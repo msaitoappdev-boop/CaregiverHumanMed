@@ -17,7 +17,6 @@ class BillingManager @Inject constructor(
 ) : PurchasesUpdatedListener {
 
     private val client: BillingClient = BillingClient.newBuilder(context)
-        .enablePendingPurchases()
         .setListener(this)
         .build()
 
@@ -127,7 +126,7 @@ class BillingManager @Inject constructor(
             .setProductType(BillingClient.ProductType.SUBS).build()
         return suspendCancellableCoroutine { cont ->
             client.queryPurchasesAsync(params) { _, list ->
-                cont.resume(list ?: emptyList())
+                cont.resume(list)
             }
         }
     }

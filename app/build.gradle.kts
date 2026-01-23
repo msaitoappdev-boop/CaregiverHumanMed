@@ -90,6 +90,9 @@ dependencies {
     // （重複していたので1つに整理）ui-tooling-preview は上で追加済み
     debugImplementation("androidx.compose.ui:ui-tooling")
 
+    // Compose のマテリアルアイコン
+    implementation("androidx.compose.material:material-icons-extended")
+
     // Navigation / Activity
     implementation("androidx.navigation:navigation-compose:2.8.4")
     implementation("androidx.activity:activity-compose:1.9.3")

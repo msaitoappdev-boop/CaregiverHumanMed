@@ -6,7 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -44,7 +44,7 @@ fun QuizScreen(
                     title = { Text(text = "第 ${state.currentIndex + 1} 問 / 全 ${state.total} 問") },
                     navigationIcon = {
                         IconButton(onClick = onNavUp) {
-                            Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る")
                         }
                     }
                 )

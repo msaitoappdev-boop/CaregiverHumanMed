@@ -3,7 +3,7 @@ package jp.msaitoappdev.caregiver.humanmed.ui.result
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -57,7 +57,7 @@ fun ResultRoute(
                 title = { Text("結果") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る")
                     }
                 }
             )
@@ -79,7 +79,7 @@ fun ResultRoute(
             Text(text = "$pct%", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(16.dp))
             LinearProgressIndicator(
-                progress = (pct / 100f),
+                progress = {(pct / 100f)},
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(10.dp)

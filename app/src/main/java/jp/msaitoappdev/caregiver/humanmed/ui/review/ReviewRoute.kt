@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,7 +37,7 @@ fun ReviewRoute(navController: NavController) {
     }
 
     val vm: QuizViewModel = viewModel(
-        quizEntry!!,
+        quizEntry,
         factory = QuizViewModelFactory(QuestionRepository(navController.context))
     )
 
@@ -59,7 +59,7 @@ fun ReviewRoute(navController: NavController) {
                 title = { Text("復習") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る")
                     }
                 }
             )
@@ -100,7 +100,7 @@ fun ReviewRoute(navController: NavController) {
                 ) { Text("新しい順番で再挑戦") }
             }
 
-            Divider()
+            HorizontalDivider()
 
             // 一覧
             LazyColumn(
