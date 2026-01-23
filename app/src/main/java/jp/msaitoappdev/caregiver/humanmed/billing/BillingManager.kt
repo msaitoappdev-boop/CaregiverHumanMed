@@ -10,14 +10,22 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
+import com.android.billingclient.api.PendingPurchasesParams
 
 @Singleton
 class BillingManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) : PurchasesUpdatedListener {
 
+
     private val client: BillingClient = BillingClient.newBuilder(context)
         .setListener(this)
+        .enablePendingPurchases(
+            PendingPurchasesParams.newBuilder()
+                .enableOneTimeProducts()   // ★必須：v7では最低これが必要
+                // .enablePrepaidPlans()    // （任意）プリペイド型サブスクを将来扱うなら有効化
+                .build()
+        )
         .build()
 
     private var connected = false
@@ -86,24 +94,35 @@ class BillingManager @Inject constructor(
     }
 
     override fun onPurchasesUpdated(result: BillingResult, purchases: MutableList<Purchase>?) {
+
         when (result.responseCode) {
             BillingClient.BillingResponseCode.OK -> {
                 if (purchases.isNullOrEmpty()) return
                 purchases.forEach { purchase ->
-                    // SUBS は消費不要、ACK 必須
-                    if (!purchase.isAcknowledged) {
-                        val ackParams = AcknowledgePurchaseParams.newBuilder()
-                            .setPurchaseToken(purchase.purchaseToken)
-                            .build()
-                        client.acknowledgePurchase(ackParams) { ackResult ->
-                            if (ackResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                                _purchaseEvents.tryEmit(PurchaseEvent.Success(purchase))
+                    when (purchase.purchaseState) {
+                        Purchase.PurchaseState.PURCHASED -> {
+                            if (!purchase.isAcknowledged) {
+                                val ackParams = AcknowledgePurchaseParams.newBuilder()
+                                    .setPurchaseToken(purchase.purchaseToken)
+                                    .build()
+                                client.acknowledgePurchase(ackParams) { ackResult ->
+                                    if (ackResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                                        _purchaseEvents.tryEmit(PurchaseEvent.Success(purchase))
+                                    } else {
+                                        _purchaseEvents.tryEmit(
+                                            PurchaseEvent.Error("ACK失敗: ${ackResult.responseCode}")
+                                        )
+                                    }
+                                }
                             } else {
-                                _purchaseEvents.tryEmit(PurchaseEvent.Error("ACK失敗: ${ackResult.responseCode}"))
+                                _purchaseEvents.tryEmit(PurchaseEvent.Success(purchase))
                             }
                         }
-                    } else {
-                        _purchaseEvents.tryEmit(PurchaseEvent.Success(purchase))
+                        Purchase.PurchaseState.PENDING -> {
+                            // 保留中：権利は付与しない。UIに案内を返す。
+                            _purchaseEvents.tryEmit(PurchaseEvent.Error("お支払い処理中です。完了後に有効化されます。"))
+                        }
+                        else -> { /* UNSPECIFIED_STATE 等は無視 */ }
                     }
                 }
             }
