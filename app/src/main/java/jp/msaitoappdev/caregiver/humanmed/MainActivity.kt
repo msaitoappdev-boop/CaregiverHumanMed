@@ -25,6 +25,15 @@ import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
 import jp.msaitoappdev.caregiver.humanmed.ui.result.ResultRoute
 import jp.msaitoappdev.caregiver.humanmed.ui.quiz.QuizRoute
 import jp.msaitoappdev.caregiver.humanmed.ui.screens.PaywallScreen
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 // 任意の依存（@Inject 付きコンストラクタで十分）
 class Greeter @Inject constructor() {
@@ -103,19 +112,55 @@ fun HomeScreen(
     onUpgrade: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+
+    // POST_NOTIFICATIONS の許可ランチャ
+    val requestPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            // 権限付与後に毎日20:00でスケジュール
+            ReminderScheduler.scheduleDaily(context, 20, 0)
+        }
+    }
+
+    var showRationale by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
     // 画面に何も出ないと真っ暗に見えるので Scaffold を噛ませておく
     Scaffold { padding ->
-//        Button(
-//            onClick = onStartQuiz,
-//            modifier = androidx.compose.ui.Modifier.padding(padding)
-//        ) {
-//            Text("クイズを開始")
-//        }
         Column(modifier = Modifier.padding(padding)) {
             Button(onClick = onStartQuiz) { Text("クイズを開始") }
             Spacer(Modifier.height(12.dp))
             Button(onClick = onUpgrade) { Text("プレミアムへアップグレード") }
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = {
+                // Android 13+ のみランタイム許可が必要
+                if (Build.VERSION.SDK_INT >= 33) {
+                    showRationale = true  // 事前説明→許可
+                } else {
+                    ReminderScheduler.scheduleDaily(context, 20, 0)
+                }
+            }) { Text("毎日20:00にリマインドを設定") }
         }
+    }
+
+    if (showRationale) {
+        AlertDialog(
+            onDismissRequest = { showRationale = false },
+            title = { Text("通知の許可が必要です") },
+            text = { Text("毎日20:00に『今日の3問』をお知らせします。通知を許可してください。") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showRationale = false
+                    if (Build.VERSION.SDK_INT >= 33) {
+                        requestPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }) { Text("許可する") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRationale = false }) { Text("後で") }
+            }
+        )
     }
 }
