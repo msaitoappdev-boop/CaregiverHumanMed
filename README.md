@@ -31,4 +31,3 @@
 
 ## JSON について
 - `app/src/main/assets/questions.json` を差し替えてください（配列ルート）。
-
