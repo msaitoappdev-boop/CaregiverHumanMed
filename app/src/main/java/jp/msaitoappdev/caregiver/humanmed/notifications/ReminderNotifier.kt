@@ -1,3 +1,4 @@
+
 package jp.msaitoappdev.caregiver.humanmed.notifications
 
 import android.app.PendingIntent
@@ -14,10 +15,9 @@ object ReminderNotifier {
     private const val NOTIFICATION_ID = 1001
 
     fun show(context: Context) {
-        // 通知タップでアプリ（Home）を開く。必要に応じて deep link に差し替え可。
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setClass(context, MainActivity::class.java)
-            data = android.net.Uri.parse("caregiver://reminder")
+            data = android.net.Uri.parse("caregiver://reminder") // DeepLink
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val flags = if (Build.VERSION.SDK_INT >= 23)
@@ -26,7 +26,7 @@ object ReminderNotifier {
         val contentPI = PendingIntent.getActivity(context, 0, intent, flags)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_quiz)
+            .setSmallIcon(R.drawable.ic_stat_quiz)        // ★白一色の小アイコン
             .setContentTitle("今日の3問を解きましょう")
             .setContentText("毎日の積み重ねが合格に近づきます。今すぐスタート！")
             .setAutoCancel(true)

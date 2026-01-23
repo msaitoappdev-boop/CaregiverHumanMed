@@ -19,12 +19,6 @@ fun PaywallScreen(
         Spacer(modifier = Modifier.height(12.dp))
         Text(text = "・AIのやさしい説明\n・詳細解説\n・弱点分析")
         Spacer(modifier = Modifier.height(12.dp))
-//        Button(
-//            onClick = { /* TODO: launch billing flow */ },
-//            modifier = Modifier.fillMaxWidth()
-//        ) {
-//            Text(text = "7日間無料で試す")
-//        }
         Button(
             onClick = onUpgradeClicked,
             modifier = Modifier.fillMaxWidth()

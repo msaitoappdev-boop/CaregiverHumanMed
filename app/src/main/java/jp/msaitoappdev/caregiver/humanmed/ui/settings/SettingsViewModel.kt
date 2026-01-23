@@ -7,14 +7,11 @@ import androidx.datastore.preferences.core.edit
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import androidx.lifecycle.ViewModel
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderPrefs
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
-import kotlinx.coroutines.flow.firstOrNull
-
-import jp.msaitoappdev.caregiver.humanmed.core.premium.PremiumRepository
-import kotlinx.coroutines.flow.first
 
 data class ReminderSettings(
     val enabled: Boolean,
@@ -24,10 +21,8 @@ data class ReminderSettings(
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val dataStore: DataStore<Preferences>,
-    private val premiumRepository: PremiumRepository
+    private val dataStore: DataStore<Preferences>
 ) : ViewModel() {
-
     val settings: Flow<ReminderSettings> = dataStore.data.map { pref ->
         ReminderSettings(
             enabled = pref[ReminderPrefs.ENABLED] ?: false,
@@ -35,10 +30,6 @@ class SettingsViewModel @Inject constructor(
             minute = pref[ReminderPrefs.MINUTE] ?: 0
         )
     }
-
-    // 現在のプレミアム状態をそのまま出す（UIでバッジ表示）
-    val isPremium: Flow<Boolean> = premiumRepository.isPremiumFlow
-
     suspend fun setEnabled(context: Context, enabled: Boolean, hour: Int, minute: Int) {
         dataStore.edit {
             it[ReminderPrefs.ENABLED] = enabled
@@ -47,27 +38,17 @@ class SettingsViewModel @Inject constructor(
                 it[ReminderPrefs.MINUTE] = minute
             }
         }
-        if (enabled) {
-            ReminderScheduler.scheduleDaily(context, hour, minute)
-        } else {
-            ReminderScheduler.cancel(context)
-        }
+        if (enabled) ReminderScheduler.scheduleDaily(context, hour, minute)
+        else ReminderScheduler.cancel(context)
     }
-
     suspend fun setTime(context: Context, hour: Int, minute: Int) {
         dataStore.edit {
             it[ReminderPrefs.HOUR] = hour
             it[ReminderPrefs.MINUTE] = minute
         }
-        // ON のときのみ再スケジュール
         val enabled = dataStore.data.map { it[ReminderPrefs.ENABLED] ?: false }.first()
-        if (enabled) {
-            ReminderScheduler.scheduleDaily(context, hour, minute)
-        }
+        if (enabled) ReminderScheduler.scheduleDaily(context, hour, minute)
     }
-
-    /** 手動「購入を復元」 */
-    suspend fun restorePurchases() {
-        premiumRepository.refreshFromBilling()
-    }
+    // PR④の「購入を復元」用スタブ（後続で実装）
+    suspend fun restorePurchases() {}
 }
