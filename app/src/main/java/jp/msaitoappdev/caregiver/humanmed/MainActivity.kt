@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -67,7 +68,10 @@ private fun AppNavHost(billing: BillingManager) {
                 onOpenSettings = { navController.navigate("settings") }
             )
         }
-        composable("quiz") { QuizRoute(navController) }
+        composable(
+            route = "quiz",
+            deepLinks = listOf(navDeepLink { uriPattern = "caregiver://reminder" })
+        ) { QuizRoute(navController) }
         composable(
             route = "result/{score}/{total}",
             arguments = listOf(
