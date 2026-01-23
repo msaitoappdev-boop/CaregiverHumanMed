@@ -136,4 +136,5 @@ dependencies {
     // プロセスライフサイクル（起動/復帰での購読状態リフレッシュに使用）
     implementation("androidx.lifecycle:lifecycle-process:2.8.6")
 
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
 }
