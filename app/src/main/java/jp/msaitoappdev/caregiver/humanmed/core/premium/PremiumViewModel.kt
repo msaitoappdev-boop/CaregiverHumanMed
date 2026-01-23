@@ -6,7 +6,7 @@ import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.billingclient.api.ProductDetails
-import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingConstants
+import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingConfig
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
 import jp.msaitoappdev.caregiver.humanmed.core.premium.PremiumRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,7 +36,7 @@ class PremiumViewModel @Inject constructor(
         viewModelScope.launch {
             val ok = billing.connect()
             if (ok) {
-                productDetails = billing.getProductDetails(BillingConstants.PRODUCT_ID_PREMIUM_MONTHLY)
+                productDetails = billing.getProductDetails(BillingConfig.PRODUCT_ID_PREMIUM_MONTHLY)
                 repo.refreshFromBilling()
             } else {
                 _uiMessage.tryEmit("Billing サービスに接続できません")
