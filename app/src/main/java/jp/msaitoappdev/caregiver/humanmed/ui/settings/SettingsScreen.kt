@@ -29,6 +29,7 @@ fun SettingsRoute(
     val state by viewModel.settings.collectAsState(
         initial = ReminderSettings(enabled = false, hour = 20, minute = 0)
     )
+    val isPremium by viewModel.isPremium.collectAsState(initial = false)
 
     // POST_NOTIFICATIONS ランチャ（Android 13+）
     val requestPermission = rememberLauncherForActivityResult(
@@ -44,7 +45,16 @@ fun SettingsRoute(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("設定") },
+                title = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("設定")
+                        AssistChip(
+                            onClick = {},
+                            label = { Text(if (isPremium) "プレミアム有効" else "フリー") },
+                            enabled = false
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る") }

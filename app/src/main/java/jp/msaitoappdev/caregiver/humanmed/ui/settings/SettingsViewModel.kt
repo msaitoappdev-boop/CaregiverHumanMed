@@ -13,6 +13,9 @@ import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderPrefs
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
 import kotlinx.coroutines.flow.firstOrNull
 
+import jp.msaitoappdev.caregiver.humanmed.core.premium.PremiumRepository
+import kotlinx.coroutines.flow.first
+
 data class ReminderSettings(
     val enabled: Boolean,
     val hour: Int,
@@ -21,7 +24,8 @@ data class ReminderSettings(
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    private val premiumRepository: PremiumRepository
 ) : ViewModel() {
 
     val settings: Flow<ReminderSettings> = dataStore.data.map { pref ->
@@ -31,6 +35,9 @@ class SettingsViewModel @Inject constructor(
             minute = pref[ReminderPrefs.MINUTE] ?: 0
         )
     }
+
+    // 現在のプレミアム状態をそのまま出す（UIでバッジ表示）
+    val isPremium: Flow<Boolean> = premiumRepository.isPremiumFlow
 
     suspend fun setEnabled(context: Context, enabled: Boolean, hour: Int, minute: Int) {
         dataStore.edit {
@@ -53,11 +60,14 @@ class SettingsViewModel @Inject constructor(
             it[ReminderPrefs.MINUTE] = minute
         }
         // ON のときのみ再スケジュール
-        val enabled = dataStore.data
-            .map { it[ReminderPrefs.ENABLED] ?: false }
-            .firstOrNull() ?: false
+        val enabled = dataStore.data.map { it[ReminderPrefs.ENABLED] ?: false }.first()
         if (enabled) {
             ReminderScheduler.scheduleDaily(context, hour, minute)
         }
+    }
+
+    /** 手動「購入を復元」 */
+    suspend fun restorePurchases() {
+        premiumRepository.refreshFromBilling()
     }
 }

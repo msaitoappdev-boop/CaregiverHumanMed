@@ -26,7 +26,7 @@ object ReminderNotifier {
         val contentPI = PendingIntent.getActivity(context, 0, intent, flags)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher_round) // ★可能なら白一色の通知用アイコンに差し替え
+            .setSmallIcon(R.drawable.ic_stat_quiz)
             .setContentTitle("今日の3問を解きましょう")
             .setContentText("毎日の積み重ねが合格に近づきます。今すぐスタート！")
             .setAutoCancel(true)
