@@ -2,15 +2,19 @@
 package jp.msaitoappdev.caregiver.humanmed
 
 import android.app.Activity
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.Manifest
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
-import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -18,22 +22,15 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingConstants
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
-import jp.msaitoappdev.caregiver.humanmed.ui.result.ResultRoute
-import jp.msaitoappdev.caregiver.humanmed.ui.quiz.QuizRoute
-import jp.msaitoappdev.caregiver.humanmed.ui.screens.PaywallScreen
-import android.Manifest
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import jp.msaitoappdev.caregiver.humanmed.ui.quiz.QuizRoute
+import jp.msaitoappdev.caregiver.humanmed.ui.result.ResultRoute
+import jp.msaitoappdev.caregiver.humanmed.ui.screens.PaywallScreen
+import jp.msaitoappdev.caregiver.humanmed.ui.settings.SettingsRoute
 
 // 任意の依存（@Inject 付きコンストラクタで十分）
 class Greeter @Inject constructor() {
@@ -49,14 +46,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ← Activity が起動しているか まずここで必ず出るはず
         Log.i("MainActivity", "onCreate called")
 
         setContent {
-            /* Compose UI */
-            //Text(greeter.message())
-
-            MaterialTheme {AppNavHost(billing)}
+            MaterialTheme {
+                AppNavHost(billing)
+            }
         }
     }
 }
@@ -68,8 +63,9 @@ private fun AppNavHost(billing: BillingManager) {
         composable("home") {
             HomeScreen(
                 onStartQuiz = { navController.navigate("quiz") },
-                onUpgrade = { navController.navigate("paywall") }
-                )
+                onUpgrade = { navController.navigate("paywall") },
+                onOpenSettings = { navController.navigate("settings") }
+            )
         }
         composable("quiz") { QuizRoute(navController) }
         composable(
@@ -92,7 +88,7 @@ private fun AppNavHost(billing: BillingManager) {
         composable("paywall") {
             val scope = rememberCoroutineScope()
             val ctx = LocalContext.current as Activity
-            // 画面入場時に接続（初回のみ）
+            // 画面入場時に一度だけ接続
             LaunchedEffect(Unit) { scope.launch { billing.connect() } }
             PaywallScreen(
                 onUpgradeClicked = {
@@ -103,17 +99,20 @@ private fun AppNavHost(billing: BillingManager) {
                 }
             )
         }
+        composable("settings") {
+            SettingsRoute(onBack = { navController.popBackStack() })
+        }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onStartQuiz: () -> Unit,
-    onUpgrade: () -> Unit
+    onUpgrade: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
 
     // POST_NOTIFICATIONS の許可ランチャ
     val requestPermission = rememberLauncherForActivityResult(
@@ -125,18 +124,30 @@ fun HomeScreen(
         }
     }
 
-    var showRationale by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    var showRationale by remember { mutableStateOf(false) }
 
-    // 画面に何も出ないと真っ暗に見えるので Scaffold を噛ませておく
-    Scaffold { padding ->
-        Column(modifier = Modifier.padding(padding)) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("ホーム") },
+                actions = {
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Filled.Settings, contentDescription = "設定")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(modifier = Modifier
+            .padding(padding)
+            .padding(16.dp)) {
             Button(onClick = onStartQuiz) { Text("クイズを開始") }
             Spacer(Modifier.height(12.dp))
             Button(onClick = onUpgrade) { Text("プレミアムへアップグレード") }
             Spacer(Modifier.height(12.dp))
             Button(onClick = {
                 // Android 13+ のみランタイム許可が必要
-                if (Build.VERSION.SDK_INT >= 33) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     showRationale = true  // 事前説明→許可
                 } else {
                     ReminderScheduler.scheduleDaily(context, 20, 0)
@@ -153,7 +164,7 @@ fun HomeScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showRationale = false
-                    if (Build.VERSION.SDK_INT >= 33) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         requestPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 }) { Text("許可する") }
