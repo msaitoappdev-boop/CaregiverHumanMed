@@ -1,30 +1,30 @@
 
 package jp.msaitoappdev.caregiver.humanmed
 
+import android.app.Activity
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
-import jp.msaitoappdev.caregiver.humanmed.ui.quiz.QuizRoute
-import jp.msaitoappdev.caregiver.humanmed.ui.result.ResultRoute
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.padding
-
 import dagger.hilt.android.AndroidEntryPoint
-import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
-import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingConstants
-import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
-import android.app.Activity
 import javax.inject.Inject
-
+import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingConstants
+import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
+import jp.msaitoappdev.caregiver.humanmed.ui.result.ResultRoute
+import jp.msaitoappdev.caregiver.humanmed.ui.quiz.QuizRoute
+import jp.msaitoappdev.caregiver.humanmed.ui.screens.PaywallScreen
 
 // 任意の依存（@Inject 付きコンストラクタで十分）
 class Greeter @Inject constructor() {
@@ -47,19 +47,13 @@ class MainActivity : ComponentActivity() {
             /* Compose UI */
             //Text(greeter.message())
 
-            MaterialTheme {
-                AppNavHost(
-                    onOpenPaywall = { /* navigate to paywall */ }
-                )
-            }
+            MaterialTheme {AppNavHost(billing)}
         }
     }
 }
 
 @Composable
-private fun AppNavHost(
-    onOpenPaywall: () -> Unit = {}
-) {
+private fun AppNavHost(billing: BillingManager) {
     val navController = rememberNavController()
     NavHost(navController, startDestination = "home") {
         composable("home") {
@@ -89,7 +83,7 @@ private fun AppNavHost(
         composable("paywall") {
             val scope = rememberCoroutineScope()
             val ctx = LocalContext.current as Activity
-            // 画面入場時に接続
+            // 画面入場時に接続（初回のみ）
             LaunchedEffect(Unit) { scope.launch { billing.connect() } }
             PaywallScreen(
                 onUpgradeClicked = {
