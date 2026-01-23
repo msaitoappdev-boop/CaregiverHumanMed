@@ -21,13 +21,6 @@ private val Context._dataStore by preferencesDataStore(name = "premium_prefs")
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-//    @Provides
-//    @Singleton
-//    fun provideBillingClient(@ApplicationContext context: Context): BillingClient =
-//        BillingClient.newBuilder(context)
-//            .enablePendingPurchases()
-//            .setListener { _, _ -> /* PurchasesUpdatedListenerは別クラスで実装 */ }
-//            .build()
 // BillingClient は BillingManager 側で一元管理するため提供しません
 // （二重生成を避ける）
     @Provides

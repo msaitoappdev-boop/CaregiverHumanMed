@@ -8,7 +8,6 @@ class DailyReminderWorker(
     appContext: Context,
     params: WorkerParameters
 ) : CoroutineWorker(appContext, params) {
-
     override suspend fun doWork(): Result {
         ReminderNotifier.show(applicationContext)
         return Result.success()
