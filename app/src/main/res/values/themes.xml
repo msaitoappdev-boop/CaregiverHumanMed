@@ -1,0 +1,6 @@
+
+<resources>
+    <style name="Theme.CaregiverHumanMed" parent="Theme.Material3.DayNight">
+        <!-- 必要に応じて色などを追加 -->
+    </style>
+</resources>
