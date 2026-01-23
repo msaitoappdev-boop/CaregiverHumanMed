@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.map
 import androidx.lifecycle.ViewModel
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderPrefs
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
+import jp.msaitoappdev.caregiver.humanmed.core.premium.PremiumRepository
 
 data class ReminderSettings(
     val enabled: Boolean,
@@ -21,8 +22,10 @@ data class ReminderSettings(
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    private val premiumRepo: PremiumRepository
 ) : ViewModel() {
+
     val settings: Flow<ReminderSettings> = dataStore.data.map { pref ->
         ReminderSettings(
             enabled = pref[ReminderPrefs.ENABLED] ?: false,
@@ -30,6 +33,7 @@ class SettingsViewModel @Inject constructor(
             minute = pref[ReminderPrefs.MINUTE] ?: 0
         )
     }
+
     suspend fun setEnabled(context: Context, enabled: Boolean, hour: Int, minute: Int) {
         dataStore.edit {
             it[ReminderPrefs.ENABLED] = enabled
@@ -41,6 +45,7 @@ class SettingsViewModel @Inject constructor(
         if (enabled) ReminderScheduler.scheduleDaily(context, hour, minute)
         else ReminderScheduler.cancel(context)
     }
+
     suspend fun setTime(context: Context, hour: Int, minute: Int) {
         dataStore.edit {
             it[ReminderPrefs.HOUR] = hour
@@ -49,6 +54,9 @@ class SettingsViewModel @Inject constructor(
         val enabled = dataStore.data.map { it[ReminderPrefs.ENABLED] ?: false }.first()
         if (enabled) ReminderScheduler.scheduleDaily(context, hour, minute)
     }
-    // PR④の「購入を復元」用スタブ（後続で実装）
-    suspend fun restorePurchases() {}
+
+    /** 「購入を復元」押下時に、Play の状態をローカルへ同期 */
+    suspend fun restorePurchases() {
+        premiumRepo.refreshFromBilling()
+    }
 }

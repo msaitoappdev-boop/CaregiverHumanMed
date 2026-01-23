@@ -94,11 +94,51 @@ private fun AppNavHost(billing: BillingManager) {
             val ctx = LocalContext.current as Activity
             // 画面入場時に一度だけ接続
             LaunchedEffect(Unit) { scope.launch { billing.connect() } }
+
+            // 簡易トースト表示ヘルパ
+            fun toast(msg: String) =
+                android.widget.Toast.makeText(ctx, msg, android.widget.Toast.LENGTH_SHORT).show()
+
+            // Billing のイベントもログに出す（成功/失敗の可視化）
+            LaunchedEffect(Unit) {
+                scope.launch {
+                    billing.purchaseEvents.collect { e ->
+                        when (e) {
+                            is jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager.PurchaseEvent.Success -> {
+                                android.util.Log.d("Paywall", "purchase success: ${e.purchase.products}")
+                                toast("購入が完了しました")
+                                // 購入後の挙動（例：前の画面に戻る）
+                                // navController.popBackStack() など
+                            }
+                            jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager.PurchaseEvent.Canceled -> {
+                                android.util.Log.d("Paywall", "purchase canceled")
+                                toast("購入をキャンセルしました")
+                            }
+                            jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager.PurchaseEvent.AlreadyOwned -> {
+                                android.util.Log.d("Paywall", "already owned")
+                                toast("すでに購入済みです")
+                            }
+                            is jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager.PurchaseEvent.Error -> {
+                                android.util.Log.e("Paywall", "purchase error: ${e.message}")
+                                toast("購入エラー: ${e.message}")
+                            }
+                        }
+                    }
+                }
+            }
+
             PaywallScreen(
                 onUpgradeClicked = {
                     scope.launch {
-                        val pd = billing.getProductDetails(BillingConfig.PRODUCT_ID_PREMIUM_MONTHLY)
-                        if (pd != null) billing.launchPurchase(ctx, pd)
+                        val pd = billing.getProductDetails(
+                            BillingConfig.PRODUCT_ID_PREMIUM_MONTHLY)
+
+                        if (pd == null) {
+                            android.util.Log.e("Paywall", "ProductDetails is null. Check Play Console config & tester setup.")
+                            toast("商品情報を取得できません。Play コンソール設定/テスター設定をご確認ください。")
+                            return@launch
+                        }
+                        billing.launchPurchase(ctx, pd) // → ここで Google Play の購入ダイアログが出るのが正
                     }
                 }
             )
