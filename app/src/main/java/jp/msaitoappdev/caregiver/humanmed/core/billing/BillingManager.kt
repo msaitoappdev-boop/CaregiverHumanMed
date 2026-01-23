@@ -10,20 +10,18 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
-import com.android.billingclient.api.PendingPurchasesParams
 
 @Singleton
 class BillingManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) : PurchasesUpdatedListener {
 
-
     private val client: BillingClient = BillingClient.newBuilder(context)
         .setListener(this)
         .enablePendingPurchases(
             PendingPurchasesParams.newBuilder()
-                .enableOneTimeProducts()   // ★必須：v7では最低これが必要
-                // .enablePrepaidPlans()    // （任意）プリペイド型サブスクを将来扱うなら有効化
+                .enableOneTimeProducts()   // 一回購入を扱う場合
+                // .enablePrepaidPlans()   // 任意：プリペイド型を扱うなら
                 .build()
         )
         .build()
@@ -31,12 +29,14 @@ class BillingManager @Inject constructor(
     private var connected = false
     private var cachedProductDetails: ProductDetails? = null
 
-    // 購入イベントをUI/Repoに伝える
+    // UI/Repo に購入イベントを配信
     private val _purchaseEvents = MutableSharedFlow<PurchaseEvent>(extraBufferCapacity = 4)
     val purchaseEvents = _purchaseEvents.asSharedFlow()
 
     suspend fun connect(): Boolean = suspendCancellableCoroutine { cont ->
-        if (connected) { cont.resume(true); return@suspendCancellableCoroutine }
+        if (connected) {
+            cont.resume(true); return@suspendCancellableCoroutine
+        }
         client.startConnection(object : BillingClientStateListener {
             override fun onBillingServiceDisconnected() {
                 connected = false
@@ -74,7 +74,7 @@ class BillingManager @Inject constructor(
 
     fun launchPurchase(activity: Activity, productDetails: ProductDetails) {
         val offerToken = productDetails.subscriptionOfferDetails
-            ?.firstOrNull() // ★無料トライアルなしのフルプライス・オファーを1つ作成しておく
+            ?.firstOrNull() // 無料トライアルなしのフルプライス・オファーを1つ用意しておく
             ?.offerToken ?: run {
             _purchaseEvents.tryEmit(PurchaseEvent.Error("オファーが見つかりません"))
             return
@@ -94,7 +94,6 @@ class BillingManager @Inject constructor(
     }
 
     override fun onPurchasesUpdated(result: BillingResult, purchases: MutableList<Purchase>?) {
-
         when (result.responseCode) {
             BillingClient.BillingResponseCode.OK -> {
                 if (purchases.isNullOrEmpty()) return
@@ -119,10 +118,10 @@ class BillingManager @Inject constructor(
                             }
                         }
                         Purchase.PurchaseState.PENDING -> {
-                            // 保留中：権利は付与しない。UIに案内を返す。
+                            // 保留中：権利は付与しない
                             _purchaseEvents.tryEmit(PurchaseEvent.Error("お支払い処理中です。完了後に有効化されます。"))
                         }
-                        else -> { /* UNSPECIFIED_STATE 等は無視 */ }
+                        else -> { /* UNSPECIFIED_STATE などは無視 */ }
                     }
                 }
             }
@@ -130,7 +129,6 @@ class BillingManager @Inject constructor(
                 _purchaseEvents.tryEmit(PurchaseEvent.Canceled)
             }
             BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
-                // 所有済み → 後で queryPurchases で復元
                 _purchaseEvents.tryEmit(PurchaseEvent.AlreadyOwned)
             }
             else -> {
@@ -143,6 +141,7 @@ class BillingManager @Inject constructor(
         if (!connected && !connect()) return emptyList()
         val params = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS).build()
+
         return suspendCancellableCoroutine { cont ->
             client.queryPurchasesAsync(params) { _, list ->
                 cont.resume(list)

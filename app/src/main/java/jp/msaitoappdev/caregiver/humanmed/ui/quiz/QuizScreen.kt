@@ -1,6 +1,7 @@
-
 package jp.msaitoappdev.caregiver.humanmed.ui.quiz
 
+import android.widget.Toast
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,9 +10,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlin.math.max
 
@@ -22,20 +25,27 @@ fun QuizScreen(
     onSelect: (Int) -> Unit,
     onNext: () -> Unit,
     onPrev: () -> Unit,
-    onNavUp: () -> Unit
+    onNavUp: () -> Unit,
+    // ★ 追加（デフォルト値付きで後方互換）
+    canShowFullExplanation: Boolean = true,
+    onUpgrade: () -> Unit = {}
 ) {
+    val TAG = "QuizScreen"
+    val ctx = LocalContext.current
+
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return
     }
-
     val q = state.current ?: return
 
-    // TopBar + 進捗バー
     val progressFraction =
         if (state.total == 0) 0f else (state.currentIndex + 1f) / max(1, state.total).toFloat()
+
+    // ★ デバッグ用スナックバー（押下到達の可視化にも使える）
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         topBar = {
@@ -46,20 +56,29 @@ fun QuizScreen(
                         IconButton(onClick = onNavUp) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る")
                         }
+                    },
+                    actions = {
+                        // ★ デバッグ: 常時 Paywall へ遷移できるアクション
+                        TextButton(
+                            onClick = {
+                                Log.d(TAG, "DEBUG action -> onUpgrade()")
+                                Toast.makeText(ctx, "DEBUG: Paywall へ遷移", Toast.LENGTH_SHORT).show()
+                                onUpgrade()
+                            }
+                        ) {
+                            Text("DEBUG: Paywall")
+                        }
                     }
                 )
-                // ここは齊藤さんの環境に合わせ、ラムダ版のまま残しています
                 LinearProgressIndicator(
                     progress = { progressFraction },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
+                    modifier = Modifier.fillMaxWidth().height(4.dp)
                 )
             }
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
 
-        // 色プリセット
         val CorrectBg = Color(0xFFDFF5E1)
         val CorrectBorder = Color(0xFF2F855A)
         val WrongBg = Color(0xFFFFE0E0)
@@ -76,11 +95,10 @@ fun QuizScreen(
             Text(text = q.text, style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(16.dp))
 
-            // 選択肢（確定後も変更できる）
+            // 選択肢（確定後も変更可）
             q.options.forEachIndexed { idx, option ->
                 val isSelected = idx == state.selectedIndex
                 val isCorrect = idx == q.correctIndex
-
                 val bg = when {
                     state.isAnswered && isCorrect -> CorrectBg
                     state.isAnswered && isSelected && !isCorrect -> WrongBg
@@ -92,7 +110,6 @@ fun QuizScreen(
                     state.isAnswered && isSelected && !isCorrect -> WrongBorder
                     else -> Color.Transparent
                 }
-
                 Surface(
                     tonalElevation = if (isSelected) 1.dp else 0.dp,
                     modifier = Modifier
@@ -113,18 +130,38 @@ fun QuizScreen(
                 }
             }
 
-            // 解説／ガイダンス
+            // 解説（回答後）
             if (state.isAnswered) {
                 Spacer(Modifier.height(12.dp))
-                q.explanation?.let {
-                    if (it.isNotBlank()) {
+                val hasExplanation = q.explanation?.isNotBlank() == true
+                if (hasExplanation) {
+                    if (canShowFullExplanation) {
                         Text(
-                            text = "解説：$it",
+                            text = "解説：${q.explanation}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color(0xFF2F855A)
                         )
-                        Spacer(Modifier.height(12.dp))
+                    } else {
+                        Text(
+                            text = "解説の全文はプレミアムで解放されます。",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF2F855A)
+                        )
+                        Spacer(Modifier.height(8.dp))
+
+                        // ★ ここが本命のボタン。押下時に Toast/Log を出し、確実に onUpgrade を呼ぶ
+                        OutlinedButton(
+                            onClick = {
+                                Log.d(TAG, "【DEBUG】upgrade button clicked")
+                                Toast.makeText(ctx, "【DEBUG】Upgrade ボタン押下", Toast.LENGTH_SHORT).show()
+                                onUpgrade()
+                            },
+                            enabled = true // 念のため明示
+                        ) {
+                            Text("【DEBUG】月額 ¥200 で解説を解放")
+                        }
                     }
+                    Spacer(Modifier.height(12.dp))
                 }
             } else {
                 Spacer(Modifier.height(12.dp))
