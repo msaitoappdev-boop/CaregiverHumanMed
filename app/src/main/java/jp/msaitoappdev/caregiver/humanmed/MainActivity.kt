@@ -25,7 +25,7 @@ import androidx.navigation.navDeepLink
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.launch
-import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingConstants
+import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingConfig
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
 import jp.msaitoappdev.caregiver.humanmed.ui.quiz.QuizRoute
@@ -97,7 +97,7 @@ private fun AppNavHost(billing: BillingManager) {
             PaywallScreen(
                 onUpgradeClicked = {
                     scope.launch {
-                        val pd = billing.getProductDetails(BillingConstants.PRODUCT_ID_PREMIUM_MONTHLY)
+                        val pd = billing.getProductDetails(BillingConfig.PRODUCT_ID_PREMIUM_MONTHLY)
                         if (pd != null) billing.launchPurchase(ctx, pd)
                     }
                 }

@@ -5,7 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import com.android.billingclient.api.Purchase
-import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingConstants
+import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingConfig
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -22,7 +22,7 @@ class PremiumRepository @Inject constructor(
 
     suspend fun refreshFromBilling() {
         val subs = billing.queryActiveSubscriptions()
-        val active = subs.any { it.products.contains(BillingConstants.PRODUCT_ID_PREMIUM_MONTHLY) &&
+        val active = subs.any { it.products.contains(BillingConfig.PRODUCT_ID_PREMIUM_MONTHLY) &&
                 it.purchaseState == Purchase.PurchaseState.PURCHASED }
         dataStore.edit {
             it[PremiumPrefs.IS_PREMIUM] = active
