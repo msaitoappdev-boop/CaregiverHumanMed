@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Notebook body -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M28,26 h44 a6,6 0 0 1 6,6 v44 a6,6 0 0 1 -6,6 h-44 a6,6 0 0 1 -6,-6 v-44 a6,6 0 0 1 6,-6 z"/>
+    <!-- Binding stripes -->
+    <path android:fillColor="#2E7D32" android:pathData="M34,28 h4 v52 h-4 z"/>
+    <path android:fillColor="#2E7D32" android:pathData="M40,28 h4 v52 h-4 z"/>
+    <!-- Leaf -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M64,40
+                          c 10,-6 18,6 10,14
+                          c -6,6 -16,10 -20,10
+                          c 4,-4 8,-12 10,-24 z"/>
+    <!-- Fold mark (page corner) -->
+    <path
+        android:fillColor="#DDEFE0"
+        android:pathData="M72,26 h8 v8 z"/>
+</vector>
