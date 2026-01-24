@@ -27,9 +27,6 @@ fun QuizScreen(
     canShowFullExplanation: Boolean = true,
     onUpgrade: () -> Unit = {}
 ) {
-    val TAG = "QuizScreen"
-    val ctx = LocalContext.current
-
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()

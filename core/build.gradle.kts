@@ -3,6 +3,7 @@ plugins {
     id("com.android.library")
     kotlin("android")
     id("com.google.devtools.ksp")        // Hiltのアノテーション処理に必要
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -20,14 +21,14 @@ dependencies {
     // Coroutine / Lifecycle（必要に応じて）
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    // Hilt（KSP 版）
-    val hiltVersion = "2.51.1"
-    implementation("com.google.dagger:hilt-android:$hiltVersion")
-    ksp("com.google.dagger:hilt-compiler:$hiltVersion")
+    // ★ DataStore 型が公開API（DIコンストラクタ）に露出するため api で公開
+    api("androidx.datastore:datastore-preferences:1.1.1")
 
     // Play Billing（BillingManager が依存）
     implementation("com.android.billingclient:billing-ktx:7.1.1")
 
-    // DataStore（Premium 状態の保存など）
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    // Hilt（KSP 版）
+    val hiltVersion = "2.51.1"
+    implementation("com.google.dagger:hilt-android:$hiltVersion")
+    ksp("com.google.dagger:hilt-compiler:$hiltVersion")
 }

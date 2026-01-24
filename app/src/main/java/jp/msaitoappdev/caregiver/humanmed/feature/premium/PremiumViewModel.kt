@@ -8,7 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.android.billingclient.api.ProductDetails
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingConfig
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
-import jp.msaitoappdev.caregiver.humanmed.core.premium.PremiumRepository
+import jp.msaitoappdev.caregiver.humanmed.core.premium.PremiumRepositoryImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -17,7 +17,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PremiumViewModel @Inject constructor(
     private val billing: BillingManager,
-    private val repo: PremiumRepository
+    private val repo: PremiumRepositoryImpl
 ) : ViewModel() {
 
     val isPremium: StateFlow<Boolean> = repo.isPremiumFlow.stateIn(

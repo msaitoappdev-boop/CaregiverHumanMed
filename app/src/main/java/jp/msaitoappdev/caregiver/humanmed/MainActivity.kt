@@ -35,8 +35,7 @@ import jp.msaitoappdev.caregiver.humanmed.ui.settings.SettingsRoute
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
-import jp.msaitoappdev.caregiver.humanmed.core.premium.PremiumRepository
+import jp.msaitoappdev.caregiver.humanmed.core.premium.PremiumRepositoryImpl
 
 // 任意の依存（@Inject 付きコンストラクタで十分）
 class Greeter @Inject constructor() {
@@ -48,7 +47,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var greeter: Greeter
     @Inject lateinit var billing: BillingManager
-    @Inject lateinit var premiumRepo: PremiumRepository
+    @Inject lateinit var premiumRepo: PremiumRepositoryImpl
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

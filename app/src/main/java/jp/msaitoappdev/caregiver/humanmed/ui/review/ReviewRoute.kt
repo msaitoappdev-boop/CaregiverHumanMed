@@ -13,38 +13,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import jp.msaitoappdev.caregiver.humanmed.data.QuestionRepository
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
+import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.ui.quiz.QuizViewModel
-import jp.msaitoappdev.caregiver.humanmed.ui.quiz.QuizViewModelFactory
 import jp.msaitoappdev.caregiver.humanmed.ui.quiz.ReviewItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReviewRoute(navController: NavController) {
-    // quiz の backStackEntry に紐づく「同じ」ViewModel を取得
+    // quiz の BackStackEntry に紐づく「同じ」ViewModel を取得（Hilt）
     val currentEntry by navController.currentBackStackEntryAsState()
     val quizEntry = remember(currentEntry) {
-        runCatching { navController.getBackStackEntry("quiz") }.getOrNull()
+        runCatching { navController.getBackStackEntry(NavRoutes.QUIZ) }.getOrNull()
     }
-
-    // 保険：quizEntry が無ければ戻る
     if (quizEntry == null) {
         LaunchedEffect(Unit) { navController.popBackStack() }
         return
     }
+    val vm: QuizViewModel = hiltViewModel(quizEntry)
+    val state by vm.uiState.collectAsStateWithLifecycle()
 
-    val vm: QuizViewModel = viewModel(
-        quizEntry,
-        factory = QuizViewModelFactory(QuestionRepository(navController.context))
-    )
-
-    // 状態（進行状況など）を購読しておくと、レビューリストを最新化できる
-    val state by vm.uiState.collectAsState()
-
-    // レビューアイテムを構築（state をキーにして再構築）
+    // レビューアイテム
     val items: List<ReviewItem> = remember(state) { vm.getReviewItems() }
 
     // 色プリセット（Quiz と同系色）
@@ -79,22 +72,20 @@ fun ReviewRoute(navController: NavController) {
             ) {
                 OutlinedButton(
                     onClick = {
-                        // 同じ順番で最初から（quiz にフラグを渡して戻る）
-                        val quizEntryBack = runCatching { navController.getBackStackEntry("quiz") }.getOrNull()
+                        val quizEntryBack = runCatching { navController.getBackStackEntry(NavRoutes.QUIZ) }.getOrNull()
                         quizEntryBack?.savedStateHandle?.set("reshuffle", false)
                         quizEntryBack?.savedStateHandle?.set("reshuffleTick", System.currentTimeMillis())
-                        navController.popBackStack("quiz", inclusive = false)
+                        navController.popBackStack(NavRoutes.QUIZ, inclusive = false)
                     },
                     modifier = Modifier.weight(1f)
                 ) { Text("同じ順番で再挑戦") }
 
                 Button(
                     onClick = {
-                        // 新しい順番で最初から
-                        val quizEntryBack = runCatching { navController.getBackStackEntry("quiz") }.getOrNull()
+                        val quizEntryBack = runCatching { navController.getBackStackEntry(NavRoutes.QUIZ) }.getOrNull()
                         quizEntryBack?.savedStateHandle?.set("reshuffle", true)
                         quizEntryBack?.savedStateHandle?.set("reshuffleTick", System.currentTimeMillis())
-                        navController.popBackStack("quiz", inclusive = false)
+                        navController.popBackStack(NavRoutes.QUIZ, inclusive = false)
                     },
                     modifier = Modifier.weight(1f)
                 ) { Text("新しい順番で再挑戦") }
@@ -144,7 +135,6 @@ private fun ReviewCard(
             item.options.forEachIndexed { idx, option ->
                 val isSelected = idx == item.selectedIndex
                 val isCorrect = idx == item.correctIndex
-
                 val bg = when {
                     isCorrect -> correctBg
                     isSelected && !isCorrect -> wrongBg
@@ -155,7 +145,6 @@ private fun ReviewCard(
                     isSelected && !isCorrect -> wrongBorder
                     else -> Color.Transparent
                 }
-
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -179,14 +168,11 @@ private fun ReviewCard(
             }
 
             Spacer(Modifier.height(8.dp))
-
-            // あなたの回答 / 正解 インジケータ
             val my = item.selectedIndex?.let { idx -> item.options.getOrNull(idx) } ?: "未回答"
             val correct = item.options.getOrNull(item.correctIndex) ?: "-"
             Text(text = "あなたの回答：$my", style = MaterialTheme.typography.labelLarge)
             Text(text = "正解：$correct", style = MaterialTheme.typography.labelLarge, color = correctBorder)
 
-            // 解説
             item.explanation?.let { exp ->
                 if (exp.isNotBlank()) {
                     Spacer(Modifier.height(8.dp))

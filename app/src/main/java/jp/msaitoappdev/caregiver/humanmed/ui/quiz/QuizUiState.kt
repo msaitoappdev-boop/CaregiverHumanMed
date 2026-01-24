@@ -1,6 +1,6 @@
 package jp.msaitoappdev.caregiver.humanmed.ui.quiz
 
-import jp.msaitoappdev.caregiver.humanmed.data.Question
+import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
 
 data class QuizUiState(
     val isLoading: Boolean = true,
