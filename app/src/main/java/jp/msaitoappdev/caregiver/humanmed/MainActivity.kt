@@ -38,11 +38,6 @@ import androidx.lifecycle.lifecycleScope
 import jp.msaitoappdev.caregiver.humanmed.feature.history.HistoryRoute
 import jp.msaitoappdev.caregiver.humanmed.feature.review.ReviewRoute
 
-// 任意の依存（@Inject 付きコンストラクタで十分）
-class Greeter @Inject constructor() {
-    fun message(): String = "Hello, Hilt + KSP!"
-}
-
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
