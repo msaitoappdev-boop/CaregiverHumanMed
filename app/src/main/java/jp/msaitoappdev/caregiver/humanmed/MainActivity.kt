@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var greeter: Greeter
     @Inject lateinit var billing: BillingManager
-    @Inject lateinit var premiumRepo: PremiumRepositoryImpl
+    @Inject lateinit var premiumRepo: jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

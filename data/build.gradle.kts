@@ -19,7 +19,7 @@ android {
 
 ksp {
     // ★ Room のスキーマ出力先は data モジュールへ
-    arg("room.schemaLocation", "$projectDir/schemas")
+    arg("room.schemaLocation", "$projectDir/build/roomSchemas")
     arg("room.incremental", "true")
     arg("room.generateKotlin", "true")
 }

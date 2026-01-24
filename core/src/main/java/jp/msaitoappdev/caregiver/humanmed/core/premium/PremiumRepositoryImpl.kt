@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import com.android.billingclient.api.Purchase
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingConfig
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
+import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -16,11 +17,12 @@ import javax.inject.Singleton
 class PremiumRepositoryImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>,
     private val billing: BillingManager
-) {
-    val isPremiumFlow: Flow<Boolean> =
+): PremiumRepository {                               // ★ IF を実装
+
+    override val isPremiumFlow: Flow<Boolean> =      // ★ override を付与
         dataStore.data.map { it[PremiumPrefs.IS_PREMIUM] ?: false }
 
-    suspend fun refreshFromBilling() {
+    override suspend fun refreshFromBilling() {
         val subs = billing.queryActiveSubscriptions()
         val active = subs.any { it.products.contains(BillingConfig.PRODUCT_ID_PREMIUM_MONTHLY) &&
                 it.purchaseState == Purchase.PurchaseState.PURCHASED }
@@ -30,7 +32,7 @@ class PremiumRepositoryImpl @Inject constructor(
         }
     }
 
-    suspend fun setPremiumForDebug(enabled: Boolean) {
+    override suspend fun setPremiumForDebug(enabled: Boolean) {
         dataStore.edit {
             it[PremiumPrefs.IS_PREMIUM] = enabled
             it[PremiumPrefs.LAST_SYNCED_EPOCH_MS] = System.currentTimeMillis()

@@ -17,7 +17,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PremiumViewModel @Inject constructor(
     private val billing: BillingManager,
-    private val repo: PremiumRepositoryImpl
+    private val repo: jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 ) : ViewModel() {
 
     val isPremium: StateFlow<Boolean> = repo.isPremiumFlow.stateIn(

@@ -18,6 +18,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":domain"))
     // Coroutine / Lifecycle（必要に応じて）
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
