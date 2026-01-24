@@ -8,7 +8,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import jp.msaitoappdev.caregiver.humanmed.data.QuestionRepository
 import jp.msaitoappdev.caregiver.humanmed.feature.premium.PremiumViewModel
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 

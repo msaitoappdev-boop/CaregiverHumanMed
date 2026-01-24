@@ -1,7 +1,7 @@
 
 package jp.msaitoappdev.caregiver.humanmed.ai
 
-import jp.msaitoappdev.caregiver.humanmed.data.Question
+import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
 
 interface AiService {
     suspend fun easyExplain(q: Question): String

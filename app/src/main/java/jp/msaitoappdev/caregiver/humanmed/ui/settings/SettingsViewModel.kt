@@ -23,7 +23,7 @@ data class ReminderSettings(
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val dataStore: DataStore<Preferences>,
-    private val premiumRepo: PremiumRepositoryImpl
+    private val premiumRepo: jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 ) : ViewModel() {
 
     val settings: Flow<ReminderSettings> = dataStore.data.map { pref ->
