@@ -1,47 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest
+    package="jp.msaitoappdev.caregiver.humanmed"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET" />
-<!--    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />-->
-<!--    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />-->
-    <!-- Android 13+ の通知ランタイム権限 -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Android 13+ 以降の通知ランタイム許可（下位は無視される） -->
+    <uses-permission
+        android:name="android.permission.POST_NOTIFICATIONS"
+        tools:targetApi="33" />
 
     <application
-        android:allowBackup="true"
         android:name=".CaregiverApp"
-        android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="false"
         android:theme="@style/Theme.CaregiverHumanMed">
 
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.CaregiverHumanMed">
+            android:exported="true">
+            <!-- ランチャー -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- 通知タップでアプリを開く（必要ならクイズ画面へ深い遷移も可能）-->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="caregiver" android:host="reminder" />
-            </intent-filter>
+
+            <!-- 通知からは setClass(MainActivity) + data=caregiver://reminder で明示起動。
+                 NavGraph の deepLink 定義が解決するため、Manifest での deep link 宣言は不要。 -->
         </activity>
 
-        <!-- AdMob App ID（ビルドタイプで切替、debug はテストID） -->
-<!--        <meta-data-->
-<!--            android:name="com.google.android.gms.ads.APPLICATION_ID"-->
-<!--            android:value="${admob_app_id}" />-->
-
-<!--        <meta-data-->
-<!--            android:name="com.google.android.gms.ads.flag.OPTIMIZE_AD_LOADING"-->
-<!--            android:value="true" />-->
+        <!-- WorkManager はデフォルト初期化（カスタム Initializer がないため Manifest 追記不要） -->
 
     </application>
 </manifest>

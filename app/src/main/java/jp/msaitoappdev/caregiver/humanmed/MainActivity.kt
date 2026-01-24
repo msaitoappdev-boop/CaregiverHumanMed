@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
@@ -25,8 +26,6 @@ import androidx.navigation.navDeepLink
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.launch
-import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingConfig
-import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
 import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizRoute
 import jp.msaitoappdev.caregiver.humanmed.feature.result.ResultRoute
@@ -36,12 +35,11 @@ import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 
 import androidx.lifecycle.lifecycleScope
 import jp.msaitoappdev.caregiver.humanmed.feature.history.HistoryRoute
+import jp.msaitoappdev.caregiver.humanmed.feature.premium.PremiumViewModel
 import jp.msaitoappdev.caregiver.humanmed.feature.review.ReviewRoute
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    @Inject lateinit var billing: BillingManager
     @Inject lateinit var premiumRepo: jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +49,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                AppNavHost(billing)
+                AppNavHost()
             }
         }
     }
@@ -66,7 +64,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun AppNavHost(billing: BillingManager) {
+private fun AppNavHost() {
     val navController = rememberNavController()
     NavHost(navController, startDestination = NavRoutes.HOME) {
         composable(NavRoutes.HOME) {
@@ -97,25 +95,28 @@ private fun AppNavHost(billing: BillingManager) {
         composable(NavRoutes.HISTORY) {
             HistoryRoute(navController)
         }
-        composable(NavRoutes.PAYWALL) {
-            val scope = rememberCoroutineScope()
-            val ctx = LocalContext.current as Activity
-            // 画面入場時に一度だけ接続
-            LaunchedEffect(Unit) { scope.launch { billing.connect() } }
-            PaywallScreen(
-                onUpgradeClicked = {
-                    scope.launch {
-                        val pd = billing.getProductDetails(
-                            BillingConfig.PRODUCT_ID_PREMIUM_MONTHLY)
 
-                        if (pd == null) {
-                            android.util.Log.e("Paywall", "ProductDetails is null. Check Play Console config & tester setup.")
-                            return@launch
-                        }
-                        billing.launchPurchase(ctx, pd) // → ここで Google Play の購入ダイアログが出るのが正
-                    }
+        composable(NavRoutes.PAYWALL) {
+            val vm: PremiumViewModel = hiltViewModel()
+            val ctx = LocalContext.current as Activity
+            val snackbarHostState = remember { SnackbarHostState() }
+            val scope = rememberCoroutineScope()
+
+            // 任意: ViewModel からのメッセージを Snackbar に表示
+            LaunchedEffect(Unit) {
+                vm.uiMessage.collect { msg ->
+                    snackbarHostState.showSnackbar(message = msg)
                 }
-            )
+            }
+
+            // UI 本体
+            Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { inner ->
+                Box(Modifier.padding(inner)) {
+                    PaywallScreen(
+                        onUpgradeClicked = { vm.startPurchase(ctx) }
+                    )
+                }
+            }
         }
         composable(NavRoutes.SETTINGS) {
             SettingsRoute(onBack = { navController.popBackStack() })
