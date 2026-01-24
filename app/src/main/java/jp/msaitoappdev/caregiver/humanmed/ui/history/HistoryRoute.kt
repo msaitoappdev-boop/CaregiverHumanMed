@@ -8,30 +8,23 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import jp.msaitoappdev.caregiver.humanmed.data.score.AppDatabase
-import jp.msaitoappdev.caregiver.humanmed.data.score.ScoreRecord
-import jp.msaitoappdev.caregiver.humanmed.data.score.ScoreRepository
-import kotlinx.coroutines.flow.collectLatest
 import java.text.SimpleDateFormat
 import java.util.*
-
+import androidx.hilt.navigation.compose.hiltViewModel
+import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryRoute(navController: NavController) {
-    val context = LocalContext.current
-    val repo = remember { ScoreRepository(AppDatabase.get(context).scoreDao()) }
-
-    var list by remember { mutableStateOf<List<ScoreRecord>>(emptyList()) }
-
+    val vm: HistoryVM = hiltViewModel()
+    var list by remember { mutableStateOf<List<ScoreEntry>>(emptyList()) }
     // 履歴を購読
     LaunchedEffect(Unit) {
-        repo.history.collectLatest { list = it }
+        vm.observe().collect { list = it }
     }
 
     val sdf = remember { SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault()) }
@@ -83,7 +76,7 @@ fun HistoryRoute(navController: NavController) {
             // クリアボタン
             val scope = rememberCoroutineScope()
             Button(
-                onClick = { scope.launch { repo.clear() } },  // ← コルーチン内で呼ぶ
+                onClick = { scope.launch { vm.clear() } },  // ← コルーチン内で呼ぶ
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("履歴を全て削除")
