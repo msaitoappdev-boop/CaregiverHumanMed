@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
     entities = [
         ScoreRecord::class,           // ★ スコアのみ
     ],
-    version = 2,                      // 既存の v2 を維持
+    version = 3,                      // 2→3に上げる
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -22,11 +22,8 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
 
-        // v1→v2 の移行（過去ビルドからの互換用、無害なので残してOK）
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // ここは文字列SQLなので、型解決に関係しません。
-                // 旧テーブルが必要なら作成、使わないならそのままでも問題ありません。
                 db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS score_records(
@@ -38,34 +35,15 @@ abstract class AppDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
-                // 旧テーブル作成（不要なら削ってもOK）
-                db.execSQL(
-                    """
-                    CREATE TABLE IF NOT EXISTS questions(
-                        id INTEGER NOT NULL PRIMARY KEY,
-                        category TEXT NOT NULL,
-                        type TEXT NOT NULL,
-                        text TEXT NOT NULL,
-                        choicesJson TEXT,
-                        correctAnswer TEXT NOT NULL,
-                        explanationSimple TEXT NOT NULL,
-                        explanationFull TEXT NOT NULL,
-                        tags TEXT,
-                        difficulty INTEGER NOT NULL
-                    )
-                    """.trimIndent()
-                )
-                db.execSQL(
-                    """
-                    CREATE TABLE IF NOT EXISTS user_records(
-                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        questionId INTEGER NOT NULL,
-                        isCorrect INTEGER NOT NULL,
-                        answeredAt INTEGER NOT NULL,
-                        elapsedSec INTEGER NOT NULL
-                    )
-                    """.trimIndent()
-                )
+            }
+        }
+
+        // ★ 2→3 は no-op（不要テーブルを使っていないため）
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 必要ならDROPする（今回はno-opでOK）
+                // db.execSQL("DROP TABLE IF EXISTS questions")
+                // db.execSQL("DROP TABLE IF EXISTS user_records")
             }
         }
 
@@ -76,7 +54,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "humanmed.db"
                 )
-                    .addMigrations(MIGRATION_1_2) // 新規インストールには影響なし
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3) // 新規インストールには影響なし
                     .build().also { INSTANCE = it }
             }
     }

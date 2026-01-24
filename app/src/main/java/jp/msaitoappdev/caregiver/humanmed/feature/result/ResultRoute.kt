@@ -1,5 +1,4 @@
-
-package jp.msaitoappdev.caregiver.humanmed.ui.result
+package jp.msaitoappdev.caregiver.humanmed.feature.result
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -12,7 +11,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlin.math.roundToInt
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
  import androidx.hilt.navigation.compose.hiltViewModel
  import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry

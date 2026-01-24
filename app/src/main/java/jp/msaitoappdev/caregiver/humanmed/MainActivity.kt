@@ -28,14 +28,15 @@ import kotlinx.coroutines.launch
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingConfig
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
-import jp.msaitoappdev.caregiver.humanmed.ui.quiz.QuizRoute
-import jp.msaitoappdev.caregiver.humanmed.ui.result.ResultRoute
+import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizRoute
+import jp.msaitoappdev.caregiver.humanmed.feature.result.ResultRoute
 import jp.msaitoappdev.caregiver.humanmed.feature.premium.PaywallScreen
-import jp.msaitoappdev.caregiver.humanmed.ui.settings.SettingsRoute
+import jp.msaitoappdev.caregiver.humanmed.feature.settings.SettingsRoute
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 
 import androidx.lifecycle.lifecycleScope
-import jp.msaitoappdev.caregiver.humanmed.core.premium.PremiumRepositoryImpl
+import jp.msaitoappdev.caregiver.humanmed.feature.history.HistoryRoute
+import jp.msaitoappdev.caregiver.humanmed.feature.review.ReviewRoute
 
 // 任意の依存（@Inject 付きコンストラクタで十分）
 class Greeter @Inject constructor() {
@@ -45,7 +46,6 @@ class Greeter @Inject constructor() {
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    @Inject lateinit var greeter: Greeter
     @Inject lateinit var billing: BillingManager
     @Inject lateinit var premiumRepo: jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 
@@ -97,10 +97,10 @@ private fun AppNavHost(billing: BillingManager) {
             ResultRoute(navController, score, total)
         }
         composable(NavRoutes.REVIEW) {
-            jp.msaitoappdev.caregiver.humanmed.ui.review.ReviewRoute(navController)
+            ReviewRoute(navController)
         }
         composable(NavRoutes.HISTORY) {
-            jp.msaitoappdev.caregiver.humanmed.ui.history.HistoryRoute(navController)
+            HistoryRoute(navController)
         }
         composable(NavRoutes.PAYWALL) {
             val scope = rememberCoroutineScope()

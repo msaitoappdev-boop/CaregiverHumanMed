@@ -1,11 +1,10 @@
-package jp.msaitoappdev.caregiver.humanmed.ui.quiz
+package jp.msaitoappdev.caregiver.humanmed.feature.quiz
 
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import jp.msaitoappdev.caregiver.humanmed.feature.premium.PremiumViewModel

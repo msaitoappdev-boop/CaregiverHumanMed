@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.data.dto
+package jp.msaitoappdev.caregiver.humanmed.data.question.dto
 
 import kotlinx.serialization.Serializable
 

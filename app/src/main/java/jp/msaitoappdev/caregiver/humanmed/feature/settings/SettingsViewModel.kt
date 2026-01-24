@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.ui.settings
+package jp.msaitoappdev.caregiver.humanmed.feature.settings
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.map
 import androidx.lifecycle.ViewModel
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderPrefs
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
-import jp.msaitoappdev.caregiver.humanmed.core.premium.PremiumRepositoryImpl
+import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 
 data class ReminderSettings(
     val enabled: Boolean,
@@ -23,7 +23,7 @@ data class ReminderSettings(
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val dataStore: DataStore<Preferences>,
-    private val premiumRepo: jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
+    private val premiumRepo: PremiumRepository
 ) : ViewModel() {
 
     val settings: Flow<ReminderSettings> = dataStore.data.map { pref ->

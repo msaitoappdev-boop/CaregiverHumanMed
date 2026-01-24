@@ -1,5 +1,4 @@
-
-package jp.msaitoappdev.caregiver.humanmed.ui.settings
+package jp.msaitoappdev.caregiver.humanmed.feature.settings
 
 import android.Manifest
 import android.content.Intent
@@ -13,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.launch
@@ -24,7 +24,7 @@ fun SettingsRoute(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     val state by viewModel.settings.collectAsState(
         initial = ReminderSettings(enabled = false, hour = 20, minute = 0)
     )

@@ -1,5 +1,4 @@
-
-package jp.msaitoappdev.caregiver.humanmed.ui.result
+package jp.msaitoappdev.caregiver.humanmed.feature.result
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
