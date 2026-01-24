@@ -13,7 +13,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class PremiumRepository @Inject constructor(
+class PremiumRepositoryImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>,
     private val billing: BillingManager
 ) {

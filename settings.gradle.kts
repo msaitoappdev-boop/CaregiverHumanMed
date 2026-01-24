@@ -19,3 +19,4 @@ rootProject.name = "CaregiverHumanMed"
 include(":app")
 include(":core")
 include(":data")
+include(":domain")

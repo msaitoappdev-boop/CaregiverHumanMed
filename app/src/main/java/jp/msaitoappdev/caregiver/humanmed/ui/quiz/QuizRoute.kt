@@ -17,8 +17,7 @@ fun QuizRoute(navController: NavController) {
     val TAG = "QuizRoute"
 
     // --- Quiz VM / 状態 ---
-    val vm: QuizViewModel =
-        viewModel(factory = QuizViewModelFactory(QuestionRepository(navController.context)))
+    val vm: QuizViewModel = hiltViewModel()
     val state by vm.uiState.collectAsStateWithLifecycle()
 
     // --- Premium 状態を購読 ---

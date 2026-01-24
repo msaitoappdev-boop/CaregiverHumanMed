@@ -26,11 +26,12 @@ ksp {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":domain"))
 
     val room = "2.6.1"
     // AppDatabase が RoomDatabase を継承 = 公開APIに露出するので api で公開
-    api("androidx.room:room-runtime:${room}")
-    api("androidx.room:room-ktx:${room}")
+    api("androidx.room:room-runtime:$room")
+    api("androidx.room:room-ktx:$room")
     ksp("androidx.room:room-compiler:$room")
 
     // Hilt（Repositoryや@Moduleを置くなら）
