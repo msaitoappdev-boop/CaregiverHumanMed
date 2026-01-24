@@ -65,16 +65,11 @@ android {
     }
 }
 
-ksp {
-    // ★ Room のスキーマ出力先（プロジェクト直下の /app/schemas）
-    arg("room.schemaLocation", "$projectDir/schemas")
-
-    // （任意）増分処理・Kotlin ソース生成の明示
-    arg("room.incremental", "true")
-    arg("room.generateKotlin", "true")
-}
 
 dependencies {
+    implementation(project(":core"))
+    implementation(project(":data"))
+
     implementation("androidx.core:core-ktx:1.13.1")
 
     // Compose（BOM で統一）
@@ -110,12 +105,6 @@ dependencies {
 
     // ▼ これを追加（XML の M3 テーマ解決に必要）
     implementation("com.google.android.material:material:1.12.0")
-
-    // --- Room ---
-    val roomVersion = "2.6.1"
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
-    ksp("androidx.room:room-compiler:$roomVersion")
 
     // --- Hilt（KSP 版） ---
     val hiltVersion = "2.51.1" // 例：必要なら上げてOK（2.58 など）
