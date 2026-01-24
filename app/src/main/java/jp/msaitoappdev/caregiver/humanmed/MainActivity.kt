@@ -30,8 +30,13 @@ import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
 import jp.msaitoappdev.caregiver.humanmed.ui.quiz.QuizRoute
 import jp.msaitoappdev.caregiver.humanmed.ui.result.ResultRoute
-import jp.msaitoappdev.caregiver.humanmed.ui.screens.PaywallScreen
+import jp.msaitoappdev.caregiver.humanmed.feature.premium.PaywallScreen
 import jp.msaitoappdev.caregiver.humanmed.ui.settings.SettingsRoute
+import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
+
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import jp.msaitoappdev.caregiver.humanmed.core.premium.PremiumRepository
 
 // 任意の依存（@Inject 付きコンストラクタで十分）
 class Greeter @Inject constructor() {
@@ -43,6 +48,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var greeter: Greeter
     @Inject lateinit var billing: BillingManager
+    @Inject lateinit var premiumRepo: PremiumRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,25 +61,33 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        // フォアグラウンド復帰のタイミングで、購入状態を軽く同期
+        lifecycleScope.launch {
+            premiumRepo.refreshFromBilling()
+        }
+    }
 }
 
 @Composable
 private fun AppNavHost(billing: BillingManager) {
     val navController = rememberNavController()
-    NavHost(navController, startDestination = "home") {
-        composable("home") {
+    NavHost(navController, startDestination = NavRoutes.HOME) {
+        composable(NavRoutes.HOME) {
             HomeScreen(
-                onStartQuiz = { navController.navigate("quiz") },
-                onUpgrade = { navController.navigate("paywall") },
-                onOpenSettings = { navController.navigate("settings") }
+                onStartQuiz = { navController.navigate(NavRoutes.QUIZ) },
+                onUpgrade = { navController.navigate(NavRoutes.PAYWALL) },
+                onOpenSettings = { navController.navigate(NavRoutes.SETTINGS) }
             )
         }
         composable(
-            route = "quiz",
+            route = NavRoutes.QUIZ,
             deepLinks = listOf(navDeepLink { uriPattern = "caregiver://reminder" })
         ) { QuizRoute(navController) }
         composable(
-            route = "result/{score}/{total}",
+            route = NavRoutes.Result.PATTERN,
             arguments = listOf(
                 navArgument("score") { type = NavType.IntType },
                 navArgument("total") { type = NavType.IntType }
@@ -83,50 +97,17 @@ private fun AppNavHost(billing: BillingManager) {
             val total = backStackEntry.arguments?.getInt("total") ?: 0
             ResultRoute(navController, score, total)
         }
-        composable("review") {
+        composable(NavRoutes.REVIEW) {
             jp.msaitoappdev.caregiver.humanmed.ui.review.ReviewRoute(navController)
         }
-        composable("history") {
+        composable(NavRoutes.HISTORY) {
             jp.msaitoappdev.caregiver.humanmed.ui.history.HistoryRoute(navController)
         }
-        composable("paywall") {
+        composable(NavRoutes.PAYWALL) {
             val scope = rememberCoroutineScope()
             val ctx = LocalContext.current as Activity
             // 画面入場時に一度だけ接続
             LaunchedEffect(Unit) { scope.launch { billing.connect() } }
-
-            // 簡易トースト表示ヘルパ
-            fun toast(msg: String) =
-                android.widget.Toast.makeText(ctx, msg, android.widget.Toast.LENGTH_SHORT).show()
-
-            // Billing のイベントもログに出す（成功/失敗の可視化）
-            LaunchedEffect(Unit) {
-                scope.launch {
-                    billing.purchaseEvents.collect { e ->
-                        when (e) {
-                            is jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager.PurchaseEvent.Success -> {
-                                android.util.Log.d("Paywall", "purchase success: ${e.purchase.products}")
-                                toast("購入が完了しました")
-                                // 購入後の挙動（例：前の画面に戻る）
-                                // navController.popBackStack() など
-                            }
-                            jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager.PurchaseEvent.Canceled -> {
-                                android.util.Log.d("Paywall", "purchase canceled")
-                                toast("購入をキャンセルしました")
-                            }
-                            jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager.PurchaseEvent.AlreadyOwned -> {
-                                android.util.Log.d("Paywall", "already owned")
-                                toast("すでに購入済みです")
-                            }
-                            is jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager.PurchaseEvent.Error -> {
-                                android.util.Log.e("Paywall", "purchase error: ${e.message}")
-                                toast("購入エラー: ${e.message}")
-                            }
-                        }
-                    }
-                }
-            }
-
             PaywallScreen(
                 onUpgradeClicked = {
                     scope.launch {
@@ -135,7 +116,6 @@ private fun AppNavHost(billing: BillingManager) {
 
                         if (pd == null) {
                             android.util.Log.e("Paywall", "ProductDetails is null. Check Play Console config & tester setup.")
-                            toast("商品情報を取得できません。Play コンソール設定/テスター設定をご確認ください。")
                             return@launch
                         }
                         billing.launchPurchase(ctx, pd) // → ここで Google Play の購入ダイアログが出るのが正
@@ -143,7 +123,7 @@ private fun AppNavHost(billing: BillingManager) {
                 }
             )
         }
-        composable("settings") {
+        composable(NavRoutes.SETTINGS) {
             SettingsRoute(onBack = { navController.popBackStack() })
         }
     }

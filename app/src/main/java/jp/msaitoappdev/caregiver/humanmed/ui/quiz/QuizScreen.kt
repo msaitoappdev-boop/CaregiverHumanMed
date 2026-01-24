@@ -1,7 +1,5 @@
 package jp.msaitoappdev.caregiver.humanmed.ui.quiz
 
-import android.widget.Toast
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,7 +8,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,9 +41,6 @@ fun QuizScreen(
     val progressFraction =
         if (state.total == 0) 0f else (state.currentIndex + 1f) / max(1, state.total).toFloat()
 
-    // ★ デバッグ用スナックバー（押下到達の可視化にも使える）
-    val snackbarHostState = remember { SnackbarHostState() }
-
     Scaffold(
         topBar = {
             Column {
@@ -56,18 +50,6 @@ fun QuizScreen(
                         IconButton(onClick = onNavUp) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る")
                         }
-                    },
-                    actions = {
-                        // ★ デバッグ: 常時 Paywall へ遷移できるアクション
-                        TextButton(
-                            onClick = {
-                                Log.d(TAG, "DEBUG action -> onUpgrade()")
-                                Toast.makeText(ctx, "DEBUG: Paywall へ遷移", Toast.LENGTH_SHORT).show()
-                                onUpgrade()
-                            }
-                        ) {
-                            Text("DEBUG: Paywall")
-                        }
                     }
                 )
                 LinearProgressIndicator(
@@ -75,8 +57,7 @@ fun QuizScreen(
                     modifier = Modifier.fillMaxWidth().height(4.dp)
                 )
             }
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        }
     ) { innerPadding ->
 
         val CorrectBg = Color(0xFFDFF5E1)
@@ -148,17 +129,8 @@ fun QuizScreen(
                             color = Color(0xFF2F855A)
                         )
                         Spacer(Modifier.height(8.dp))
-
-                        // ★ ここが本命のボタン。押下時に Toast/Log を出し、確実に onUpgrade を呼ぶ
-                        OutlinedButton(
-                            onClick = {
-                                Log.d(TAG, "【DEBUG】upgrade button clicked")
-                                Toast.makeText(ctx, "【DEBUG】Upgrade ボタン押下", Toast.LENGTH_SHORT).show()
-                                onUpgrade()
-                            },
-                            enabled = true // 念のため明示
-                        ) {
-                            Text("【DEBUG】月額 ¥200 で解説を解放")
+                        OutlinedButton(onClick = onUpgrade) {
+                            Text("月額 ¥200 で解説を解放")
                         }
                     }
                     Spacer(Modifier.height(12.dp))

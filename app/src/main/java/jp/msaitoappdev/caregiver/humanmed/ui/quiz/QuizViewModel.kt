@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
+import jp.msaitoappdev.caregiver.humanmed.ui.quiz.DailyQuestionSelector
 
 class QuizViewModel(
     private val repository: QuestionRepository
@@ -29,6 +30,9 @@ class QuizViewModel(
     private var shuffleSeed: Long = System.currentTimeMillis()
     private val shuffleQuestions: Boolean = true   // 設問順をシャッフル
     private val shuffleOptions: Boolean = true     // 選択肢シャッフル
+
+    // ★ “毎日3問” セレクタを追加
+    private val selector = DailyQuestionSelector()
 
     init {
         loadAndPrepare(reshuffle = false)
@@ -48,12 +52,15 @@ class QuizViewModel(
                 emptyList()
             }
 
-            // 設問順シャッフル
+            // ★ 追加：その日限定の3問を先に選ぶ（loaded → daily）
+            val daily = selector.select(all = loaded, count = 3)
+
+    // 設問順シャッフル（ベースは loaded ではなく daily）
             val ordered = if (shuffleQuestions) {
-                val order = loaded.indices.shuffled(Random(shuffleSeed))
-                order.map { loaded[it] }
+                val order = daily.indices.shuffled(Random(shuffleSeed))
+                order.map { daily[it] }
             } else {
-                loaded
+                daily
             }
 
             // 選択肢シャッフル

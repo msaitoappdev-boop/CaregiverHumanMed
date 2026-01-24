@@ -10,6 +10,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import jp.msaitoappdev.caregiver.humanmed.data.QuestionRepository
 import jp.msaitoappdev.caregiver.humanmed.feature.premium.PremiumViewModel
+import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 
 @Composable
 fun QuizRoute(navController: NavController) {
@@ -27,7 +28,7 @@ fun QuizRoute(navController: NavController) {
     // --- 「再挑戦」やり取り（既存ロジック維持） ---
     val currentEntry by navController.currentBackStackEntryAsState()
     val quizEntry = remember(currentEntry) {
-        runCatching { navController.getBackStackEntry("quiz") }.getOrNull()
+        runCatching { navController.getBackStackEntry(NavRoutes.QUIZ) }.getOrNull()
     }
     val savedStateHandle = quizEntry?.savedStateHandle
     val tickFlow = remember(savedStateHandle) { savedStateHandle?.getStateFlow("reshuffleTick", 0L) }
@@ -46,9 +47,10 @@ fun QuizRoute(navController: NavController) {
     // --- 結果画面へ遷移 ---
     LaunchedEffect(state.finished) {
         if (state.finished) {
-            Log.d(TAG, "navigate -> result/${state.correctCount}/${state.total}")
-            navController.navigate("result/${state.correctCount}/${state.total}") {
-                popUpTo("quiz") { inclusive = false }
+            navController.navigate(
+                NavRoutes.Result.build(state.correctCount, state.total)
+            ) {
+                popUpTo(NavRoutes.QUIZ) { inclusive = false }
             }
             vm.markResultNavigated()
         }
@@ -62,9 +64,9 @@ fun QuizRoute(navController: NavController) {
 
     // --- Paywall 遷移クロージャ（ログ付き） ---
     val goToPaywall: () -> Unit = {
-        val exists = navController.graph.findNode("paywall") != null
+        val exists = navController.graph.findNode(NavRoutes.PAYWALL) != null
         Log.d(TAG, "onUpgrade clicked. paywall exists=$exists -> navigate(\"paywall\")")
-        navController.navigate("paywall") {
+        navController.navigate(NavRoutes.PAYWALL) {
             launchSingleTop = true
             // quiz は残す（VM維持のため）
             // popUpTo("quiz") { inclusive = false }
