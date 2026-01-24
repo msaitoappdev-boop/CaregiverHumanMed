@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.ui.review
+package jp.msaitoappdev.caregiver.humanmed.feature.review
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,10 +17,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.launch
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
-import jp.msaitoappdev.caregiver.humanmed.ui.quiz.QuizViewModel
-import jp.msaitoappdev.caregiver.humanmed.ui.quiz.ReviewItem
+import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizViewModel
+import jp.msaitoappdev.caregiver.humanmed.feature.quiz.ReviewItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,6 +1,6 @@
-package jp.msaitoappdev.caregiver.humanmed.data.mapper
+package jp.msaitoappdev.caregiver.humanmed.data.question.mapper
 
-import jp.msaitoappdev.caregiver.humanmed.data.dto.QuestionDto
+import jp.msaitoappdev.caregiver.humanmed.data.question.dto.QuestionDto
 import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
 
 fun QuestionDto.toDomain(): Question =

@@ -4,7 +4,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import jp.msaitoappdev.caregiver.humanmed.data.repository.QuestionRepositoryImpl
+import jp.msaitoappdev.caregiver.humanmed.data.question.QuestionRepositoryImpl
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.QuestionRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.ScoreRepository
 import jp.msaitoappdev.caregiver.humanmed.data.score.ScoreRepositoryImpl
