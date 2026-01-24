@@ -7,6 +7,10 @@ import dagger.hilt.components.SingletonComponent
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.QuestionRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.usecase.GetDailyQuestionsUseCase
 import jp.msaitoappdev.caregiver.humanmed.domain.util.DailyQuestionSelector
+import jp.msaitoappdev.caregiver.humanmed.domain.repository.ScoreRepository
+import jp.msaitoappdev.caregiver.humanmed.domain.usecase.SaveScoreUseCase
+import jp.msaitoappdev.caregiver.humanmed.domain.usecase.ObserveScoresUseCase
+import jp.msaitoappdev.caregiver.humanmed.domain.usecase.ClearScoresUseCase
 import javax.inject.Singleton
 
 @Module
@@ -20,4 +24,16 @@ object UseCaseModule {
         repo: QuestionRepository,
         selector: DailyQuestionSelector
     ): GetDailyQuestionsUseCase = GetDailyQuestionsUseCase(repo, selector)
+
+    @Provides @Singleton
+    fun provideSaveScoreUseCase(repo: ScoreRepository): SaveScoreUseCase =
+        SaveScoreUseCase(repo)
+
+    @Provides @Singleton
+    fun provideObserveScoresUseCase(repo: ScoreRepository): ObserveScoresUseCase =
+        ObserveScoresUseCase(repo)
+
+    @Provides @Singleton
+    fun provideClearScoresUseCase(repo: ScoreRepository): ClearScoresUseCase =
+        ClearScoresUseCase(repo)
 }

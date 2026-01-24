@@ -19,6 +19,7 @@ android {
 
 ksp {
     // ★ Room のスキーマ出力先は data モジュールへ
+    // ビルド配下へ出力（毎回 clean で消えるため“空ファイルの残骸”問題を避けやすい）
     arg("room.schemaLocation", "$projectDir/build/roomSchemas")
     arg("room.incremental", "true")
     arg("room.generateKotlin", "true")
@@ -30,8 +31,8 @@ dependencies {
 
     val room = "2.6.1"
     // AppDatabase が RoomDatabase を継承 = 公開APIに露出するので api で公開
-    api("androidx.room:room-runtime:$room")
-    api("androidx.room:room-ktx:$room")
+    implementation("androidx.room:room-runtime:${room}")
+    implementation("androidx.room:room-ktx:${room}")
     ksp("androidx.room:room-compiler:$room")
 
     // Hilt（Repositoryや@Moduleを置くなら）

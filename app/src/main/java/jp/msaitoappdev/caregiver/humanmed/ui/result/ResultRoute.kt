@@ -12,13 +12,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlin.math.roundToInt
-
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
-import jp.msaitoappdev.caregiver.humanmed.data.score.AppDatabase
-import jp.msaitoappdev.caregiver.humanmed.data.score.ScoreRecord
-import jp.msaitoappdev.caregiver.humanmed.data.score.ScoreRepository
+ import androidx.hilt.navigation.compose.hiltViewModel
+ import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,15 +32,11 @@ fun ResultRoute(
         else      -> "まずは基礎から振り返ってみましょう。"
     }
 
-
-    // ★ 追加: 保存処理（初回 Compose 時に1回だけ）
-    val context = LocalContext.current
-    val scoreRepo = remember {
-        ScoreRepository(AppDatabase.get(context).scoreDao())
-    }
+    // 新：UseCase経由で保存（Hilt）
+    val saver: ScoreSaverVM = hiltViewModel()
     LaunchedEffect(Unit) {
-        scoreRepo.add(
-            ScoreRecord(
+        saver.save(
+            ScoreEntry(
                 timestamp = System.currentTimeMillis(),
                 score = score,
                 total = total,
@@ -51,6 +44,7 @@ fun ResultRoute(
             )
         )
     }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
