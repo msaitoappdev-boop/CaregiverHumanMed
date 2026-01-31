@@ -1,5 +1,6 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.result
 
+import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -12,8 +13,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlin.math.roundToInt
 import androidx.compose.runtime.LaunchedEffect
- import androidx.hilt.navigation.compose.hiltViewModel
- import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.firebase.remoteconfig.ktx.remoteConfig
+import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,6 +43,34 @@ fun ResultRoute(
                 total = total,
                 percent = pct
             )
+        )
+    }
+
+    val quotaSaver: QuotaSaverVM = hiltViewModel()
+    LaunchedEffect(Unit) { quotaSaver.markFinished() }
+
+    val ctx = LocalContext.current
+    val activity = ctx as Activity
+
+    // RCの値を読む（既にApp.ktでsetDefaultsAsync済み）
+    val rc = com.google.firebase.ktx.Firebase.remoteConfig
+    val enabled = rc.getBoolean("interstitial_enabled")
+    val cap = rc.getLong("interstitial_cap_per_session").toInt()
+    val intervalSec = rc.getLong("inter_session_interval_sec")
+
+    // 事前ロード
+    LaunchedEffect(Unit) {
+        jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper.preload(ctx)
+    }
+
+    // 画面表示直後に1回だけ試す
+    LaunchedEffect(score to total) {
+        jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper.tryShow(
+            activity = activity,
+            enabled = enabled,
+            sessionCap = cap,
+            minIntervalSec = intervalSec,
+            onNotShown = { /* 何もしない */ }
         )
     }
 

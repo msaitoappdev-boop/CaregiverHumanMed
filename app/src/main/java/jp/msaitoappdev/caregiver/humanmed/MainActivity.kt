@@ -38,6 +38,10 @@ import jp.msaitoappdev.caregiver.humanmed.feature.history.HistoryRoute
 import jp.msaitoappdev.caregiver.humanmed.feature.premium.PremiumViewModel
 import jp.msaitoappdev.caregiver.humanmed.feature.review.ReviewRoute
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.rememberCoroutineScope
+import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeVM
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject lateinit var premiumRepo: jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
@@ -65,6 +69,11 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun AppNavHost() {
+    val ctx = LocalContext.current as Activity
+    LaunchedEffect(Unit) {
+        jp.msaitoappdev.caregiver.humanmed.privacy.ConsentManager.obtain(ctx) { /* ads can be requested */ }
+    }
+
     val navController = rememberNavController()
     NavHost(navController, startDestination = NavRoutes.HOME) {
         composable(NavRoutes.HOME) {
@@ -131,6 +140,13 @@ fun HomeScreen(
     onUpgrade: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
+    // ★ 追加：当日枠ゲート用 VM / 状態
+    val vm: HomeVM = hiltViewModel()
+    val canStart by vm.canStartFlow.collectAsStateWithLifecycle()
+    var showOffer by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val act = LocalContext.current as Activity
+
     val context = LocalContext.current
 
     // POST_NOTIFICATIONS の許可ランチャ
@@ -160,7 +176,13 @@ fun HomeScreen(
         Column(modifier = Modifier
             .padding(padding)
             .padding(16.dp)) {
-            Button(onClick = onStartQuiz) { Text("クイズを開始") }
+
+            // ★ 修正：枠があれば開始、なければ +1 提案へ
+            Button(onClick = {
+                if (canStart) onStartQuiz() else showOffer = true
+            }) {
+                Text("クイズを開始")
+            }
             Spacer(Modifier.height(12.dp))
             Button(onClick = onUpgrade) { Text("プレミアムへアップグレード") }
             Spacer(Modifier.height(12.dp))
@@ -172,7 +194,41 @@ fun HomeScreen(
                     ReminderScheduler.scheduleDaily(context, 20, 0)
                 }
             }) { Text("毎日20:00にリマインドを設定") }
+            // ---- HomeScreen() のボタン群の下あたりに一時的に追記 ----
+//            if (BuildConfig.DEBUG) {
+//                androidx.compose.material3.Divider()
+//                androidx.compose.material3.Text("広告デバッグパネル", color = androidx.compose.ui.graphics.Color.Gray)
+//                jp.msaitoappdev.caregiver.humanmed.debug.AdsDebugPanel()
+//            }
         }
+    }
+
+    // ★ 追加：枠不足時の +1 提案ダイアログ（Rewarded）
+    if (showOffer) {
+        AlertDialog(
+            onDismissRequest = { showOffer = false },
+            title = { Text("今日は無料分が終了しました") },
+            text  = { Text("動画を視聴すると +1 セット解放できます。視聴しますか？") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showOffer = false
+                    jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper.show(
+                        activity = act,
+                        onEarned = { _ ->
+                            // +1 付与 → 即開始
+                            scope.launch {
+                                vm.onRewardEarned()
+                                onStartQuiz()
+                            }
+                        },
+                        onFail = { /* 何もしない（キャンセル） */ }
+                    )
+                }) { Text("動画を視聴して +1 セット") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showOffer = false }) { Text("キャンセル") }
+            }
+        )
     }
 
     if (showRationale) {

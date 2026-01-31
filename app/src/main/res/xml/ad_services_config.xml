@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ad-services-config
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+      ここには現時点で必須の子要素はありません。
+      将来、AdServices（Privacy Sandbox など）を明示設定したくなった場合に
+      追記する前提の “空定義” として設置します。
+    -->
+</ad-services-config>
