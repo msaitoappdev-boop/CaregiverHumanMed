@@ -17,6 +17,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.remoteconfig.ktx.remoteConfig
+
 data class ReviewItem(
     val number: Int,
     val question: String,
@@ -54,8 +57,10 @@ class QuizViewModel @Inject constructor(
                 shuffleSeed = System.currentTimeMillis()
             }
 
+            val rc = com.google.firebase.ktx.Firebase.remoteConfig
+            val setSize = rc.getLong("set_size").toInt().coerceAtLeast(1)
             val daily: List<Question> = try {
-                withContext(Dispatchers.IO) { getDailyQuestions(count = 3) }
+                withContext(Dispatchers.IO) { getDailyQuestions(count = setSize) }
             } catch (_: Exception) {
                 emptyList()
             }
