@@ -102,6 +102,11 @@ private fun AppNavHost() {
         ) { backStackEntry ->
             val score = backStackEntry.arguments?.getInt("score") ?: 0
             val total = backStackEntry.arguments?.getInt("total") ?: 0
+
+            val homeVm: HomeVM = hiltViewModel()
+            LaunchedEffect(backStackEntry.id) {
+                homeVm.onTrainingSetFinished()
+            }
             ResultRoute(navController, score, total)
         }
         composable(NavRoutes.REVIEW) {
@@ -150,10 +155,11 @@ fun HomeScreen(
     val vm: HomeVM = hiltViewModel()
     val rewardedCountToday by vm.rewardedCountToday.collectAsStateWithLifecycle()
     val canStart by vm.canStartFlow.collectAsStateWithLifecycle()
+    val ui by vm.uiState.collectAsStateWithLifecycle()           // ← RCのrewardedEnabled なども参照
+    val canWatchReward = ui.rewardedEnabled && rewardedCountToday < 1
     var showOffer by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val act = LocalContext.current as Activity
-
     val context = LocalContext.current
 
     // POST_NOTIFICATIONS の許可ランチャ
@@ -180,9 +186,11 @@ fun HomeScreen(
             )
         }
     ) { padding ->
-        Column(modifier = Modifier
-            .padding(padding)
-            .padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(16.dp)
+        ) {
 
             // ★ 修正：枠があれば開始、なければ +1 提案へ
             Button(onClick = {
@@ -212,37 +220,60 @@ fun HomeScreen(
 
     // ★ 追加：枠不足時の +1 提案ダイアログ（Rewarded）
     if (showOffer) {
-        AlertDialog(
-            onDismissRequest = { showOffer = false },
-            title = { Text("今日は無料分が終了しました") },
-            text  = { Text("動画を視聴すると +1 セット解放できます。視聴しますか？") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showOffer = false
-                    jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper.show(
-                        activity = act,
-                        canShowToday = { rewardedCountToday < 1 },
-                        onEarned = { _ ->
-                            scope.launch {
-                                val ok = vm.tryGrantDailyPlusOne()
-                                if (ok) {
-                                    onStartQuiz()
-                                } else {
-                                    // 既に本日は付与済み：SnackBar/Toastなど
-                                }
-                            }
-                        }
-                        ,
-                        onFail = { /* 何もしない（キャンセル） */ }
-                    )
-                }) { Text("動画を視聴して +1 セット") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showOffer = false }) { Text("キャンセル") }
+        // 視聴不可なら即クローズ＋メッセージ
+        if (!canWatchReward) {
+            LaunchedEffect(Unit) {
+                showOffer = false
+                android.widget.Toast
+                    .makeText(context, "本日は動画視聴による付与は上限です", android.widget.Toast.LENGTH_SHORT)
+                    .show()
             }
-        )
-    }
+        } else {
+            AlertDialog(
+                onDismissRequest = { showOffer = false },
+                title = { Text("今日は無料分が終了しました") },
+                text = { Text("動画を視聴すると +1 セット解放できます。視聴しますか？") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showOffer = false
+                        jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper.show(
+                            activity = act,
+                            canShowToday = { rewardedCountToday < 1 },
+                            onEarned = { _ ->
+                                scope.launch {
+                                    val ok = vm.tryGrantDailyPlusOne()
+                                    if (ok) {
+                                        onStartQuiz()
+                                    } else {
+                                        android.widget.Toast
+                                            .makeText(
+                                                context,
+                                                "本日はすでに付与済みです",
+                                                android.widget.Toast.LENGTH_SHORT
+                                            )
+                                            .show()
 
+                                    }
+                                }
+                            },
+                            onFail = {
+                                android.widget.Toast
+                                    .makeText(
+                                        context,
+                                        "動画を読み込めませんでした（ネットワーク/在庫/初期化）",
+                                        android.widget.Toast.LENGTH_SHORT
+                                    )
+                                    .show()
+                            }
+                        )
+                    }) { Text("動画を視聴して +1 セット") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showOffer = false }) { Text("キャンセル") }
+                }
+            )
+        }
+    }
     if (showRationale) {
         AlertDialog(
             onDismissRequest = { showRationale = false },
