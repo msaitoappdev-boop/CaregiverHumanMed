@@ -1,42 +1,60 @@
+// app/src/main/java/jp/msaitoappdev/caregiver/humanmed/ads/RewardedHelper.kt
 package jp.msaitoappdev.caregiver.humanmed.ads
 
 import android.app.Activity
-import android.content.Context
-import android.util.Log
-import com.google.android.gms.ads.*
+import jp.msaitoappdev.caregiver.humanmed.BuildConfig
+
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.initialization.AdapterStatus
 import com.google.android.gms.ads.rewarded.RewardItem
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
-import jp.msaitoappdev.caregiver.humanmed.config.AdUnits
 
 object RewardedHelper {
-    private const val TAG = "RewardedHelper"
-    private var ad: RewardedAd? = null
 
-    fun preload(context: Context) {
-        if (ad != null) return
-        val unitId = AdUnits.rewardedWeaktrainPlusOne(context)
-        RewardedAd.load(context, unitId, AdRequest.Builder().build(),
+    /**
+     * 同意取得後（かつ MobileAds.initialize 完了後）に呼ぶことを前提。
+     * @param canShowToday 今日の付与上限（例：1回/日）に達していないかを事前チェック
+     */
+    fun show(
+        activity: Activity,
+        canShowToday: () -> Boolean,
+        onEarned: (RewardItem) -> Unit,
+        onFail: () -> Unit
+    ) {
+        // 1) MobileAds 初期化の完了を確認
+        val ready = MobileAds.getInitializationStatus()
+            ?.adapterStatusMap
+            ?.values
+            ?.all { it.initializationState == AdapterStatus.State.READY }
+            ?: false
+        if (!ready) { onFail(); return }
+
+        // 2) 日次上限の事前チェック
+        if (!canShowToday()) { onFail(); return }
+
+        // 3) Rewarded のロード＆表示
+        val adUnitId = if (BuildConfig.DEBUG)
+            "ca-app-pub-3940256099942544/5224354917" // Google のテスト用 Rewarded
+        else
+            "ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy"   // TODO: 本番IDを設定
+
+        val request = AdRequest.Builder().build()
+        RewardedAd.load(
+            activity,
+            adUnitId,
+            request,
             object : RewardedAdLoadCallback() {
-                override fun onAdLoaded(p0: RewardedAd) {
-                    ad = p0
-                    ad?.fullScreenContentCallback = object : FullScreenContentCallback() {
-                        override fun onAdDismissedFullScreenContent() { ad = null; preload(context) }
-                        override fun onAdFailedToShowFullScreenContent(p0: AdError) { ad = null }
+                override fun onAdFailedToLoad(error: com.google.android.gms.ads.LoadAdError) {
+                    onFail()
+                }
+                override fun onAdLoaded(ad: RewardedAd) {
+                    ad.show(activity) { reward: RewardItem ->
+                        onEarned(reward)
                     }
-                    Log.d(TAG, "Rewarded loaded")
                 }
-                override fun onAdFailedToLoad(p0: LoadAdError) {
-                    ad = null
-                    Log.w(TAG, "Rewarded load failed: ${p0.message}")
-                }
-            })
-    }
-
-    fun show(activity: Activity, onEarned: (RewardItem) -> Unit, onFail: () -> Unit) {
-        val current = ad ?: return onFail()
-        current.show(activity) { reward ->
-            onEarned(reward) // ここで＋1セットを付与
-        }
+            }
+        )
     }
 }

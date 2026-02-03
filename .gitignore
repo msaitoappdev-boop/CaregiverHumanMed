@@ -1,4 +1,16 @@
 # プロジェクトの除外パス
+# Android / Gradle
 /.gradle/
-/app/build/
-/build/
+**/build/
+.idea/
+*.iml
+
+# 機密・環境依存
+local.properties
+*.jks
+*.keystore
+*.pem
+*.p12
+
+# Firebase
+app/google-services.json

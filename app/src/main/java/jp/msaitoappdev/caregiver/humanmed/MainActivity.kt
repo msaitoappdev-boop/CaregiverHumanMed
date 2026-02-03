@@ -41,6 +41,7 @@ import jp.msaitoappdev.caregiver.humanmed.feature.review.ReviewRoute
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.rememberCoroutineScope
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeVM
+import com.google.firebase.analytics.ktx.analytics
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -70,8 +71,13 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun AppNavHost() {
     val ctx = LocalContext.current as Activity
+
     LaunchedEffect(Unit) {
-        jp.msaitoappdev.caregiver.humanmed.privacy.ConsentManager.obtain(ctx) { /* ads can be requested */ }
+        // UMP同意 → 同意OKの時のみ Ads/Analytics を有効化
+        jp.msaitoappdev.caregiver.humanmed.privacy.ConsentManager.obtain(ctx) {
+            com.google.android.gms.ads.MobileAds.initialize(ctx.applicationContext)
+            com.google.firebase.ktx.Firebase.analytics.setAnalyticsCollectionEnabled(true)
+        }
     }
 
     val navController = rememberNavController()
@@ -214,13 +220,22 @@ fun HomeScreen(
                     showOffer = false
                     jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper.show(
                         activity = act,
-                        onEarned = { _ ->
-                            // +1 付与 → 即開始
-                            scope.launch {
-                                vm.onRewardEarned()
-                                onStartQuiz()
-                            }
+                        canShowToday = {
+                            // ここでは VM の “今日の付与回数 < 1” を軽く見るのが理想。
+                            // 簡易には true を返し、実際の付与は tryGrantDailyPlusOne() の結果で確定。
+                            true
                         },
+                        onEarned = { _ ->
+                            scope.launch {
+                                val ok = vm.tryGrantDailyPlusOne()
+                                if (ok) {
+                                    onStartQuiz()
+                                } else {
+                                    // 既に本日は付与済み：SnackBar/Toastなど
+                                }
+                            }
+                        }
+                        ,
                         onFail = { /* 何もしない（キャンセル） */ }
                     )
                 }) { Text("動画を視聴して +1 セット") }
