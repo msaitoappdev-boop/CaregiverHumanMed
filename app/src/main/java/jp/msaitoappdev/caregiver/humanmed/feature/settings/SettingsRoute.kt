@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.launch
+import jp.msaitoappdev.caregiver.humanmed.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,7 +104,7 @@ fun SettingsRoute(
 
             Button(
                 onClick = {
-                    val url = "https://doc-hosting.flycricket.io/jie-hu-fu-zhi-shi-mei-ri-3wen-torena-privacy-policy/c742ebfd-1960-4204-9f26-898770c8be48/privacy"
+                    val url = context.getString(R.string.privacy_policy_url)
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                     context.startActivity(intent)
                 },

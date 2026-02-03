@@ -102,6 +102,11 @@ private fun AppNavHost() {
         ) { backStackEntry ->
             val score = backStackEntry.arguments?.getInt("score") ?: 0
             val total = backStackEntry.arguments?.getInt("total") ?: 0
+
+            val homeVm: HomeVM = hiltViewModel()
+            LaunchedEffect(backStackEntry.id) {
+                homeVm.onTrainingSetFinished()
+            }
             ResultRoute(navController, score, total)
         }
         composable(NavRoutes.REVIEW) {
