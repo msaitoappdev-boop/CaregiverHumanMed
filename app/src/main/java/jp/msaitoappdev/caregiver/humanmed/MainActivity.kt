@@ -148,6 +148,7 @@ fun HomeScreen(
 ) {
     // ★ 追加：当日枠ゲート用 VM / 状態
     val vm: HomeVM = hiltViewModel()
+    val rewardedCountToday by vm.rewardedCountToday.collectAsStateWithLifecycle()
     val canStart by vm.canStartFlow.collectAsStateWithLifecycle()
     var showOffer by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -220,11 +221,7 @@ fun HomeScreen(
                     showOffer = false
                     jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper.show(
                         activity = act,
-                        canShowToday = {
-                            // ここでは VM の “今日の付与回数 < 1” を軽く見るのが理想。
-                            // 簡易には true を返し、実際の付与は tryGrantDailyPlusOne() の結果で確定。
-                            true
-                        },
+                        canShowToday = { rewardedCountToday < 1 },
                         onEarned = { _ ->
                             scope.launch {
                                 val ok = vm.tryGrantDailyPlusOne()
