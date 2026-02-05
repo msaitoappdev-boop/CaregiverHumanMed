@@ -1,6 +1,11 @@
 import java.util.Properties
 import java.io.FileInputStream
 
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) load(FileInputStream(f))
+}
+
 val localProps = Properties().apply {
     val f = rootProject.file("local.properties")
     if (f.exists()) load(FileInputStream(f))
@@ -15,9 +20,6 @@ plugins {
     id("com.google.gms.google-services")
 }
 
-val admobTestAppId: String? = (project.findProperty("admob.test.app.id") as? String)
-val admobProdAppId: String? = localProps.getProperty("admob.app.id")
-
 android {
     namespace = "jp.msaitoappdev.caregiver.humanmed"
     compileSdk = 35
@@ -30,19 +32,28 @@ android {
         versionName = "1.0"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(keystoreProps["storeFile"] as String)
+            storePassword = keystoreProps["storePassword"] as String
+            keyAlias = keystoreProps["keyAlias"] as String
+            keyPassword = keystoreProps["keyPassword"] as String
+        }
+    }
+
     buildTypes {
         debug {
-            // Googleのテスト用 App ID（安全）
+            // Debug は Google のサンプル App ID に固定（安全）
+            //    公式サンプル: ca-app-pub-3940256099942544~3347511713
             manifestPlaceholders["admob_app_id"] =
                 "ca-app-pub-3940256099942544~3347511713"
         }
         release {
-//            isMinifyEnabled = false
-            // 本番App IDは local.properties に置く（例：admob.app.id=ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy）
-            val prodId = localProps.getProperty("admob.app.id")
-                ?: throw GradleException("Missing admob.app.id in local.properties")
-            manifestPlaceholders["admob_app_id"] = prodId
 
+            val appId = localProps.getProperty("admob.app.id")
+                ?: "ca-app-pub-2149916445602223~1245613844"
+            manifestPlaceholders["admob_app_id"] = appId
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
