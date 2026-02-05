@@ -35,7 +35,7 @@ class PremiumViewModel @Inject constructor(
         viewModelScope.launch {
             val ok = billing.connect()
             if (ok) {
-                productDetails = billing.getProductDetails(BillingConfig.PRODUCT_ID_PREMIUM_MONTHLY)
+                productDetails = billing.getProductDetails()
                 repo.refreshFromBilling()
             } else {
                 _uiMessage.tryEmit("Billing サービスに接続できません")
