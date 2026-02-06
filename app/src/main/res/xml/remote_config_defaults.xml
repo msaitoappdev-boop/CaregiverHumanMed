@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<defaultsMap>
+    <entry><key>free_daily_sets</key><value>1</value></entry>
+    <entry><key>rewarded_enabled</key><value>true</value></entry>
+    <entry><key>interstitial_enabled</key><value>true</value></entry>
+    <entry><key>interstitial_cap_per_session</key><value>1</value></entry>
+    <entry><key>inter_session_interval_sec</key><value>180</value></entry>
+    <entry><key>set_size</key><value>3</value></entry>
+    <entry><key>mix_same_related_review</key><value>3:1:1</value></entry>
+    <entry><key>srs_intervals_days</key><value>1,3,7,14</value></entry>
+    <entry><key>srs_min_hours_between_repeats</key><value>24</value></entry>
+    <entry><key>paywall_variant</key><value>A</value></entry>
+    <entry><key>premium_daily_bonus</key><value>1</value></entry>
+</defaultsMap>

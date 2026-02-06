@@ -1,0 +1,55 @@
+{
+  "conditions": [],
+  "parameters": {
+    "free_daily_sets": {
+      "defaultValue": {
+        "value": "1"
+      }
+    },
+    "rewarded_enabled": {
+      "defaultValue": {
+        "value": "true"
+      }
+    },
+    "interstitial_enabled": {
+      "defaultValue": {
+        "value": "true"
+      }
+    },
+    "interstitial_cap_per_session": {
+      "defaultValue": {
+        "value": "1"
+      }
+    },
+    "inter_session_interval_sec": {
+      "defaultValue": {
+        "value": "180"
+      }
+    },
+    "set_size": {
+      "defaultValue": {
+        "value": "5"
+      }
+    },
+    "mix_same_related_review": {
+      "defaultValue": {
+        "value": "3:1:1"
+      }
+    },
+    "srs_intervals_days": {
+      "defaultValue": {
+        "value": "1,3,7,14"
+      }
+    },
+    "srs_min_hours_between_repeats": {
+      "defaultValue": {
+        "value": "24"
+      }
+    },
+    "paywall_variant": {
+      "defaultValue": {
+        "value": "A"
+      }
+    }
+  }
+}

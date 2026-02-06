@@ -1,6 +1,15 @@
 import java.util.Properties
 import java.io.FileInputStream
 
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.serialization")
+    id("com.google.devtools.ksp")
+    id("com.google.dagger.hilt.android")
+    id("com.google.gms.google-services")
+}
+
 val keystoreProps = Properties().apply {
     val f = rootProject.file("keystore.properties")
     if (f.exists()) load(FileInputStream(f))
@@ -11,15 +20,6 @@ val localProps = Properties().apply {
     if (f.exists()) load(FileInputStream(f))
 }
 
-plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.serialization")
-    id("com.google.devtools.ksp")
-    id("com.google.dagger.hilt.android")
-    id("com.google.gms.google-services")
-}
-
 android {
     namespace = "jp.msaitoappdev.caregiver.humanmed"
     compileSdk = 35
@@ -28,8 +28,8 @@ android {
         applicationId = "jp.msaitoappdev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 6
+        versionName = "1.0.5"
     }
 
     signingConfigs {
@@ -49,7 +49,6 @@ android {
                 "ca-app-pub-3940256099942544~3347511713"
         }
         release {
-
             val appId = localProps.getProperty("admob.app.id")
                 ?: "ca-app-pub-2149916445602223~1245613844"
             manifestPlaceholders["admob_app_id"] = appId
@@ -77,7 +76,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
 
     // Compose BOM
-    val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
+    val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
     implementation(composeBom)
     androidTestImplementation(composeBom)
 

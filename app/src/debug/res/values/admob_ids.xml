@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Interstitial (Weaktrain set complete). Test Ad Unit ID for development: -->
+    <string name="ad_unit_interstitial_weaktrain_complete">ca-app-pub-3940256099942544/1033173712</string>
+    <!-- Rewarded (Gain +1 set). Test Ad Unit ID for development: -->
+    <string name="ad_unit_rewarded_weaktrain_plus1">ca-app-pub-3940256099942544/5224354917</string>
+</resources>
