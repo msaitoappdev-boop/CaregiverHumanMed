@@ -116,12 +116,12 @@ class BillingManager @Inject constructor(
     }
 
     fun launchPurchase(activity: Activity, productDetails: ProductDetails) {
-        // basePlanId と offerId を明示的に選択
+        // basePlanId のみで特典を選択（より安全な方法は offerId も指定すること）
         val offerToken = productDetails.subscriptionOfferDetails
-            ?.firstOrNull { it.basePlanId == BillingConfig.BASE_PLAN_ID_MONTHLY && it.offerId == BillingConfig.OFFER_ID_DEFAULT }
+            ?.firstOrNull { it.basePlanId == BillingConfig.BASE_PLAN_ID_MONTHLY }
             ?.offerToken
             ?: run {
-                _purchaseEvents.tryEmit(PurchaseEvent.Error("購入オファー（月額／デフォルト）が見つかりません"))
+                _purchaseEvents.tryEmit(PurchaseEvent.Error("購入オファー（月額）が見つかりません"))
                 return
             }
 
