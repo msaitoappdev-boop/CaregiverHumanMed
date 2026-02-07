@@ -3,18 +3,35 @@ package jp.msaitoappdev.caregiver.humanmed.core.billing
 import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.core.content.edit
-import com.android.billingclient.api.*
+import com.android.billingclient.api.AcknowledgePurchaseParams
+import com.android.billingclient.api.BillingClient
+import com.android.billingclient.api.BillingClientStateListener
+import com.android.billingclient.api.BillingFlowParams
+import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.PendingPurchasesParams
+import com.android.billingclient.api.ProductDetails
+import com.android.billingclient.api.Purchase
+import com.android.billingclient.api.PurchasesResponseListener
+import com.android.billingclient.api.PurchasesUpdatedListener
+import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryPurchasesParams
 import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.coroutines.resume
 
 /**
@@ -36,6 +53,7 @@ class BillingManager @Inject constructor(
         appContext.getSharedPreferences(BillingConfig.PREFS_NAME, Context.MODE_PRIVATE)
 
     private val scope = CoroutineScope(Dispatchers.IO + Job())
+    private val TAG = "BugHunt-Premium"
 
     // ---- BillingClient -------------------------------------------------------
     private val client: BillingClient = BillingClient.newBuilder(appContext)
@@ -194,41 +212,54 @@ class BillingManager @Inject constructor(
      */
     suspend fun refreshEntitlements() {
         if (!isConnected && !connect()) return
-        val params = QueryPurchasesParams.newBuilder()
-            .setProductType(BillingClient.ProductType.SUBS)
-            .build()
 
-        val owned = suspendCancellableCoroutine<List<Purchase>> { cont ->
-            client.queryPurchasesAsync(params) { result: BillingResult, list: MutableList<Purchase> ->
-                // result は必要に応じてログへ
-                cont.resume(list.orEmpty())
-            }
+        val owned = suspendCancellableCoroutine<List<Purchase>> { continuation ->
+            val params = QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.SUBS)
+                .build()
+            client.queryPurchasesAsync(params, PurchasesResponseListener { result, purchases ->
+                if (continuation.isCancelled) {
+                    return@PurchasesResponseListener
+                }
+                if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                    continuation.resume(purchases)
+                } else {
+                    Log.e(TAG, "Failed to query purchases: ${result.debugMessage}")
+                    continuation.resume(emptyList())
+                }
+            })
         }
 
         // ローカル判定：対象 Product のアクティブ所有があれば Premium とみなす
         val premium = owned.any { p ->
             p.products.contains(BillingConfig.PRODUCT_ID_PREMIUM_MONTHLY) &&
-                    p.purchaseState == Purchase.PurchaseState.PURCHASED
+                    p.purchaseState == Purchase.PurchaseState.PURCHASED && p.isAutoRenewing
         }
+
+        Log.d(TAG, "BillingManager: Querying purchases finished. Result: $premium")
 
         savePremiumToPrefs(premium)
         _isPremium.value = premium
-
-        // （将来）真実源チェック：サーバーで purchases.subscriptionsv2.get を呼び、上書き
-        // RTDN 受信時にこれを再実行。
     }
 
-    // --- 互換API（既存 PremiumRepositoryImpl から呼ばれている想定） ----------
+    // ---- 互換API（既存 PremiumRepositoryImpl から呼ばれている想定） ----------
     suspend fun queryActiveSubscriptions(): List<Purchase> {
         if (!isConnected && !connect()) return emptyList()
         val params = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
             .build()
 
-        return suspendCancellableCoroutine { cont ->
-            client.queryPurchasesAsync(params) { result: BillingResult, list: MutableList<Purchase> ->
-                cont.resume(list.orEmpty())
-            }
+        return suspendCancellableCoroutine<List<Purchase>> { continuation ->
+            client.queryPurchasesAsync(params, PurchasesResponseListener { result, purchases ->
+                if (continuation.isCancelled) {
+                    return@PurchasesResponseListener
+                }
+                if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                    continuation.resume(purchases)
+                } else {
+                    continuation.resume(emptyList())
+                }
+            })
         }
     }
 

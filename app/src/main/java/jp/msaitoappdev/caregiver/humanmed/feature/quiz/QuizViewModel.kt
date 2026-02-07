@@ -2,12 +2,11 @@ package jp.msaitoappdev.caregiver.humanmed.feature.quiz
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.remoteconfig.ktx.remoteConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
-
-import jp.msaitoappdev.caregiver.humanmed.domain.usecase.GetDailyQuestionsUseCase
 import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
-
+import jp.msaitoappdev.caregiver.humanmed.domain.usecase.GetDailyQuestionsUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,16 +14,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.random.Random
-
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.remoteconfig.ktx.remoteConfig
+import java.util.Random
+import javax.inject.Inject
 
 data class ReviewItem(
     val number: Int,
     val question: String,
     val options: List<String>,
-    val selectedIndex: Int?, // null = 未回答
+    val selectedIndex: Int?,
     val correctIndex: Int,
     val explanation: String?
 )
@@ -37,11 +34,9 @@ class QuizViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(QuizUiState())
     val uiState: StateFlow<QuizUiState> = _uiState.asStateFlow()
 
-    // 回答履歴
     private var answers: MutableList<Int?> = mutableListOf()
     private var questions: List<Question> = emptyList()
 
-    // この ViewModel ライフサイクル内で順序を安定化
     private var shuffleSeed: Long = System.currentTimeMillis()
     private val shuffleQuestions: Boolean = true
     private val shuffleOptions: Boolean = true
@@ -50,14 +45,13 @@ class QuizViewModel @Inject constructor(
         loadAndPrepare(reshuffle = false)
     }
 
-    /** 初期ロード or 再挑戦時の再ロード */
     private fun loadAndPrepare(reshuffle: Boolean) {
         viewModelScope.launch {
             if (reshuffle) {
                 shuffleSeed = System.currentTimeMillis()
             }
 
-            val rc = com.google.firebase.ktx.Firebase.remoteConfig
+            val rc = Firebase.remoteConfig
             val setSize = rc.getLong("set_size").toInt().coerceAtLeast(1)
             val daily: List<Question> = try {
                 withContext(Dispatchers.IO) { getDailyQuestions(count = setSize) }
@@ -65,7 +59,6 @@ class QuizViewModel @Inject constructor(
                 emptyList()
             }
 
-            // 設問順のシャッフル（daily ベース）
             val ordered = if (shuffleQuestions) {
                 val order = daily.indices.shuffled(Random(shuffleSeed))
                 order.map { daily[it] }
@@ -73,7 +66,6 @@ class QuizViewModel @Inject constructor(
                 daily
             }
 
-            // 選択肢シャッフル
             questions = if (shuffleOptions) {
                 shuffleOptionsForAll(ordered, shuffleSeed)
             } else {
@@ -95,7 +87,6 @@ class QuizViewModel @Inject constructor(
         }
     }
 
-    /** 再挑戦。（reshuffle=true で新しい順序） */
     fun reset(reshuffle: Boolean) {
         _uiState.update {
             it.copy(
@@ -109,7 +100,6 @@ class QuizViewModel @Inject constructor(
         loadAndPrepare(reshuffle)
     }
 
-    /** 選択肢を選ぶ（確定済みでも変更可） */
     fun selectOption(index: Int) {
         _uiState.update { state ->
             if (state.total == 0) return@update state
@@ -123,7 +113,6 @@ class QuizViewModel @Inject constructor(
         }
     }
 
-    /** 次の問題へ（最終なら finished=true） */
     fun next() {
         _uiState.update { state ->
             if (state.total == 0) return@update state
@@ -145,7 +134,6 @@ class QuizViewModel @Inject constructor(
         }
     }
 
-    /** 前の問題へ */
     fun prev() {
         _uiState.update { state ->
             if (state.total == 0 || state.currentIndex <= 0) return@update state
@@ -169,7 +157,6 @@ class QuizViewModel @Inject constructor(
         return s
     }
 
-    /** 各問題の選択肢をシャッフルし、正解インデックスを再計算 */
     private fun shuffleOptionsForAll(src: List<Question>, seed: Long): List<Question> {
         return src.mapIndexed { idx, q ->
             val rnd = Random(seed + idx)
@@ -180,13 +167,11 @@ class QuizViewModel @Inject constructor(
         }
     }
 
-    /** 結果画面遷移後の完了フラグを消費 */
     fun markResultNavigated() {
         _uiState.update { it.copy(finished = false) }
     }
 
-    /** 復習画面向けスナップショット */
-    fun getReviewItems(): List<ReviewItem> {
+    fun getReviewItems(isPremium: Boolean): List<ReviewItem> {
         val qs = questions
         return qs.mapIndexed { idx, q ->
             ReviewItem(
@@ -195,7 +180,7 @@ class QuizViewModel @Inject constructor(
                 options = q.options,
                 selectedIndex = answers.getOrNull(idx),
                 correctIndex = q.correctIndex,
-                explanation = q.explanation
+                explanation = if (isPremium) q.explanation else null
             )
         }
     }

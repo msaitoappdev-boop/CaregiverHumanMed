@@ -36,6 +36,11 @@ fun QuizRoute(navController: NavController) {
     val pvm: PremiumViewModel = hiltViewModel()
     val isPremium by pvm.isPremium.collectAsStateWithLifecycle(initialValue = false)
 
+    // ★★★ isPremium の状態変化をログで追跡 ★★★
+    LaunchedEffect(isPremium) {
+        Log.d(TAG, "isPremium state changed to: $isPremium")
+    }
+
     // --- 当日の残枠（canStart）を監視（Result→Quiz の再挑戦ガード用） ---
     val homeVm: HomeVM = hiltViewModel()
     val canStart by homeVm.canStartFlow.collectAsStateWithLifecycle()
