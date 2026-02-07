@@ -21,8 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.remoteconfig.ktx.remoteConfig
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeVM
@@ -44,6 +42,8 @@ fun ResultRoute(
     }
 
     val saver: ScoreSaverVM = hiltViewModel()
+    val homeVm: HomeVM = hiltViewModel()
+
     LaunchedEffect(Unit) {
         saver.save(
             ScoreEntry(
@@ -55,38 +55,15 @@ fun ResultRoute(
         )
     }
 
-    val ctx = LocalContext.current
-    val activity = ctx as Activity
+    val activity = LocalContext.current as Activity
 
-    // Interstitial Ad Logic (as before)
-    val rc = Firebase.remoteConfig
-    val enabled = rc.getBoolean("interstitial_enabled")
-    val cap = rc.getLong("interstitial_cap_per_session").toInt()
-    val intervalSec = rc.getLong("inter_session_interval_sec")
-
-    LaunchedEffect(Unit) {
-        jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper.preload(ctx)
-    }
-    LaunchedEffect(score to total) {
-        jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper.tryShow(
-            activity = activity,
-            enabled = enabled,
-            sessionCap = cap,
-            minIntervalSec = intervalSec,
-            onNotShown = { /* 何もしない */ }
-        )
-    }
-
-    // HomeVM for quota state
-    val homeVm: HomeVM = hiltViewModel()
     val canStart by homeVm.canStartFlow.collectAsStateWithLifecycle(initialValue = false)
     val rewardedCountToday by homeVm.rewardedCountToday.collectAsStateWithLifecycle(initialValue = 0)
     val ui by homeVm.uiState.collectAsStateWithLifecycle()
     val canWatchReward = ui.rewardedEnabled && rewardedCountToday < 1
     
-    // State for rewarded ad dialog
     var showOffer by remember { mutableStateOf(false) }
-    var reshuffleOnReward by remember { mutableStateOf(true) } // Default to true for the primary button
+    var reshuffleOnReward by remember { mutableStateOf(true) } 
     val scope = rememberCoroutineScope()
 
     val onRetry: (reshuffle: Boolean) -> Unit = {
@@ -96,8 +73,10 @@ fun ResultRoute(
             quizEntry?.savedStateHandle?.set("reshuffleTick", System.currentTimeMillis())
             navController.popBackStack(NavRoutes.QUIZ, inclusive = false)
         } else {
-            reshuffleOnReward = it // Remember which button was clicked
-            showOffer = true
+            reshuffleOnReward = it
+            homeVm.showInterstitialAdIfNeeded(activity) {
+                showOffer = true
+            }
         }
     }
 
@@ -186,7 +165,7 @@ fun ResultRoute(
         if (!canWatchReward) {
             LaunchedEffect(Unit) {
                 showOffer = false
-                Toast.makeText(ctx, "本日は動画視聴による付与は上限です", Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, "本日は動画視聴による付与は上限です", Toast.LENGTH_SHORT).show()
             }
         } else {
             AlertDialog(
@@ -203,18 +182,17 @@ fun ResultRoute(
                                 scope.launch {
                                     val ok = homeVm.tryGrantDailyPlusOne()
                                     if (ok) {
-                                        // Navigate directly to avoid race condition
                                         val quizEntry = runCatching { navController.getBackStackEntry(NavRoutes.QUIZ) }.getOrNull()
                                         quizEntry?.savedStateHandle?.set("reshuffle", reshuffleOnReward)
                                         quizEntry?.savedStateHandle?.set("reshuffleTick", System.currentTimeMillis())
                                         navController.popBackStack(NavRoutes.QUIZ, inclusive = false)
                                     } else {
-                                        Toast.makeText(ctx, "本日はすでに付与済みです", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(activity, "本日はすでに付与済みです", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             },
                             onFail = {
-                                Toast.makeText(ctx, "動画を読み込めませんでした（ネットワーク/在庫/初期化）", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(activity, "動画を読み込めませんでした（ネットワーク/在庫/初期化）", Toast.LENGTH_SHORT).show()
                             }
                         )
                     }) { Text("動画を視聴して +1 セット") }

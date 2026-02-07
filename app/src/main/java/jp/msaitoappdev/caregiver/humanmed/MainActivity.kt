@@ -28,6 +28,7 @@ import androidx.navigation.navDeepLink
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.launch
+import jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
 import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizRoute
 import jp.msaitoappdev.caregiver.humanmed.feature.result.ResultRoute
@@ -48,11 +49,13 @@ import com.google.firebase.analytics.ktx.analytics
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject lateinit var premiumRepo: jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
+    @Inject lateinit var interstitialHelper: InterstitialHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         Log.i("MainActivity", "onCreate called")
+        interstitialHelper.preload() // Preload interstitial ad
 
         // ライフサイクルイベントの監視
         lifecycle.addObserver(object : DefaultLifecycleObserver {
