@@ -9,6 +9,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -17,9 +21,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.ktx.remoteConfig
+import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeVM
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +43,6 @@ fun ResultRoute(
         else      -> "まずは基礎から振り返ってみましょう。"
     }
 
-    // スコア保存（既存どおり）
     val saver: ScoreSaverVM = hiltViewModel()
     LaunchedEffect(Unit) {
         saver.save(
@@ -49,20 +55,15 @@ fun ResultRoute(
         )
     }
 
-    // ⚠️ セット完了の +1 は NavHost 側に統一するため、ResultRoute からは削除
-    // val quotaSaver: QuotaSaverVM = hiltViewModel()
-    // LaunchedEffect(Unit) { quotaSaver.markFinished() }
-
     val ctx = LocalContext.current
     val activity = ctx as Activity
 
-    // RC（インタースティシャル制御）— 既存のまま
-    val rc = com.google.firebase.ktx.Firebase.remoteConfig
+    // Interstitial Ad Logic (as before)
+    val rc = Firebase.remoteConfig
     val enabled = rc.getBoolean("interstitial_enabled")
     val cap = rc.getLong("interstitial_cap_per_session").toInt()
     val intervalSec = rc.getLong("inter_session_interval_sec")
 
-    // 事前ロード & 表示（既存のまま）
     LaunchedEffect(Unit) {
         jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper.preload(ctx)
     }
@@ -76,9 +77,29 @@ fun ResultRoute(
         )
     }
 
-    // 🔸 枠ゲート：canStart を購読
+    // HomeVM for quota state
     val homeVm: HomeVM = hiltViewModel()
-    val canStart by homeVm.canStartFlow.collectAsStateWithLifecycle()
+    val canStart by homeVm.canStartFlow.collectAsStateWithLifecycle(initialValue = false)
+    val rewardedCountToday by homeVm.rewardedCountToday.collectAsStateWithLifecycle(initialValue = 0)
+    val ui by homeVm.uiState.collectAsStateWithLifecycle()
+    val canWatchReward = ui.rewardedEnabled && rewardedCountToday < 1
+    
+    // State for rewarded ad dialog
+    var showOffer by remember { mutableStateOf(false) }
+    var reshuffleOnReward by remember { mutableStateOf(true) } // Default to true for the primary button
+    val scope = rememberCoroutineScope()
+
+    val onRetry: (reshuffle: Boolean) -> Unit = {
+        if (canStart) {
+            val quizEntry = runCatching { navController.getBackStackEntry(NavRoutes.QUIZ) }.getOrNull()
+            quizEntry?.savedStateHandle?.set("reshuffle", it)
+            quizEntry?.savedStateHandle?.set("reshuffleTick", System.currentTimeMillis())
+            navController.popBackStack(NavRoutes.QUIZ, inclusive = false)
+        } else {
+            reshuffleOnReward = it // Remember which button was clicked
+            showOffer = true
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -109,46 +130,22 @@ fun ResultRoute(
             Spacer(Modifier.height(16.dp))
             LinearProgressIndicator(
                 progress = { (pct / 100f) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(10.dp)
+                modifier = Modifier.fillMaxWidth().height(10.dp)
             )
             Spacer(Modifier.height(16.dp))
             Text(text = message, style = MaterialTheme.typography.titleMedium)
 
             Spacer(Modifier.height(32.dp))
 
-            // 再挑戦（シャッフル）— 枠ゲート
             Button(
-                enabled = canStart,
-                onClick = {
-                    if (!canStart) {
-                        Toast.makeText(ctx, "本日の枠は終了しました", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-                    val quizEntry = runCatching { navController.getBackStackEntry("quiz") }.getOrNull()
-                    quizEntry?.savedStateHandle?.set("reshuffle", true)
-                    quizEntry?.savedStateHandle?.set("reshuffleTick", System.currentTimeMillis())
-                    navController.popBackStack("quiz", inclusive = false)
-                },
+                onClick = { onRetry(true) },
                 modifier = Modifier.fillMaxWidth()
             ) { Text("再挑戦（新しい順番でシャッフル）") }
 
             Spacer(Modifier.height(12.dp))
 
-            // 同じ順番で復習 — 枠ゲート
             OutlinedButton(
-                enabled = canStart,
-                onClick = {
-                    if (!canStart) {
-                        Toast.makeText(ctx, "本日の枠は終了しました", Toast.LENGTH_SHORT).show()
-                        return@OutlinedButton
-                    }
-                    val quizEntry = runCatching { navController.getBackStackEntry("quiz") }.getOrNull()
-                    quizEntry?.savedStateHandle?.set("reshuffle", false)
-                    quizEntry?.savedStateHandle?.set("reshuffleTick", System.currentTimeMillis())
-                    navController.popBackStack("quiz", inclusive = false)
-                },
+                onClick = { onRetry(false) },
                 modifier = Modifier.fillMaxWidth()
             ) { Text("同じ順番で復習する") }
 
@@ -156,8 +153,8 @@ fun ResultRoute(
 
             Button(
                 onClick = {
-                    navController.navigate("review") {
-                        popUpTo("quiz") { inclusive = false }
+                    navController.navigate(NavRoutes.REVIEW) {
+                        popUpTo(NavRoutes.QUIZ) { inclusive = false }
                         launchSingleTop = true
                     }
                 },
@@ -168,8 +165,8 @@ fun ResultRoute(
 
             Button(
                 onClick = {
-                    navController.navigate("history") {
-                        popUpTo("home") { inclusive = false }
+                    navController.navigate(NavRoutes.HISTORY) {
+                        popUpTo(NavRoutes.HOME) { inclusive = false }
                         launchSingleTop = true
                     }
                 },
@@ -179,9 +176,53 @@ fun ResultRoute(
             Spacer(Modifier.height(12.dp))
 
             TextButton(
-                onClick = { navController.popBackStack("home", inclusive = false) },
+                onClick = { navController.popBackStack(NavRoutes.HOME, inclusive = false) },
                 modifier = Modifier.fillMaxWidth()
             ) { Text("ホームへ戻る") }
+        }
+    }
+
+    if (showOffer) {
+        if (!canWatchReward) {
+            LaunchedEffect(Unit) {
+                showOffer = false
+                Toast.makeText(ctx, "本日は動画視聴による付与は上限です", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            AlertDialog(
+                onDismissRequest = { showOffer = false },
+                title = { Text("今日は無料分が終了しました") },
+                text = { Text("動画を視聴すると +1 セット解放できます。視聴しますか？") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showOffer = false
+                        jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper.show(
+                            activity = activity,
+                            canShowToday = { rewardedCountToday < 1 },
+                            onEarned = { _ ->
+                                scope.launch {
+                                    val ok = homeVm.tryGrantDailyPlusOne()
+                                    if (ok) {
+                                        // Navigate directly to avoid race condition
+                                        val quizEntry = runCatching { navController.getBackStackEntry(NavRoutes.QUIZ) }.getOrNull()
+                                        quizEntry?.savedStateHandle?.set("reshuffle", reshuffleOnReward)
+                                        quizEntry?.savedStateHandle?.set("reshuffleTick", System.currentTimeMillis())
+                                        navController.popBackStack(NavRoutes.QUIZ, inclusive = false)
+                                    } else {
+                                        Toast.makeText(ctx, "本日はすでに付与済みです", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            },
+                            onFail = {
+                                Toast.makeText(ctx, "動画を読み込めませんでした（ネットワーク/在庫/初期化）", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }) { Text("動画を視聴して +1 セット") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showOffer = false }) { Text("キャンセル") }
+                }
+            )
         }
     }
 }

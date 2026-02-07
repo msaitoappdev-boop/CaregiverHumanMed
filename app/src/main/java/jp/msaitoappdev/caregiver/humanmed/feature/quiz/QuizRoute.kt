@@ -43,7 +43,7 @@ fun QuizRoute(navController: NavController) {
 
     // --- 当日の残枠（canStart）を監視（Result→Quiz の再挑戦ガード用） ---
     val homeVm: HomeVM = hiltViewModel()
-    val canStart by homeVm.canStartFlow.collectAsStateWithLifecycle()
+    val canStart by homeVm.canStartFlow.collectAsStateWithLifecycle(initialValue = false)
 
     // --- 「再挑戦」やり取り（Result → Quiz）：savedStateHandle を介す既存ロジック ---
     val currentEntry by navController.currentBackStackEntryAsState()
@@ -57,18 +57,15 @@ fun QuizRoute(navController: NavController) {
     val tick by (tickFlow?.collectAsStateWithLifecycle(initialValue = 0L)
         ?: remember { mutableStateOf(0L) })
 
-    // Result 側から tick が届いたら、当日の残枠があるときだけ reset() を実行
+    // Result 側から tick が届いたら reset() を実行
     LaunchedEffect(tick) {
         if (tick != 0L && savedStateHandle != null) {
             val reshuffle = savedStateHandle.get<Boolean>("reshuffle")
             if (reshuffle != null) {
-                if (canStart) {
-                    Log.d(TAG, "Reset quiz. reshuffle=$reshuffle (canStart=true)")
-                    vm.reset(reshuffle = reshuffle)
-                } else {
-                    Log.d(TAG, "Skip reset (canStart=false). Show toast.")
-                    Toast.makeText(context, "本日の枠は終了しました", Toast.LENGTH_SHORT).show()
-                }
+                // The check for canStart is now handled by the calling screen (ResultRoute).
+                // Removing the check here prevents a race condition where canStart hasn't updated yet.
+                Log.d(TAG, "Reset quiz. reshuffle=$reshuffle")
+                vm.reset(reshuffle = reshuffle)
                 // 再発火を防ぐために必ず削除
                 savedStateHandle.remove<Boolean>("reshuffle")
             }
