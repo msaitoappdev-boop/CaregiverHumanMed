@@ -28,8 +28,8 @@ android {
         applicationId = "jp.msaitoappdev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 18
-        versionName = "0.9.17"
+        versionCode = 20
+        versionName = "0.9.19"
     }
 
     signingConfigs {
