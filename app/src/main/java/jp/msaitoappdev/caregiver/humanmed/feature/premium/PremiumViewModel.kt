@@ -1,82 +1,56 @@
-
-// feature/premium/PremiumViewModel.kt
 package jp.msaitoappdev.caregiver.humanmed.feature.premium
 
 import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.android.billingclient.api.ProductDetails
-import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingConfig
-import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
+import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class PremiumViewModel @Inject constructor(
     private val billing: BillingManager,
-    private val repo: jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
+    private val premiumRepo: PremiumRepository
 ) : ViewModel() {
 
-    val isPremium: StateFlow<Boolean> = repo.isPremiumFlow.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = false
-    )
+    // UIに公開する isPremium は、BillingManager からのリアルタイムの値を直接参照する
+    val isPremium: StateFlow<Boolean> = billing.isPremium
 
     private val _uiMessage = MutableSharedFlow<String>(extraBufferCapacity = 4)
     val uiMessage: SharedFlow<String> = _uiMessage.asSharedFlow()
 
-    private var productDetails: ProductDetails? = null
-
     init {
-        // 起動時：接続→商品取得→購読復元
+        // BillingManager の isPremium の変更を監視し、DataStore への永続化を指示する
+        // これにより、UIの即時性と、アプリ再起動後の状態復元を両立する
         viewModelScope.launch {
-            val ok = billing.connect()
-            if (ok) {
-                productDetails = billing.getProductDetails()
-                repo.refreshFromBilling()
-            } else {
-                _uiMessage.tryEmit("Billing サービスに接続できません")
-            }
-        }
-        // 購入イベント購読
-        viewModelScope.launch {
-            billing.purchaseEvents.collect { e ->
-                when (e) {
-                    is BillingManager.PurchaseEvent.Success -> {
-                        repo.refreshFromBilling()
-                        _uiMessage.emit("購入が完了しました")
-                    }
-                    BillingManager.PurchaseEvent.Canceled ->
-                        _uiMessage.emit("購入をキャンセルしました")
-                    BillingManager.PurchaseEvent.AlreadyOwned -> {
-                        repo.refreshFromBilling()
-                        _uiMessage.emit("すでに購入済みです")
-                    }
-                    is BillingManager.PurchaseEvent.Error ->
-                        _uiMessage.emit("購入エラー: ${e.message}")
-                }
+            billing.isPremium.collect { isPremiumValue ->
+                premiumRepo.savePremiumStatus(isPremiumValue)
             }
         }
     }
 
     fun startPurchase(activity: Activity) {
-        val pd = productDetails
-        if (pd == null) {
-            viewModelScope.launch { _uiMessage.emit("商品情報を取得できませんでした") }
-            return
+        viewModelScope.launch {
+            val productDetails = billing.getProductDetails()
+            if (productDetails == null) {
+                _uiMessage.emit("商品情報を取得できませんでした")
+                return@launch
+            }
+            billing.launchPurchase(activity, productDetails)
         }
-        billing.launchPurchase(activity, pd)
     }
 
     fun refresh() {
-        viewModelScope.launch { repo.refreshFromBilling() }
+        viewModelScope.launch { premiumRepo.refreshFromBilling() }
     }
 
-    // 開発時: Play Consoleが未設定でもUI動作を確認したい場合
     fun devTogglePremium(enable: Boolean) {
-        viewModelScope.launch { repo.setPremiumForDebug(enable) }
+        viewModelScope.launch { premiumRepo.setPremiumForDebug(enable) }
     }
 }

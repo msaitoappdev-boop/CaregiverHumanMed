@@ -19,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
@@ -52,18 +54,21 @@ class MainActivity : ComponentActivity() {
 
         Log.i("MainActivity", "onCreate called")
 
+        // ライフサイクルイベントの監視
+        lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onResume(owner: LifecycleOwner) {
+                // フォアグラウンド復帰のタイミングで、購入状態を同期
+                lifecycleScope.launch {
+                    Log.d("BugHunt-Premium", "MainActivity.onResume: Kicking off refreshFromBilling()")
+                    premiumRepo.refreshFromBilling()
+                }
+            }
+        })
+
         setContent {
             MaterialTheme {
                 AppNavHost()
             }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // フォアグラウンド復帰のタイミングで、購入状態を軽く同期
-        lifecycleScope.launch {
-            premiumRepo.refreshFromBilling()
         }
     }
 }
