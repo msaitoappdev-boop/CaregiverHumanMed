@@ -1,11 +1,13 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.home
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import jp.msaitoappdev.caregiver.humanmed.R
+import jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper
 import jp.msaitoappdev.caregiver.humanmed.core.session.StudyQuotaRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -26,7 +29,8 @@ import kotlinx.coroutines.sync.withLock
 @HiltViewModel
 class HomeVM @Inject constructor(
     private val quotaRepo: StudyQuotaRepository,
-    private val premiumRepo: PremiumRepository
+    private val premiumRepo: PremiumRepository,
+    private val interstitialHelper: InterstitialHelper
 ) : ViewModel() {
 
     // ---- Remote Config Keys ----
@@ -35,6 +39,8 @@ class HomeVM @Inject constructor(
         const val KEY_SET_SIZE = "set_size"
         const val KEY_REWARDED_ENABLED = "rewarded_enabled"
         const val KEY_INTERSTITIAL_ENABLED = "interstitial_enabled"
+        const val KEY_INTERSTITIAL_CAP_PER_SESSION = "interstitial_cap_per_session"
+        const val KEY_INTER_SESSION_INTERVAL_SEC = "inter_session_interval_sec"
         const val KEY_PREMIUM_DAILY_BONUS = "premium_daily_bonus"
     }
 
@@ -192,6 +198,28 @@ class HomeVM @Inject constructor(
             } catch (_: Throwable) {
                 _effect.emit(HomeEffect.ShowMessage("進捗の保存に失敗しました"))
             }
+        }
+    }
+
+    // ---- Interstitial Ad Logic ----
+    fun showInterstitialAdIfNeeded(activity: Activity, onAdClosed: () -> Unit) {
+        viewModelScope.launch {
+            val enabled = effectiveInterstitialEnabledFlow.first()
+            if (!enabled) {
+                onAdClosed()
+                return@launch
+            }
+
+            val cap = rc.getLong(KEY_INTERSTITIAL_CAP_PER_SESSION).toInt()
+            val intervalSec = rc.getLong(KEY_INTER_SESSION_INTERVAL_SEC)
+
+            interstitialHelper.tryShow(
+                activity = activity,
+                enabled = true, // Already checked by effectiveInterstitialEnabledFlow
+                sessionCap = cap,
+                minIntervalSec = intervalSec,
+                onAdClosed = onAdClosed
+            )
         }
     }
 
