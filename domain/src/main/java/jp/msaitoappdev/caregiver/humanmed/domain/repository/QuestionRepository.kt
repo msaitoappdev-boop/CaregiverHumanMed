@@ -4,4 +4,5 @@ import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
 
 interface QuestionRepository {
     suspend fun loadAll(): List<Question>
+    suspend fun getRandomUnseenQuestions(count: Int, excludingIds: Set<String>): List<Question>
 }

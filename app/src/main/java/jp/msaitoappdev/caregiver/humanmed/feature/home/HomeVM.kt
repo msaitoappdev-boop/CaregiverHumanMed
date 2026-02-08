@@ -212,7 +212,24 @@ class HomeVM @Inject constructor(
         }
     }
 
-    // ---- Interstitial Ad Logic ----
+    fun onNextSetClicked(activity: Activity) {
+        viewModelScope.launch {
+            if (canStartFlow.first()) {
+                _effect.emit(HomeEffect.LoadNextQuizSet)
+            } else {
+                if (isPremium.first()) {
+                    _effect.emit(HomeEffect.ShowMessage("本日の学習上限に達しました。"))
+                } else {
+                    showInterstitialAdIfNeeded(activity) {
+                        viewModelScope.launch {
+                            _effect.emit(HomeEffect.ShowRewardedAdOffer)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fun showInterstitialAdIfNeeded(activity: Activity, onAdClosed: () -> Unit) {
         viewModelScope.launch {
             val enabled = effectiveInterstitialEnabledFlow.first()
@@ -236,8 +253,8 @@ class HomeVM @Inject constructor(
 
     // ---- One-shot effects（必要なら HomeScreen から collect）----
     sealed interface HomeEffect {
-        data class NavigateToWeakTraining(val questionsPerSet: Int) : HomeEffect
-        object ShowQuotaReached : HomeEffect
+        object LoadNextQuizSet : HomeEffect
+        object ShowRewardedAdOffer : HomeEffect
         data class ShowMessage(val message: String) : HomeEffect
     }
     private val _effect = MutableSharedFlow<HomeEffect>()

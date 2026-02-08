@@ -18,14 +18,28 @@ class QuestionRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context
 ) : QuestionRepository {
 
-
     private val json = Json { ignoreUnknownKeys = true }
+    private var cachedQuestions: List<Question>? = null
 
     override suspend fun loadAll(): List<Question> = withContext(Dispatchers.IO) {
-        context.assets.open("questions.json").bufferedReader().use { reader ->
+        cachedQuestions?.let { return@withContext it }
+        val questions = context.assets.open("questions.json").bufferedReader().use { reader ->
             val text = reader.readText()
             val dtos = json.decodeFromString(ListSerializer(QuestionDto.serializer()), text)
             dtos.map { it.toDomain() }
+        }
+        cachedQuestions = questions
+        questions
+    }
+
+    override suspend fun getRandomUnseenQuestions(count: Int, excludingIds: Set<String>): List<Question> {
+        val allQuestions = loadAll()
+        val unseenQuestions = allQuestions.filterNot { it.id in excludingIds }
+        return if (unseenQuestions.size < count) {
+            // Reset if not enough questions are available
+            allQuestions.shuffled().take(count)
+        } else {
+            unseenQuestions.shuffled().take(count)
         }
     }
 }
