@@ -56,7 +56,9 @@ fun ResultRoute(
     }
 
     val activity = LocalContext.current as Activity
+    val context = LocalContext.current
 
+    val isPremium by homeVm.isPremium.collectAsStateWithLifecycle(initialValue = false)
     val canStart by homeVm.canStartFlow.collectAsStateWithLifecycle(initialValue = false)
     val rewardedCountToday by homeVm.rewardedCountToday.collectAsStateWithLifecycle(initialValue = 0)
     val ui by homeVm.uiState.collectAsStateWithLifecycle()
@@ -73,9 +75,13 @@ fun ResultRoute(
             quizEntry?.savedStateHandle?.set("reshuffleTick", System.currentTimeMillis())
             navController.popBackStack(NavRoutes.QUIZ, inclusive = false)
         } else {
-            reshuffleOnReward = it
-            homeVm.showInterstitialAdIfNeeded(activity) {
-                showOffer = true
+            if (isPremium) {
+                Toast.makeText(context, "本日の学習上限に達しました。", Toast.LENGTH_SHORT).show()
+            } else {
+                reshuffleOnReward = it
+                homeVm.showInterstitialAdIfNeeded(activity) {
+                    showOffer = true
+                }
             }
         }
     }

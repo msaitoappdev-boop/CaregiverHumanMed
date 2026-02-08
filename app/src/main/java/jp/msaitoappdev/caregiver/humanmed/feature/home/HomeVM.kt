@@ -1,11 +1,11 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.home
 
 import android.app.Activity
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import jp.msaitoappdev.caregiver.humanmed.R
 import jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper
 import jp.msaitoappdev.caregiver.humanmed.core.session.StudyQuotaRepository
@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import javax.inject.Inject
 
 @HiltViewModel
 class HomeVM @Inject constructor(
@@ -36,24 +37,25 @@ class HomeVM @Inject constructor(
     // ---- Remote Config Keys ----
     private companion object {
         const val KEY_FREE_DAILY_SETS = "free_daily_sets"
+        const val KEY_PREMIUM_DAILY_SETS = "premium_daily_sets"
         const val KEY_SET_SIZE = "set_size"
         const val KEY_REWARDED_ENABLED = "rewarded_enabled"
         const val KEY_INTERSTITIAL_ENABLED = "interstitial_enabled"
         const val KEY_INTERSTITIAL_CAP_PER_SESSION = "interstitial_cap_per_session"
         const val KEY_INTER_SESSION_INTERVAL_SEC = "inter_session_interval_sec"
-        const val KEY_PREMIUM_DAILY_BONUS = "premium_daily_bonus"
     }
 
     // ---- Remote Config ----
     private val rc: FirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
 
     private val _freeDailySets = MutableStateFlow(1)
+    private val _premiumDailySets = MutableStateFlow(10)
     private val _setSize = MutableStateFlow(3)
     private val _rewardedEnabled = MutableStateFlow(true)
     private val _interstitialEnabled = MutableStateFlow(true)
-    private val _premiumDailyBonus = MutableStateFlow(0)
 
     private val freeDailySetsFlow = _freeDailySets.asStateFlow()
+    private val premiumDailySetsFlow = _premiumDailySets.asStateFlow()
     private val setSizeFlow = _setSize.asStateFlow()
 
     init {
@@ -67,43 +69,52 @@ class HomeVM @Inject constructor(
 
     private fun readRcIntoState() {
         val free = rc.getLong(KEY_FREE_DAILY_SETS).toInt().coerceAtLeast(0)
-        val size = rc.getLong(KEY_SET_SIZE).toInt().coerceAtLeast(1) // 「3問/セット」にも対応
+        val premium = rc.getLong(KEY_PREMIUM_DAILY_SETS).toInt().coerceAtLeast(1)
+        val size = rc.getLong(KEY_SET_SIZE).toInt().coerceAtLeast(1)
         val rewarded = rc.getBoolean(KEY_REWARDED_ENABLED)
         val interstitial = rc.getBoolean(KEY_INTERSTITIAL_ENABLED)
-        val bonus = rc.getLong(KEY_PREMIUM_DAILY_BONUS).toInt().coerceAtLeast(0)
 
         _freeDailySets.value = free
+        _premiumDailySets.value = premium
         _setSize.value = size
         _rewardedEnabled.value = rewarded
         _interstitialEnabled.value = interstitial
-        _premiumDailyBonus.value = bonus
     }
 
-    // ---- Premium × RC で有効な設定値を算出 ----
+    // ---- Premium Status ----
+    val isPremium: StateFlow<Boolean> = premiumRepo.isPremiumFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = false
+        )
 
+    // ---- Premium × RC で有効な設定値を算出 ----
     private val effectiveFreeDailySetsFlow: StateFlow<Int> =
         combine(
             freeDailySetsFlow,
-            _premiumDailyBonus.asStateFlow(),
-            premiumRepo.isPremiumFlow
-        ) { free, bonus, isPremium ->
-            if (isPremium) free + bonus else free
+            premiumDailySetsFlow,
+            isPremium
+        ) { free, premium, isPremiumValue ->
+            val result = if (isPremiumValue) premium else free
+            Log.d("BugHunt-Quota", "effectiveFreeDailySetsFlow updated: isPremium=$isPremiumValue, free=$free, premium=$premium, result=$result")
+            result
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 1)
 
     private val effectiveRewardedEnabledFlow: StateFlow<Boolean> =
         combine(
             _rewardedEnabled.asStateFlow(),
-            premiumRepo.isPremiumFlow
-        ) { enabled, isPremium ->
-            enabled && !isPremium // Premium なら false
+            isPremium
+        ) { enabled, isPremiumValue ->
+            enabled && !isPremiumValue // Premium なら false
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     private val effectiveInterstitialEnabledFlow: StateFlow<Boolean> =
         combine(
             _interstitialEnabled.asStateFlow(),
-            premiumRepo.isPremiumFlow
-        ) { enabled, isPremium ->
-            enabled && !isPremium // Premium なら false
+            isPremium
+        ) { enabled, isPremiumValue ->
+            enabled && !isPremiumValue // Premium なら false
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     // ---- Repository 連携（freeDailySets の変化に追従）----
