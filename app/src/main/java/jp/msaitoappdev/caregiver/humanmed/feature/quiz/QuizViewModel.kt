@@ -1,5 +1,6 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.quiz
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.ktx.Firebase
@@ -18,13 +19,13 @@ import kotlinx.coroutines.withContext
 import java.util.Random
 import javax.inject.Inject
 
-
 @HiltViewModel
 class QuizViewModel @Inject constructor(
     private val getDailyQuestions: GetDailyQuestionsUseCase,
     private val getNextQuestions: GetNextQuestionsUseCase
 ) : ViewModel() {
 
+    private val TAG = "QuizViewModel"
     private val _uiState = MutableStateFlow(QuizUiState())
     val uiState: StateFlow<QuizUiState> = _uiState.asStateFlow()
 
@@ -46,8 +47,8 @@ class QuizViewModel @Inject constructor(
     }
 
     private fun loadAndPrepare(reshuffle: Boolean) {
+        _uiState.update { it.copy(isLoading = true, finished = false) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, finished = false) }
             val setSize = getSetSize()
             val daily = try {
                 withContext(Dispatchers.IO) { getDailyQuestions(count = setSize) }
@@ -61,8 +62,9 @@ class QuizViewModel @Inject constructor(
     }
 
     fun loadNextSet() {
+        Log.d(TAG, "loadNextSet: Received request. Updating state to loading.")
+        _uiState.update { it.copy(isLoading = true, finished = false) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, finished = false) }
             val setSize = getSetSize()
             val nextQuestions = withContext(Dispatchers.IO) {
                 getNextQuestions(count = setSize, excludingIds = seenQuestionIds)
@@ -70,12 +72,13 @@ class QuizViewModel @Inject constructor(
             currentOriginalQuestions = nextQuestions
             seenQuestionIds.addAll(nextQuestions.map { it.id })
             processAndStart(nextQuestions, true)
+            Log.d(TAG, "loadNextSet: Processing finished.")
         }
     }
 
     fun reset(reshuffle: Boolean) {
+        _uiState.update { it.copy(isLoading = true, finished = false) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, finished = false) }
             processAndStart(currentOriginalQuestions, reshuffle)
         }
     }
