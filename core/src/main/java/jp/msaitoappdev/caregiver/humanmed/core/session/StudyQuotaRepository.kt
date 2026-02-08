@@ -1,15 +1,16 @@
 package jp.msaitoappdev.caregiver.humanmed.core.session
 
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import jp.msaitoappdev.caregiver.humanmed.core.session.StudyQuotaPrefs as P
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
-import javax.inject.Singleton
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.inject.Inject
+import javax.inject.Singleton
 
 data class QuotaState(
     val todayKey: String,
@@ -56,8 +57,11 @@ class StudyQuotaRepository @Inject constructor(
     suspend fun markSetFinished() {
         ensureToday()
         store.edit { p ->
-            p[P.USED_SETS] = (p[P.USED_SETS] ?: 0) + 1
+            val currentUsed = p[P.USED_SETS] ?: 0
+            val nextUsed = currentUsed + 1
+            p[P.USED_SETS] = nextUsed
             p[P.LAST_UPDATED_MS] = System.currentTimeMillis()
+            Log.d("BugHunt-Quota", "markSetFinished: usedSets updated to $nextUsed")
         }
     }
 

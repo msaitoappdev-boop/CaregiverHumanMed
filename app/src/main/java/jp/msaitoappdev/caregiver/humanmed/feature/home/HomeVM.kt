@@ -1,11 +1,11 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.home
 
 import android.app.Activity
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import jp.msaitoappdev.caregiver.humanmed.R
 import jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper
 import jp.msaitoappdev.caregiver.humanmed.core.session.StudyQuotaRepository
@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import javax.inject.Inject
 
 @HiltViewModel
 class HomeVM @Inject constructor(
@@ -80,31 +81,40 @@ class HomeVM @Inject constructor(
         _interstitialEnabled.value = interstitial
     }
 
-    // ---- Premium × RC で有効な設定値を算出 ----
+    // ---- Premium Status ----
+    val isPremium: StateFlow<Boolean> = premiumRepo.isPremiumFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = false
+        )
 
+    // ---- Premium × RC で有効な設定値を算出 ----
     private val effectiveFreeDailySetsFlow: StateFlow<Int> =
         combine(
             freeDailySetsFlow,
             premiumDailySetsFlow,
-            premiumRepo.isPremiumFlow
-        ) { free, premium, isPremium ->
-            if (isPremium) premium else free
+            isPremium
+        ) { free, premium, isPremiumValue ->
+            val result = if (isPremiumValue) premium else free
+            Log.d("BugHunt-Quota", "effectiveFreeDailySetsFlow updated: isPremium=$isPremiumValue, free=$free, premium=$premium, result=$result")
+            result
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 1)
 
     private val effectiveRewardedEnabledFlow: StateFlow<Boolean> =
         combine(
             _rewardedEnabled.asStateFlow(),
-            premiumRepo.isPremiumFlow
-        ) { enabled, isPremium ->
-            enabled && !isPremium // Premium なら false
+            isPremium
+        ) { enabled, isPremiumValue ->
+            enabled && !isPremiumValue // Premium なら false
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     private val effectiveInterstitialEnabledFlow: StateFlow<Boolean> =
         combine(
             _interstitialEnabled.asStateFlow(),
-            premiumRepo.isPremiumFlow
-        ) { enabled, isPremium ->
-            enabled && !isPremium // Premium なら false
+            isPremium
+        ) { enabled, isPremiumValue ->
+            enabled && !isPremiumValue // Premium なら false
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     // ---- Repository 連携（freeDailySets の変化に追従）----

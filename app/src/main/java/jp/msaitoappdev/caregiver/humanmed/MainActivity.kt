@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.Manifest
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -159,23 +160,21 @@ fun HomeScreen(
     onUpgrade: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
-    // ★ 追加：当日枠ゲート用 VM / 状態
     val vm: HomeVM = hiltViewModel()
-    val rewardedCountToday by vm.rewardedCountToday.collectAsStateWithLifecycle()
+    val isPremium by vm.isPremium.collectAsStateWithLifecycle(initialValue = false)
     val canStart by vm.canStartFlow.collectAsStateWithLifecycle()
-    val ui by vm.uiState.collectAsStateWithLifecycle()           // ← RCのrewardedEnabled なども参照
+    val ui by vm.uiState.collectAsStateWithLifecycle() 
+    val rewardedCountToday by vm.rewardedCountToday.collectAsStateWithLifecycle()
     val canWatchReward = ui.rewardedEnabled && rewardedCountToday < 1
     var showOffer by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val act = LocalContext.current as Activity
     val context = LocalContext.current
 
-    // POST_NOTIFICATIONS の許可ランチャ
     val requestPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            // 権限付与後に毎日20:00でスケジュール
             ReminderScheduler.scheduleDaily(context, 20, 0)
         }
     }
@@ -199,10 +198,16 @@ fun HomeScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-
-            // ★ 修正：枠があれば開始、なければ +1 提案へ
             Button(onClick = {
-                if (canStart) onStartQuiz() else showOffer = true
+                if (canStart) {
+                    onStartQuiz()
+                } else {
+                    if (isPremium) {
+                        Toast.makeText(context, "本日の学習上限に達しました。", Toast.LENGTH_SHORT).show()
+                    } else {
+                        showOffer = true
+                    }
+                }
             }) {
                 Text("クイズを開始")
             }
@@ -210,31 +215,20 @@ fun HomeScreen(
             Button(onClick = onUpgrade) { Text("プレミアムへアップグレード") }
             Spacer(Modifier.height(12.dp))
             Button(onClick = {
-                // Android 13+ のみランタイム許可が必要
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    showRationale = true  // 事前説明→許可
+                    showRationale = true
                 } else {
                     ReminderScheduler.scheduleDaily(context, 20, 0)
                 }
             }) { Text("毎日20:00にリマインドを設定") }
-            // ---- HomeScreen() のボタン群の下あたりに一時的に追記 ----
-//            if (BuildConfig.DEBUG) {
-//                androidx.compose.material3.Divider()
-//                androidx.compose.material3.Text("広告デバッグパネル", color = androidx.compose.ui.graphics.Color.Gray)
-//                jp.msaitoappdev.caregiver.humanmed.debug.AdsDebugPanel()
-//            }
         }
     }
 
-    // ★ 追加：枠不足時の +1 提案ダイアログ（Rewarded）
     if (showOffer) {
-        // 視聴不可なら即クローズ＋メッセージ
         if (!canWatchReward) {
             LaunchedEffect(Unit) {
                 showOffer = false
-                android.widget.Toast
-                    .makeText(context, "本日は動画視聴による付与は上限です", android.widget.Toast.LENGTH_SHORT)
-                    .show()
+                Toast.makeText(context, "本日は動画視聴による付与は上限です", Toast.LENGTH_SHORT).show()
             }
         } else {
             AlertDialog(
@@ -253,25 +247,12 @@ fun HomeScreen(
                                     if (ok) {
                                         onStartQuiz()
                                     } else {
-                                        android.widget.Toast
-                                            .makeText(
-                                                context,
-                                                "本日はすでに付与済みです",
-                                                android.widget.Toast.LENGTH_SHORT
-                                            )
-                                            .show()
-
+                                        Toast.makeText(context, "本日はすでに付与済みです", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             },
                             onFail = {
-                                android.widget.Toast
-                                    .makeText(
-                                        context,
-                                        "動画を読み込めませんでした（ネットワーク/在庫/初期化）",
-                                        android.widget.Toast.LENGTH_SHORT
-                                    )
-                                    .show()
+                                Toast.makeText(context, "動画を読み込めませんでした（ネットワーク/在庫/初期化）", Toast.LENGTH_SHORT).show()
                             }
                         )
                     }) { Text("動画を視聴して +1 セット") }
