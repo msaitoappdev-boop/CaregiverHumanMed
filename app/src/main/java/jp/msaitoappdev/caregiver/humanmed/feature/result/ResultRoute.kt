@@ -24,6 +24,7 @@ import androidx.navigation.NavController
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeVM
+import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,6 +44,7 @@ fun ResultRoute(
 
     val saver: ScoreSaverVM = hiltViewModel()
     val homeVm: HomeVM = hiltViewModel()
+    val quizVm: QuizViewModel = hiltViewModel()
 
     LaunchedEffect(Unit) {
         saver.save(
@@ -65,25 +67,26 @@ fun ResultRoute(
     val canWatchReward = ui.rewardedEnabled && rewardedCountToday < 1
     
     var showOffer by remember { mutableStateOf(false) }
-    var reshuffleOnReward by remember { mutableStateOf(true) } 
     val scope = rememberCoroutineScope()
 
-    val onRetry: (reshuffle: Boolean) -> Unit = {
+    val onNextSet: () -> Unit = {
         if (canStart) {
-            val quizEntry = runCatching { navController.getBackStackEntry(NavRoutes.QUIZ) }.getOrNull()
-            quizEntry?.savedStateHandle?.set("reshuffle", it)
-            quizEntry?.savedStateHandle?.set("reshuffleTick", System.currentTimeMillis())
+            quizVm.loadNextSet()
             navController.popBackStack(NavRoutes.QUIZ, inclusive = false)
         } else {
             if (isPremium) {
                 Toast.makeText(context, "本日の学習上限に達しました。", Toast.LENGTH_SHORT).show()
             } else {
-                reshuffleOnReward = it
                 homeVm.showInterstitialAdIfNeeded(activity) {
                     showOffer = true
                 }
             }
         }
+    }
+    
+    val onRetrySame: () -> Unit = {
+        quizVm.reset(false)
+        navController.popBackStack(NavRoutes.QUIZ, inclusive = false)
     }
 
     Scaffold(
@@ -123,14 +126,14 @@ fun ResultRoute(
             Spacer(Modifier.height(32.dp))
 
             Button(
-                onClick = { onRetry(true) },
+                onClick = onNextSet,
                 modifier = Modifier.fillMaxWidth()
-            ) { Text("再挑戦（新しい順番でシャッフル）") }
+            ) { Text("次の3問へ") }
 
             Spacer(Modifier.height(12.dp))
 
             OutlinedButton(
-                onClick = { onRetry(false) },
+                onClick = onRetrySame,
                 modifier = Modifier.fillMaxWidth()
             ) { Text("同じ順番で復習する") }
 
@@ -188,9 +191,7 @@ fun ResultRoute(
                                 scope.launch {
                                     val ok = homeVm.tryGrantDailyPlusOne()
                                     if (ok) {
-                                        val quizEntry = runCatching { navController.getBackStackEntry(NavRoutes.QUIZ) }.getOrNull()
-                                        quizEntry?.savedStateHandle?.set("reshuffle", reshuffleOnReward)
-                                        quizEntry?.savedStateHandle?.set("reshuffleTick", System.currentTimeMillis())
+                                        quizVm.loadNextSet()
                                         navController.popBackStack(NavRoutes.QUIZ, inclusive = false)
                                     } else {
                                         Toast.makeText(activity, "本日はすでに付与済みです", Toast.LENGTH_SHORT).show()

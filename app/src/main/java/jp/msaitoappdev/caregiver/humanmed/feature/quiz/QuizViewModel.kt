@@ -7,6 +7,7 @@ import com.google.firebase.remoteconfig.ktx.remoteConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
 import jp.msaitoappdev.caregiver.humanmed.domain.usecase.GetDailyQuestionsUseCase
+import jp.msaitoappdev.caregiver.humanmed.domain.usecase.GetNextQuestionsUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,18 +18,11 @@ import kotlinx.coroutines.withContext
 import java.util.Random
 import javax.inject.Inject
 
-data class ReviewItem(
-    val number: Int,
-    val question: String,
-    val options: List<String>,
-    val selectedIndex: Int?,
-    val correctIndex: Int,
-    val explanation: String?
-)
 
 @HiltViewModel
 class QuizViewModel @Inject constructor(
-    private val getDailyQuestions: GetDailyQuestionsUseCase
+    private val getDailyQuestions: GetDailyQuestionsUseCase,
+    private val getNextQuestions: GetNextQuestionsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QuizUiState())
@@ -36,6 +30,8 @@ class QuizViewModel @Inject constructor(
 
     private var answers: MutableList<Int?> = mutableListOf()
     private var questions: List<Question> = emptyList()
+    private val seenQuestionIds = mutableSetOf<String>()
+    private var currentOriginalQuestions: List<Question> = emptyList()
 
     private var shuffleSeed: Long = System.currentTimeMillis()
     private val shuffleQuestions: Boolean = true
@@ -45,59 +41,75 @@ class QuizViewModel @Inject constructor(
         loadAndPrepare(reshuffle = false)
     }
 
+    private fun getSetSize(): Int {
+        return Firebase.remoteConfig.getLong("set_size").toInt().coerceAtLeast(1)
+    }
+
     private fun loadAndPrepare(reshuffle: Boolean) {
         viewModelScope.launch {
-            if (reshuffle) {
-                shuffleSeed = System.currentTimeMillis()
-            }
-
-            val rc = Firebase.remoteConfig
-            val setSize = rc.getLong("set_size").toInt().coerceAtLeast(1)
-            val daily: List<Question> = try {
+            _uiState.update { it.copy(isLoading = true, finished = false) }
+            val setSize = getSetSize()
+            val daily = try {
                 withContext(Dispatchers.IO) { getDailyQuestions(count = setSize) }
             } catch (_: Exception) {
                 emptyList()
             }
+            currentOriginalQuestions = daily
+            seenQuestionIds.addAll(daily.map { it.id })
+            processAndStart(daily, reshuffle)
+        }
+    }
 
-            val ordered = if (shuffleQuestions) {
-                val order = daily.indices.shuffled(Random(shuffleSeed))
-                order.map { daily[it] }
-            } else {
-                daily
+    fun loadNextSet() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, finished = false) }
+            val setSize = getSetSize()
+            val nextQuestions = withContext(Dispatchers.IO) {
+                getNextQuestions(count = setSize, excludingIds = seenQuestionIds)
             }
-
-            questions = if (shuffleOptions) {
-                shuffleOptionsForAll(ordered, shuffleSeed)
-            } else {
-                ordered
-            }
-
-            answers = MutableList(questions.size) { null }
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    questions = questions,
-                    currentIndex = 0,
-                    selectedIndex = answers.getOrNull(0),
-                    isAnswered = answers.getOrNull(0) != null,
-                    correctCount = 0,
-                    finished = questions.isEmpty()
-                )
-            }
+            currentOriginalQuestions = nextQuestions
+            seenQuestionIds.addAll(nextQuestions.map { it.id })
+            processAndStart(nextQuestions, true)
         }
     }
 
     fun reset(reshuffle: Boolean) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, finished = false) }
+            processAndStart(currentOriginalQuestions, reshuffle)
+        }
+    }
+
+    private fun processAndStart(source: List<Question>, reshuffle: Boolean) {
+        if (reshuffle) {
+            shuffleSeed = System.currentTimeMillis()
+        }
+
+        val ordered = if (shuffleQuestions) {
+            val order = source.indices.shuffled(Random(shuffleSeed))
+            order.map { source[it] }
+        } else {
+            source
+        }
+
+        questions = if (shuffleOptions) {
+            shuffleOptionsForAll(ordered, shuffleSeed)
+        } else {
+            ordered
+        }
+
+        answers = MutableList(questions.size) { null }
         _uiState.update {
             it.copy(
-                isLoading = true,
-                finished = false,
+                isLoading = false,
+                questions = questions,
                 currentIndex = 0,
-                selectedIndex = null,
-                isAnswered = false
+                selectedIndex = answers.getOrNull(0),
+                isAnswered = answers.getOrNull(0) != null,
+                correctCount = 0,
+                finished = questions.isEmpty()
             )
         }
-        loadAndPrepare(reshuffle)
     }
 
     fun selectOption(index: Int) {
