@@ -36,24 +36,25 @@ class HomeVM @Inject constructor(
     // ---- Remote Config Keys ----
     private companion object {
         const val KEY_FREE_DAILY_SETS = "free_daily_sets"
+        const val KEY_PREMIUM_DAILY_SETS = "premium_daily_sets"
         const val KEY_SET_SIZE = "set_size"
         const val KEY_REWARDED_ENABLED = "rewarded_enabled"
         const val KEY_INTERSTITIAL_ENABLED = "interstitial_enabled"
         const val KEY_INTERSTITIAL_CAP_PER_SESSION = "interstitial_cap_per_session"
         const val KEY_INTER_SESSION_INTERVAL_SEC = "inter_session_interval_sec"
-        const val KEY_PREMIUM_DAILY_BONUS = "premium_daily_bonus"
     }
 
     // ---- Remote Config ----
     private val rc: FirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
 
     private val _freeDailySets = MutableStateFlow(1)
+    private val _premiumDailySets = MutableStateFlow(10)
     private val _setSize = MutableStateFlow(3)
     private val _rewardedEnabled = MutableStateFlow(true)
     private val _interstitialEnabled = MutableStateFlow(true)
-    private val _premiumDailyBonus = MutableStateFlow(0)
 
     private val freeDailySetsFlow = _freeDailySets.asStateFlow()
+    private val premiumDailySetsFlow = _premiumDailySets.asStateFlow()
     private val setSizeFlow = _setSize.asStateFlow()
 
     init {
@@ -67,16 +68,16 @@ class HomeVM @Inject constructor(
 
     private fun readRcIntoState() {
         val free = rc.getLong(KEY_FREE_DAILY_SETS).toInt().coerceAtLeast(0)
-        val size = rc.getLong(KEY_SET_SIZE).toInt().coerceAtLeast(1) // 「3問/セット」にも対応
+        val premium = rc.getLong(KEY_PREMIUM_DAILY_SETS).toInt().coerceAtLeast(1)
+        val size = rc.getLong(KEY_SET_SIZE).toInt().coerceAtLeast(1)
         val rewarded = rc.getBoolean(KEY_REWARDED_ENABLED)
         val interstitial = rc.getBoolean(KEY_INTERSTITIAL_ENABLED)
-        val bonus = rc.getLong(KEY_PREMIUM_DAILY_BONUS).toInt().coerceAtLeast(0)
 
         _freeDailySets.value = free
+        _premiumDailySets.value = premium
         _setSize.value = size
         _rewardedEnabled.value = rewarded
         _interstitialEnabled.value = interstitial
-        _premiumDailyBonus.value = bonus
     }
 
     // ---- Premium × RC で有効な設定値を算出 ----
@@ -84,10 +85,10 @@ class HomeVM @Inject constructor(
     private val effectiveFreeDailySetsFlow: StateFlow<Int> =
         combine(
             freeDailySetsFlow,
-            _premiumDailyBonus.asStateFlow(),
+            premiumDailySetsFlow,
             premiumRepo.isPremiumFlow
-        ) { free, bonus, isPremium ->
-            if (isPremium) free + bonus else free
+        ) { free, premium, isPremium ->
+            if (isPremium) premium else free
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 1)
 
     private val effectiveRewardedEnabledFlow: StateFlow<Boolean> =
