@@ -28,9 +28,13 @@ class InterstitialHelper @Inject constructor(
     private var ad: InterstitialAd? = null
 
     fun preload() {
-        if (ad != null) return
+        if (ad != null) {
+            Log.d(TAG, "preload: Ad already loaded.")
+            return
+        }
         val req = AdRequest.Builder().build()
         val unitId = AdUnits.interstitialWeaktrainComplete(context)
+        Log.d(TAG, "preload: Loading ad with unit ID: $unitId")
         InterstitialAd.load(context, unitId, req, object : InterstitialAdLoadCallback() {
             override fun onAdLoaded(p0: InterstitialAd) {
                 ad = p0
@@ -39,7 +43,7 @@ class InterstitialHelper @Inject constructor(
 
             override fun onAdFailedToLoad(p0: LoadAdError) {
                 ad = null
-                Log.w(TAG, "Interstitial load failed: ${p0.message}")
+                Log.w(TAG, "Interstitial load failed: ${p0.code} - ${p0.message}")
             }
         })
     }
@@ -51,17 +55,37 @@ class InterstitialHelper @Inject constructor(
         minIntervalSec: Long,
         onAdClosed: () -> Unit
     ) {
+        Log.d(TAG, "tryShow called with: enabled=$enabled, sessionCap=$sessionCap, minIntervalSec=$minIntervalSec")
         val shownCount = repository.shownCountThisSession.first()
         val lastShown = repository.lastShownEpochSec.first()
+        Log.d(TAG, "Current state: shownCountThisSession=$shownCount, lastShownEpochSec=$lastShown")
 
-        if (!enabled) return onAdClosed()
-        if (sessionCap > 0 && shownCount >= sessionCap) return onAdClosed()
+        if (!enabled) {
+            Log.d(TAG, "Ad not shown: Remote config is disabled.")
+            onAdClosed()
+            return
+        }
+        if (ad == null) {
+            Log.d(TAG, "Ad not shown: Not loaded yet. Calling preload() for next time.")
+            preload()
+            onAdClosed()
+            return
+        }
+        if (sessionCap > 0 && shownCount >= sessionCap) {
+            Log.d(TAG, "Ad not shown: Session cap reached (count=$shownCount, cap=$sessionCap).")
+            onAdClosed()
+            return
+        }
         val now = System.currentTimeMillis() / 1000
-        if (minIntervalSec > 0 && (now - lastShown) < minIntervalSec) return onAdClosed()
+        if (minIntervalSec > 0 && (now - lastShown) < minIntervalSec) {
+            Log.d(TAG, "Ad not shown: Minimum interval not reached (now=$now, lastShown=$lastShown, interval=$minIntervalSec).")
+            onAdClosed()
+            return
+        }
 
-        val current = ad
-        if (current != null) {
-            current.fullScreenContentCallback = object : FullScreenContentCallback() {
+        Log.d(TAG, "Ad is ready to be shown.")
+        ad?.let {
+            it.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
                     scope.launch {
                         repository.updateLastShownTimestamp()
@@ -74,17 +98,22 @@ class InterstitialHelper @Inject constructor(
 
                 override fun onAdFailedToShowFullScreenContent(p0: com.google.android.gms.ads.AdError) {
                     ad = null
-                    Log.w(TAG, "Interstitial failed to show: ${p0.message}")
+                    Log.w(TAG, "Interstitial failed to show: ${p0.code} - ${p0.message}")
                     preload()
                     onAdClosed()
                 }
+
+                override fun onAdShowedFullScreenContent() {
+                    Log.d(TAG, "Interstitial showed successfully.")
+                    scope.launch {
+                        repository.incrementShownCount()
+                    }
+                }
             }
-            current.show(activity)
-            scope.launch {
-                repository.incrementShownCount()
-            }
-        } else {
-            preload() // Preload for next time
+            it.show(activity)
+        } ?: run {
+            // Fallback in case 'ad' becomes null between the check and here.
+            Log.e(TAG, "Ad became null unexpectedly before show().")
             onAdClosed()
         }
     }

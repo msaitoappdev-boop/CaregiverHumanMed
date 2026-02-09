@@ -1,4 +1,3 @@
-
 package jp.msaitoappdev.caregiver.humanmed
 
 import android.app.Activity
@@ -44,6 +43,7 @@ import jp.msaitoappdev.caregiver.humanmed.feature.review.ReviewRoute
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.rememberCoroutineScope
+import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeEffect
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeVM
 import com.google.firebase.analytics.ktx.analytics
 
@@ -79,12 +79,12 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun AppNavHost() {
-    val ctx = LocalContext.current as Activity
+    val activity = LocalContext.current as Activity
 
     LaunchedEffect(Unit) {
         // UMP同意 → 同意OKの時のみ Ads/Analytics を有効化
-        jp.msaitoappdev.caregiver.humanmed.privacy.ConsentManager.obtain(ctx) {
-            com.google.android.gms.ads.MobileAds.initialize(ctx.applicationContext)
+        jp.msaitoappdev.caregiver.humanmed.privacy.ConsentManager.obtain(activity) {
+            com.google.android.gms.ads.MobileAds.initialize(activity.applicationContext)
             com.google.firebase.ktx.Firebase.analytics.setAnalyticsCollectionEnabled(true)
         }
     }
@@ -114,7 +114,7 @@ private fun AppNavHost() {
 
             val homeVm: HomeVM = hiltViewModel()
             LaunchedEffect(backStackEntry.id) {
-                homeVm.onTrainingSetFinished()
+                homeVm.onTrainingSetFinished(activity)
             }
             ResultRoute(navController, score, total)
         }
@@ -161,15 +161,22 @@ fun HomeScreen(
     onOpenSettings: () -> Unit
 ) {
     val vm: HomeVM = hiltViewModel()
-    val isPremium by vm.isPremium.collectAsStateWithLifecycle(initialValue = false)
-    val canStart by vm.canStartFlow.collectAsStateWithLifecycle()
-    val ui by vm.uiState.collectAsStateWithLifecycle() 
-    val rewardedCountToday by vm.rewardedCountToday.collectAsStateWithLifecycle()
-    val canWatchReward = ui.rewardedEnabled && rewardedCountToday < 1
+    val ui by vm.uiState.collectAsStateWithLifecycle()
     var showOffer by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val act = LocalContext.current as Activity
     val context = LocalContext.current
+
+    LaunchedEffect(vm.effect) {
+        vm.effect.collect {
+            when (it) {
+                is HomeEffect.NavigateToQuiz -> onStartQuiz() // Note: This is now only triggered for rewarded ad flow
+                is HomeEffect.ShowRewardedAdOffer -> showOffer = true
+                is HomeEffect.ShowMessage -> Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
+                else -> Unit
+            }
+        }
+    }
 
     val requestPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -199,14 +206,10 @@ fun HomeScreen(
                 .padding(16.dp)
         ) {
             Button(onClick = {
-                if (canStart) {
+                if (ui.canStart) {
                     onStartQuiz()
                 } else {
-                    if (isPremium) {
-                        Toast.makeText(context, "本日の学習上限に達しました。", Toast.LENGTH_SHORT).show()
-                    } else {
-                        showOffer = true
-                    }
+                    vm.onStartQuizClicked()
                 }
             }) {
                 Text("クイズを開始")
@@ -225,7 +228,8 @@ fun HomeScreen(
     }
 
     if (showOffer) {
-        if (!canWatchReward) {
+        val rewardedCountToday by vm.rewardedCountToday.collectAsStateWithLifecycle()
+        if (rewardedCountToday >= 1) {
             LaunchedEffect(Unit) {
                 showOffer = false
                 Toast.makeText(context, "本日は動画視聴による付与は上限です", Toast.LENGTH_SHORT).show()
@@ -245,9 +249,9 @@ fun HomeScreen(
                                 scope.launch {
                                     val ok = vm.tryGrantDailyPlusOne()
                                     if (ok) {
-                                        onStartQuiz()
-                                    } else {
-                                        Toast.makeText(context, "本日はすでに付与済みです", Toast.LENGTH_SHORT).show()
+                                        // After getting a reward, we want to start the quiz.
+                                        // The NavigateToQuiz effect is now suitable for this.
+                                        vm.onStartQuizClicked()
                                     }
                                 }
                             },

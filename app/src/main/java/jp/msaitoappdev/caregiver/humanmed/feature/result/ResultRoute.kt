@@ -9,17 +9,26 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
+import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeEffect
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeVM
 import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizViewModel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +47,8 @@ fun ResultRoute(
     }
 
     val saver: ScoreSaverVM = hiltViewModel()
+    val homeVm: HomeVM = hiltViewModel()
+    val ui by homeVm.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         saver.save(
@@ -50,10 +61,28 @@ fun ResultRoute(
         )
     }
 
+    val activity = LocalContext.current as Activity
+    val context = LocalContext.current
+    var showOffer by remember { mutableStateOf(false) }
+
+    LaunchedEffect(homeVm.effect) {
+        homeVm.effect.collectLatest {
+            when (it) {
+                is HomeEffect.LoadNextQuizSet -> {
+                    Log.d(TAG, "LoadNextQuizSet event received. Navigating back.")
+                    navController.previousBackStackEntry?.savedStateHandle?.set("action", "loadNext")
+                    navController.popBackStack()
+                }
+                is HomeEffect.ShowRewardedAdOffer -> showOffer = true
+                is HomeEffect.ShowMessage -> Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
+                else -> Unit
+            }
+        }
+    }
+
     val onNextSet: () -> Unit = {
-        Log.d(TAG, "onNextSet clicked. Setting action 'loadNext' to previous back stack entry.")
-        navController.previousBackStackEntry?.savedStateHandle?.set("action", "loadNext")
-        navController.popBackStack()
+        Log.d(TAG, "onNextSet clicked. Calling onNextSetClicked on ViewModel with canStart=${ui.canStart}")
+        homeVm.onNextSetClicked(activity, ui.canStart)
     }
 
     val onRetrySame: () -> Unit = {
@@ -140,6 +169,50 @@ fun ResultRoute(
                 onClick = { navController.popBackStack(NavRoutes.HOME, inclusive = false) },
                 modifier = Modifier.fillMaxWidth()
             ) { Text("ホームへ戻る") }
+        }
+    }
+
+    if (showOffer) {
+        val rewardedCountToday by homeVm.rewardedCountToday.collectAsStateWithLifecycle(initialValue = 0)
+        val canWatchReward = rewardedCountToday < 1
+        val scope = rememberCoroutineScope()
+        val quizVm: QuizViewModel = hiltViewModel()
+
+        if (!canWatchReward) {
+            LaunchedEffect(Unit) {
+                showOffer = false
+                Toast.makeText(activity, "本日は動画視聴による付与は上限です", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            AlertDialog(
+                onDismissRequest = { showOffer = false },
+                title = { Text("今日は無料分が終了しました") },
+                text = { Text("動画を視聴すると +1 セット解放できます。視聴しますか？") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showOffer = false
+                        jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper.show(
+                            activity = activity,
+                            canShowToday = { canWatchReward },
+                            onEarned = { _ ->
+                                scope.launch {
+                                    val ok = homeVm.tryGrantDailyPlusOne()
+                                    if (ok) {
+                                        navController.previousBackStackEntry?.savedStateHandle?.set("action", "loadNext")
+                                        navController.popBackStack()
+                                    }
+                                }
+                            },
+                            onFail = {
+                                Toast.makeText(activity, "動画を読み込めませんでした（ネットワーク/在庫/初期化）", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }) { Text("動画を視聴して +1 セット") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showOffer = false }) { Text("キャンセル") }
+                }
+            )
         }
     }
 }
