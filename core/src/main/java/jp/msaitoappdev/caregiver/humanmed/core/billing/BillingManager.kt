@@ -242,25 +242,9 @@ class BillingManager @Inject constructor(
         _isPremium.value = premium
     }
 
-    // ---- 互換API（既存 PremiumRepositoryImpl から呼ばれている想定） ----------
-    suspend fun queryActiveSubscriptions(): List<Purchase> {
-        if (!isConnected && !connect()) return emptyList()
-        val params = QueryPurchasesParams.newBuilder()
-            .setProductType(BillingClient.ProductType.SUBS)
-            .build()
-
-        return suspendCancellableCoroutine<List<Purchase>> { continuation ->
-            client.queryPurchasesAsync(params, PurchasesResponseListener { result, purchases ->
-                if (continuation.isCancelled) {
-                    return@PurchasesResponseListener
-                }
-                if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                    continuation.resume(purchases)
-                } else {
-                    continuation.resume(emptyList())
-                }
-            })
-        }
+    fun setPremiumForDebug(enabled: Boolean) {
+        savePremiumToPrefs(enabled)
+        _isPremium.value = enabled
     }
 
     // ---- Prefs ヘルパ -------------------------------------------------------

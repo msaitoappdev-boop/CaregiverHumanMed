@@ -34,6 +34,8 @@ class HomeVM @Inject constructor(
     private val interstitialHelper: InterstitialHelper
 ) : ViewModel() {
 
+    private val TAG = "HomeVM"
+
     // ---- Remote Config Keys ----
     private companion object {
         const val KEY_FREE_DAILY_SETS = "free_daily_sets"
@@ -82,12 +84,7 @@ class HomeVM @Inject constructor(
     }
 
     // ---- Premium Status ----
-    val isPremium: StateFlow<Boolean> = premiumRepo.isPremiumFlow
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = false
-        )
+    val isPremium: StateFlow<Boolean> = premiumRepo.isPremium
 
     // ---- Premium × RC で有効な設定値を算出 ----
     private val effectiveFreeDailySetsFlow: StateFlow<Int> =
@@ -106,7 +103,9 @@ class HomeVM @Inject constructor(
             _rewardedEnabled.asStateFlow(),
             isPremium
         ) { enabled, isPremiumValue ->
-            enabled && !isPremiumValue // Premium なら false
+            val result = enabled && !isPremiumValue
+            Log.d(TAG, "effectiveRewardedEnabledFlow calculated: remoteConfigEnabled=$enabled, isPremium=$isPremiumValue, result=$result")
+            result
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     private val effectiveInterstitialEnabledFlow: StateFlow<Boolean> =
@@ -114,7 +113,9 @@ class HomeVM @Inject constructor(
             _interstitialEnabled.asStateFlow(),
             isPremium
         ) { enabled, isPremiumValue ->
-            enabled && !isPremiumValue // Premium なら false
+            val result = enabled && !isPremiumValue
+            Log.d(TAG, "effectiveInterstitialEnabledFlow calculated: remoteConfigEnabled=$enabled, isPremium=$isPremiumValue, result=$result")
+            result
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     // ---- Repository 連携（freeDailySets の変化に追従）----
@@ -174,16 +175,11 @@ class HomeVM @Inject constructor(
         quotaFlow.map { it.rewardedGranted }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
-    /** 本日、問題セットを開始できるか（枠が残っているか） */
-    val canStartFlow: StateFlow<Boolean> =
-        quotaFlow.map { it.canStart }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-
     private val grantMutex = Mutex()
 
     /**
      * Rewarded 動画視聴後、+1 セットを当日に付与する。
-     * - 1日1回まで（rewardedGranted < 1 のときのみ付与）
+     * - 1日1回まで（rewardedGranted < 1 のときのみ付여）
      * - RC の rewarded_enabled=false or Premium の場合は付与しない
      *
      * @return true: 付与した / false: 付与しなかった（停止中 or 既に上限 or Premium）
@@ -201,49 +197,72 @@ class HomeVM @Inject constructor(
         }
     }
 
-    // Quiz 側から呼ぶ想定（set_size 問を解き終えたタイミングで）
-    fun onTrainingSetFinished() {
+    fun onTrainingSetFinished(activity: Activity) {
         viewModelScope.launch {
-            try {
-                quotaRepo.markSetFinished()
-            } catch (_: Throwable) {
-                _effect.emit(HomeEffect.ShowMessage("進捗の保存に失敗しました"))
-            }
-        }
-    }
-
-    fun onNextSetClicked(activity: Activity) {
-        viewModelScope.launch {
-            if (canStartFlow.first()) {
-                _effect.emit(HomeEffect.LoadNextQuizSet)
-            } else {
-                if (isPremium.first()) {
-                    _effect.emit(HomeEffect.ShowMessage("本日の学習上限に達しました。"))
-                } else {
-                    showInterstitialAdIfNeeded(activity) {
-                        viewModelScope.launch {
-                            _effect.emit(HomeEffect.ShowRewardedAdOffer)
-                        }
+            Log.d(TAG, "onTrainingSetFinished called. Checking for interstitial.")
+            showInterstitialAdIfNeeded(activity) {
+                viewModelScope.launch {
+                    try {
+                        quotaRepo.markSetFinished()
+                    } catch (_: Throwable) {
+                        _effect.emit(HomeEffect.ShowMessage("進捗の保存に失敗しました"))
                     }
                 }
             }
         }
     }
 
-    fun showInterstitialAdIfNeeded(activity: Activity, onAdClosed: () -> Unit) {
+    /**
+     * This function is now only called when the user CANNOT start a quiz.
+     */
+    fun onStartQuizClicked() {
         viewModelScope.launch {
-            val enabled = effectiveInterstitialEnabledFlow.first()
+            if (isPremium.value) {
+                _effect.emit(HomeEffect.ShowMessage("本日の学習上限に達しました。"))
+            } else {
+                _effect.emit(HomeEffect.ShowRewardedAdOffer)
+            }
+        }
+    }
+
+    fun onNextSetClicked(activity: Activity, canStart: Boolean) {
+        Log.d(TAG, "onNextSetClicked called with canStart: $canStart")
+        viewModelScope.launch {
+            if (canStart) {
+                Log.d(TAG, "canStart is true, showing interstitial ad.")
+                showInterstitialAdIfNeeded(activity) {
+                    viewModelScope.launch {
+                        _effect.emit(HomeEffect.LoadNextQuizSet)
+                    }
+                }
+            } else {
+                Log.d(TAG, "canStart is false, checking for premium status.")
+                if (isPremium.value) {
+                    _effect.emit(HomeEffect.ShowMessage("本日の学習上限に達しました。"))
+                } else {
+                    _effect.emit(HomeEffect.ShowRewardedAdOffer)
+                }
+            }
+        }
+    }
+
+    private fun showInterstitialAdIfNeeded(activity: Activity, onAdClosed: () -> Unit) {
+        viewModelScope.launch {
+            Log.d(TAG, "showInterstitialAdIfNeeded: Checking conditions...")
+            val enabled = _interstitialEnabled.value && !isPremium.value
+            Log.d(TAG, "showInterstitialAdIfNeeded: isPremium=${isPremium.value}, remoteConfigInterstitialEnabled=${_interstitialEnabled.value}, finalEnabled=$enabled")
             if (!enabled) {
+                Log.d(TAG, "showInterstitialAdIfNeeded: Interstitial is disabled for this user. Skipping.")
                 onAdClosed()
                 return@launch
             }
 
             val cap = rc.getLong(KEY_INTERSTITIAL_CAP_PER_SESSION).toInt()
             val intervalSec = rc.getLong(KEY_INTER_SESSION_INTERVAL_SEC)
-
+            Log.d(TAG, "showInterstitialAdIfNeeded: Calling helper with cap=$cap, interval=$intervalSec")
             interstitialHelper.tryShow(
                 activity = activity,
-                enabled = true, // Already checked by effectiveInterstitialEnabledFlow
+                enabled = true, // Already checked by this function
                 sessionCap = cap,
                 minIntervalSec = intervalSec,
                 onAdClosed = onAdClosed
@@ -251,12 +270,14 @@ class HomeVM @Inject constructor(
         }
     }
 
-    // ---- One-shot effects（必要なら HomeScreen から collect）----
-    sealed interface HomeEffect {
-        object LoadNextQuizSet : HomeEffect
-        object ShowRewardedAdOffer : HomeEffect
-        data class ShowMessage(val message: String) : HomeEffect
-    }
     private val _effect = MutableSharedFlow<HomeEffect>()
     val effect: SharedFlow<HomeEffect> = _effect.asSharedFlow()
+}
+
+// ---- One-shot effects（必要なら HomeScreen から collect）----
+public sealed interface HomeEffect {
+    object NavigateToQuiz : HomeEffect
+    object LoadNextQuizSet : HomeEffect
+    object ShowRewardedAdOffer : HomeEffect
+    data class ShowMessage(val message: String) : HomeEffect
 }
