@@ -8,25 +8,37 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jp.msaitoappdev.caregiver.humanmed.R
 import jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper
+import jp.msaitoappdev.caregiver.humanmed.core.session.QuotaState
 import jp.msaitoappdev.caregiver.humanmed.core.session.StudyQuotaRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 
+// sealed interface をトップレベルに定義し、外部からの可視性を確保
+sealed interface HomeEffect {
+    object NavigateToQuiz : HomeEffect
+    data class NavigateToResult(val score: Int, val total: Int) : HomeEffect
+    object LoadNextQuizSet : HomeEffect
+    object ShowRewardedAdOffer : HomeEffect
+    data class ShowMessage(val message: String) : HomeEffect
+    object RewardGrantedAndNavigate : HomeEffect
+}
+
+/**
+ * ホーム画面、および関連する学習フロー全体のビジネスロジックを管理する ViewModel。
+ * この ViewModel は、単一の真実の源 (Single Source of Truth) として機能し、
+ * レースコンディションを避けるため、状態の更新とそれに基づく判断を直列的に行う責務を持つ。
+ */
 @HiltViewModel
 class HomeVM @Inject constructor(
     private val quotaRepo: StudyQuotaRepository,
@@ -35,249 +47,242 @@ class HomeVM @Inject constructor(
 ) : ViewModel() {
 
     private val TAG = "HomeVM"
-
-    // ---- Remote Config Keys ----
-    private companion object {
-        const val KEY_FREE_DAILY_SETS = "free_daily_sets"
-        const val KEY_PREMIUM_DAILY_SETS = "premium_daily_sets"
-        const val KEY_SET_SIZE = "set_size"
-        const val KEY_REWARDED_ENABLED = "rewarded_enabled"
-        const val KEY_INTERSTITIAL_ENABLED = "interstitial_enabled"
-        const val KEY_INTERSTITIAL_CAP_PER_SESSION = "interstitial_cap_per_session"
-        const val KEY_INTER_SESSION_INTERVAL_SEC = "inter_session_interval_sec"
-    }
-
-    // ---- Remote Config ----
     private val rc: FirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
 
-    private val _freeDailySets = MutableStateFlow(1)
-    private val _premiumDailySets = MutableStateFlow(10)
-    private val _setSize = MutableStateFlow(3)
-    private val _rewardedEnabled = MutableStateFlow(true)
-    private val _interstitialEnabled = MutableStateFlow(true)
-
-    private val freeDailySetsFlow = _freeDailySets.asStateFlow()
-    private val premiumDailySetsFlow = _premiumDailySets.asStateFlow()
-    private val setSizeFlow = _setSize.asStateFlow()
-
     init {
-        // defaults を設定（res/xml/remote_config_defaults.xml）
         rc.setDefaultsAsync(R.xml.remote_config_defaults)
-        // まずは defaults/キャッシュを即時反映
-        readRcIntoState()
-        // 非同期 fetch & activate 後に再反映
-        rc.fetchAndActivate().addOnCompleteListener { readRcIntoState() }
+        rc.fetchAndActivate()
     }
 
-    private fun readRcIntoState() {
-        val free = rc.getLong(KEY_FREE_DAILY_SETS).toInt().coerceAtLeast(0)
-        val premium = rc.getLong(KEY_PREMIUM_DAILY_SETS).toInt().coerceAtLeast(1)
-        val size = rc.getLong(KEY_SET_SIZE).toInt().coerceAtLeast(1)
-        val rewarded = rc.getBoolean(KEY_REWARDED_ENABLED)
-        val interstitial = rc.getBoolean(KEY_INTERSTITIAL_ENABLED)
+    // --- Data Flow: リアクティブなデータストリームの構築 ---
 
-        _freeDailySets.value = free
-        _premiumDailySets.value = premium
-        _setSize.value = size
-        _rewardedEnabled.value = rewarded
-        _interstitialEnabled.value = interstitial
-    }
-
-    // ---- Premium Status ----
-    val isPremium: StateFlow<Boolean> = premiumRepo.isPremium
-
-    // ---- Premium × RC で有効な設定値を算出 ----
-    private val effectiveFreeDailySetsFlow: StateFlow<Int> =
-        combine(
-            freeDailySetsFlow,
-            premiumDailySetsFlow,
-            isPremium
-        ) { free, premium, isPremiumValue ->
-            val result = if (isPremiumValue) premium else free
-            Log.d("BugHunt-Quota", "effectiveFreeDailySetsFlow updated: isPremium=$isPremiumValue, free=$free, premium=$premium, result=$result")
-            result
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 1)
-
-    private val effectiveRewardedEnabledFlow: StateFlow<Boolean> =
-        combine(
-            _rewardedEnabled.asStateFlow(),
-            isPremium
-        ) { enabled, isPremiumValue ->
-            val result = enabled && !isPremiumValue
-            Log.d(TAG, "effectiveRewardedEnabledFlow calculated: remoteConfigEnabled=$enabled, isPremium=$isPremiumValue, result=$result")
-            result
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-
-    private val effectiveInterstitialEnabledFlow: StateFlow<Boolean> =
-        combine(
-            _interstitialEnabled.asStateFlow(),
-            isPremium
-        ) { enabled, isPremiumValue ->
-            val result = enabled && !isPremiumValue
-            Log.d(TAG, "effectiveInterstitialEnabledFlow calculated: remoteConfigEnabled=$enabled, isPremium=$isPremiumValue, result=$result")
-            result
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-
-    // ---- Repository 連携（freeDailySets の変化に追従）----
-
-    private val quotaFlow = effectiveFreeDailySetsFlow
-        .map { it.coerceAtLeast(0) }
-        .flatMapLatest { effectiveFree -> quotaRepo.observe { effectiveFree } }
-
-    // ---- UI State（必要であれば HomeScreen 以外で利用）----
-    data class HomeUiState(
-        val todayKey: String = "",
-        val usedSets: Int = 0,
-        val rewardedGranted: Int = 0,
-        val freeDailySets: Int = 1,
-        val totalAllowance: Int = 1,
-        val remainingSets: Int = 1,
-        val canStart: Boolean = false,
-        val questionsPerSet: Int = 3,
-        val rewardedEnabled: Boolean = true,
-        val interstitialEnabled: Boolean = true,
-        val isLoading: Boolean = false,
-        val errorMessage: String? = null
-    )
-
-    val uiState: StateFlow<HomeUiState> =
-        combine(
-            quotaFlow,
-            setSizeFlow.map { it.coerceAtLeast(1) },
-            effectiveRewardedEnabledFlow,
-            effectiveInterstitialEnabledFlow
-        ) { quota, setSize, rewardedEnabled, interstitialEnabled ->
-            val total = quota.totalAllowance
-            val remaining = (total - quota.usedSets).coerceAtLeast(0)
-            HomeUiState(
-                todayKey = quota.todayKey,
-                usedSets = quota.usedSets,
-                rewardedGranted = quota.rewardedGranted,
-                freeDailySets = quota.freeDailySets,
-                totalAllowance = total,
-                remainingSets = remaining,
-                canStart = quota.canStart,
-                questionsPerSet = setSize, // RC set_size（デフォルト3）
-                rewardedEnabled = rewardedEnabled,
-                interstitialEnabled = interstitialEnabled,
-                isLoading = false,
-                errorMessage = null
-            )
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = HomeUiState(isLoading = true)
-        )
-
-    // ---- HomeScreen が期待している公開API ----
-    /** 本日付与済みのリワード回数（= StudyQuotaRepository.rewardedGranted） */
-    val rewardedCountToday: StateFlow<Int> =
-        quotaFlow.map { it.rewardedGranted }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
-
-    private val grantMutex = Mutex()
+    /** ユーザーがプレミアム会員であるかどうかの状態。 [PremiumRepository] からの真実の源。 */
+    private val isPremium: StateFlow<Boolean> = premiumRepo.isPremium
 
     /**
-     * Rewarded 動画視聴後、+1 セットを当日に付与する。
-     * - 1日1回まで（rewardedGranted < 1 のときのみ付여）
-     * - RC の rewarded_enabled=false or Premium の場合は付与しない
-     *
-     * @return true: 付与した / false: 付与しなかった（停止中 or 既に上限 or Premium）
+     * 現在の学習ノルマの状態をDBから監視する Flow。
+     * isPremium の状態が変化すると、自動的に正しい上限値で監視を再開する。
      */
-    suspend fun tryGrantDailyPlusOne(): Boolean = grantMutex.withLock {
-        val state = uiState.value
-        if (!state.rewardedEnabled) return false
-        if (state.rewardedGranted >= 1) return false
+    private val quotaFlow: StateFlow<QuotaState?> = isPremium.flatMapLatest { isPremium ->
+        val limitKey = if (isPremium) "premium_daily_sets" else "free_daily_sets"
+        val limit = rc.getLong(limitKey).toInt()
+        Log.d(TAG, "New quota limit observed. isPremium: $isPremium, limit: $limit")
+        quotaRepo.observe { limit }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    // Helper to read the latest quota directly from repository (avoids stale stateIn value)
+    private suspend fun fetchLatestQuota(): QuotaState? {
+        val limitKey = if (isPremium.value) "premium_daily_sets" else "free_daily_sets"
+        val limit = rc.getLong(limitKey).toInt()
+        return quotaRepo.observe { limit }.first()
+    }
+
+    // --- UI State: 画面に表示するための状態 ---
+
+    /**
+     * UI が表示すべき、最小限かつ信頼できる状態のみを保持するデータクラス。
+     */
+    data class HomeUiState(
+        val canStart: Boolean = false,
+        val isLoading: Boolean = false,
+        val canShowFullExplanation: Boolean = false // 課金状態に基づき、解説を全文表示できるか
+    )
+
+    /** UI に公開する、現在の画面状態。 */
+    val uiState: StateFlow<HomeUiState> = combine(quotaFlow, isPremium) { quota, isPremiumValue ->
+        if (quota == null) {
+            HomeUiState(isLoading = true)
+        } else {
+            HomeUiState(
+                canStart = quota.canStart,
+                canShowFullExplanation = isPremiumValue
+            )
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState(isLoading = true))
+
+    /** UI への一度きりのイベントを通知するための SharedFlow。 */
+    private val _effect = MutableSharedFlow<HomeEffect>()
+    val effect: SharedFlow<HomeEffect> = _effect.asSharedFlow()
+
+    // onNextSetClicked の重複実行を防ぐためのフラグ
+    private var isNextSetProcessing = false
+
+    // ---- Event Handlers: UIからのアクションを処理する、唯一の窓口 ----
+
+    /**
+     * ホーム画面の「クイズを開始」ボタンがクリックされたときに呼び出される。
+     * 現在の学習ノルマを **同期的** に評価し、適切なアクションを実行する。
+     */
+    fun onStartQuizClicked() {
+        viewModelScope.launch {
+            val currentQuota = quotaFlow.first() ?: return@launch
+            Log.d(TAG, "onStartQuizClicked: canStart=${currentQuota.canStart}")
+            if (currentQuota.canStart) {
+                _effect.emit(HomeEffect.NavigateToQuiz)
+            } else {
+                handleQuotaExceeded(currentQuota)
+            }
+        }
+    }
+
+    /**
+     * クイズが終了したタイミングで呼び出す。View (QuizRoute) はこの関数を呼び、
+     * ViewModel は必要に応じてインタースティシャル広告を表示し、
+     * 表示完了後に `HomeEffect.NavigateToResult` を発行する。
+     */
+    fun onQuizFinished(activity: Activity, score: Int, total: Int) {
+        viewModelScope.launch {
+            Log.d(TAG, "onQuizFinished: Marking set as finished then checking whether to show interstitial")
+            // Ensure the completed set is recorded before we decide about ads/rewards
+            try {
+                quotaRepo.markSetFinished()
+            } catch (e: Exception) {
+                Log.e(TAG, "onQuizFinished: Failed to mark set finished", e)
+                // Continue; we still want to navigate to result even if saving failed
+            }
+
+            val interstitialEnabled = rc.getBoolean("interstitial_enabled") && !isPremium.value
+            if (!interstitialEnabled) {
+                _effect.emit(HomeEffect.NavigateToResult(score, total))
+                return@launch
+            }
+            val cap = rc.getLong("interstitial_cap_per_session").toInt()
+            val intervalSec = rc.getLong("inter_session_interval_sec")
+            // Await the suspend tryShow so we only navigate after the ad flow completes
+            val shown = interstitialHelper.tryShow(activity, true, cap, intervalSec)
+            Log.d(TAG, "onQuizFinished: interstitial shown=$shown")
+            _effect.emit(HomeEffect.NavigateToResult(score, total))
+        }
+    }
+
+    /**
+     * 結果画面の「次の3問へ」ボタンがクリックされたときに呼び出される。
+     * 進捗はクイズ完了時に記録済みなので、ここでは最新のクオータを参照して判断するのみ。
+     * 重複実行を防ぐため、isNextSetProcessing フラグで多重呼び出しを排除する。
+     */
+    fun onNextSetClicked(activity: Activity) {
+        Log.d(TAG, "onNextSetClicked: called, isNextSetProcessing=$isNextSetProcessing")
+        // 既に処理中であれば、重複呼び出しを無視する
+        if (isNextSetProcessing) {
+            Log.d(TAG, "onNextSetClicked: Already processing, ignoring duplicate call")
+            return
+        }
+        isNextSetProcessing = true
+        Log.d(TAG, "onNextSetClicked: Set isNextSetProcessing=true")
+
+        viewModelScope.launch {
+            try {
+                Log.d(TAG, "onNextSetClicked: Inside viewModelScope.launch, checking quota to load next set")
+
+                val newQuota = fetchLatestQuota()
+                Log.d(TAG, "onNextSetClicked: fetchLatestQuota returned: $newQuota")
+                if (newQuota?.canStart == true) {
+                    Log.d(TAG, "onNextSetClicked: canStart=true, emitting LoadNextQuizSet effect")
+                    // Optional: show interstitial here as well if desired, but primary interstitial is shown at quiz finish
+                    _effect.emit(HomeEffect.LoadNextQuizSet)
+                } else {
+                    Log.w(TAG, "onNextSetClicked: canStart=false, handling quota exceeded")
+                    if (newQuota != null) {
+                        handleQuotaExceeded(newQuota)
+                    }
+                }
+            } finally {
+                // 処理終了後、フラグをリセット
+                isNextSetProcessing = false
+                Log.d(TAG, "onNextSetClicked: Set isNextSetProcessing=false (in finally)")
+            }
+        }
+    }
+
+    /**
+     * リワード広告視聴による学習回数付与を試みる。
+     * 状態のチェックは、UIの古い状態に依存せず、この関数内でDBの最新状態を直接取得して行う。
+     * @return true: 付与に成功 / false: 付与に失敗
+     */
+    suspend fun tryGrantDailyPlusOne(): Boolean {
         return try {
+            Log.d(TAG, "tryGrantDailyPlusOne: Starting")
+            val currentQuota = fetchLatestQuota()
+            Log.d(TAG, "tryGrantDailyPlusOne: fetchLatestQuota returned: $currentQuota")
+            if (currentQuota == null) {
+                Log.w(TAG, "tryGrantDailyPlusOne: currentQuota is null, returning false")
+                return false
+            }
+            Log.d(TAG, "tryGrantDailyPlusOne: isPremium=${isPremium.value}, rewardedGranted=${currentQuota.rewardedGranted}")
+            if (isPremium.value || currentQuota.rewardedGranted >= 1) {
+                Log.w(TAG, "tryGrantDailyPlusOne: Granting denied (premium or already granted).")
+                return false
+            }
+            Log.d(TAG, "tryGrantDailyPlusOne: Granting reward.")
             quotaRepo.grantByReward()
+            Log.d(TAG, "tryGrantDailyPlusOne: quotaRepo.grantByReward() completed successfully")
+            // grant succeeded — return true; caller (UI) is responsible for navigation
             true
         } catch (t: Throwable) {
+            Log.e(TAG, "tryGrantDailyPlusOne: Failed to grant reward.", t)
             false
         }
     }
 
-    fun onTrainingSetFinished(activity: Activity) {
-        viewModelScope.launch {
-            Log.d(TAG, "onTrainingSetFinished called. Checking for interstitial.")
-            showInterstitialAdIfNeeded(activity) {
-                viewModelScope.launch {
-                    try {
-                        quotaRepo.markSetFinished()
-                    } catch (_: Throwable) {
-                        _effect.emit(HomeEffect.ShowMessage("進捗の保存に失敗しました"))
-                    }
-                }
+    /**
+     * 学習ノルマ上限に到達した際の共通処理。
+     * @param quota 判断の基準となる最新の学習ノルマ状態。
+     */
+    private suspend fun handleQuotaExceeded(quota: QuotaState) {
+        Log.d(TAG, "handleQuotaExceeded: isPremium=${isPremium.value}, rewardedGranted=${quota.rewardedGranted}")
+        if (isPremium.value) {
+            _effect.emit(HomeEffect.ShowMessage("本日の学習上限に達しました。"))
+        } else {
+            if (quota.rewardedGranted < 1) {
+                _effect.emit(HomeEffect.ShowRewardedAdOffer)
+            } else {
+                _effect.emit(HomeEffect.ShowMessage("本日は動画視聴による付与は上限です。"))
             }
         }
     }
 
     /**
-     * This function is now only called when the user CANNOT start a quiz.
+     * インタースティシャル広告の表示を、条件付きで試みる。
      */
-    fun onStartQuizClicked() {
-        viewModelScope.launch {
-            if (isPremium.value) {
-                _effect.emit(HomeEffect.ShowMessage("本日の学習上限に達しました。"))
-            } else {
-                _effect.emit(HomeEffect.ShowRewardedAdOffer)
-            }
-        }
-    }
-
-    fun onNextSetClicked(activity: Activity, canStart: Boolean) {
-        Log.d(TAG, "onNextSetClicked called with canStart: $canStart")
-        viewModelScope.launch {
-            if (canStart) {
-                Log.d(TAG, "canStart is true, showing interstitial ad.")
-                showInterstitialAdIfNeeded(activity) {
-                    viewModelScope.launch {
-                        _effect.emit(HomeEffect.LoadNextQuizSet)
-                    }
-                }
-            } else {
-                Log.d(TAG, "canStart is false, checking for premium status.")
-                if (isPremium.value) {
-                    _effect.emit(HomeEffect.ShowMessage("本日の学習上限に達しました。"))
-                } else {
-                    _effect.emit(HomeEffect.ShowRewardedAdOffer)
-                }
-            }
-        }
-    }
-
     private fun showInterstitialAdIfNeeded(activity: Activity, onAdClosed: () -> Unit) {
         viewModelScope.launch {
-            Log.d(TAG, "showInterstitialAdIfNeeded: Checking conditions...")
-            val enabled = _interstitialEnabled.value && !isPremium.value
-            Log.d(TAG, "showInterstitialAdIfNeeded: isPremium=${isPremium.value}, remoteConfigInterstitialEnabled=${_interstitialEnabled.value}, finalEnabled=$enabled")
-            if (!enabled) {
-                Log.d(TAG, "showInterstitialAdIfNeeded: Interstitial is disabled for this user. Skipping.")
+            val interstitialEnabled = rc.getBoolean("interstitial_enabled") && !isPremium.value
+            Log.d(TAG, "showInterstitialAdIfNeeded: interstitialEnabled=$interstitialEnabled")
+            if (!interstitialEnabled) {
                 onAdClosed()
                 return@launch
             }
-
-            val cap = rc.getLong(KEY_INTERSTITIAL_CAP_PER_SESSION).toInt()
-            val intervalSec = rc.getLong(KEY_INTER_SESSION_INTERVAL_SEC)
-            Log.d(TAG, "showInterstitialAdIfNeeded: Calling helper with cap=$cap, interval=$intervalSec")
-            interstitialHelper.tryShow(
-                activity = activity,
-                enabled = true, // Already checked by this function
-                sessionCap = cap,
-                minIntervalSec = intervalSec,
-                onAdClosed = onAdClosed
-            )
+            val cap = rc.getLong("interstitial_cap_per_session").toInt()
+            val intervalSec = rc.getLong("inter_session_interval_sec")
+            // Use the new suspend tryShow and wait for its result
+            val shown = interstitialHelper.tryShow(activity, true, cap, intervalSec)
+            Log.d(TAG, "showInterstitialAdIfNeeded: tryShow returned: $shown")
+            // Either ad was shown or not—we proceed by invoking the callback to continue flow
+            onAdClosed()
         }
     }
 
-    private val _effect = MutableSharedFlow<HomeEffect>()
-    val effect: SharedFlow<HomeEffect> = _effect.asSharedFlow()
-}
-
-// ---- One-shot effects（必要なら HomeScreen から collect）----
-public sealed interface HomeEffect {
-    object NavigateToQuiz : HomeEffect
-    object LoadNextQuizSet : HomeEffect
-    object ShowRewardedAdOffer : HomeEffect
-    data class ShowMessage(val message: String) : HomeEffect
+    /**
+     * リワード広告視聴完了時に UI から呼び出される。
+     * ViewModel 側で報酬付与を行い、完了後に NavigateToResult Effect を発行する。
+     * これにより、Compose スコープに依存せず、確実に処理が実行される。
+     */
+    fun onRewardedAdEarned() {
+        Log.d(TAG, "onRewardedAdEarned: Starting reward grant from ViewModel")
+        viewModelScope.launch {
+            try {
+                Log.d(TAG, "onRewardedAdEarned: Inside viewModelScope.launch")
+                val ok = tryGrantDailyPlusOne()
+                Log.d(TAG, "onRewardedAdEarned: tryGrantDailyPlusOne returned: $ok")
+                if (ok) {
+                    Log.d(TAG, "onRewardedAdEarned: Reward granted successfully, emitting RewardGrantedAndNavigate")
+                    _effect.emit(HomeEffect.RewardGrantedAndNavigate)
+                } else {
+                    Log.w(TAG, "onRewardedAdEarned: Failed to grant reward")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "onRewardedAdEarned: Exception occurred", e)
+            }
+        }
+    }
 }

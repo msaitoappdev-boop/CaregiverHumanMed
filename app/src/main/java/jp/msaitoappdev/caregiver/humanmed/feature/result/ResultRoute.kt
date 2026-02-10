@@ -20,16 +20,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeEffect
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeVM
-import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+/**
+ * クイズ1セット完了後の結果を表示する画面のルート Composable。
+ * この画面は UI の表示と、ユーザーのアクションを ViewModel に通知する責務のみを持つ。
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultRoute(
@@ -48,8 +50,8 @@ fun ResultRoute(
 
     val saver: ScoreSaverVM = hiltViewModel()
     val homeVm: HomeVM = hiltViewModel()
-    val ui by homeVm.uiState.collectAsStateWithLifecycle()
 
+    // この画面が表示された最初のタイミングで、今回のスコアをDBに保存する
     LaunchedEffect(Unit) {
         saver.save(
             ScoreEntry(
@@ -63,32 +65,33 @@ fun ResultRoute(
 
     val activity = LocalContext.current as Activity
     val context = LocalContext.current
-    var showOffer by remember { mutableStateOf(false) }
+    var showOffer by remember { mutableStateOf(false) } // リワード広告提案ダイアログの表示状態
 
+    // ViewModel からの一度きりのイベント (Effect) を監視・処理する
     LaunchedEffect(homeVm.effect) {
         homeVm.effect.collectLatest {
+            Log.d(TAG, "Effect received: $it")
             when (it) {
                 is HomeEffect.LoadNextQuizSet -> {
+                    // ViewModel の指示に従い、次のクイズセットをロードするために前の画面に戻る
                     Log.d(TAG, "LoadNextQuizSet event received. Navigating back.")
                     navController.previousBackStackEntry?.savedStateHandle?.set("action", "loadNext")
                     navController.popBackStack()
                 }
-                is HomeEffect.ShowRewardedAdOffer -> showOffer = true
+                is HomeEffect.RewardGrantedAndNavigate -> {
+                    // リワード広告視聴後、報酬付与に成功したため、次のクイズセットをロードして遷移する
+                    Log.d(TAG, "RewardGrantedAndNavigate event received. Navigating back to load next set.")
+                    navController.previousBackStackEntry?.savedStateHandle?.set("action", "loadNext")
+                    navController.popBackStack()
+                }
+                is HomeEffect.ShowRewardedAdOffer -> {
+                    Log.d(TAG, "ShowRewardedAdOffer event received. Displaying dialog.")
+                    showOffer = true
+                }
                 is HomeEffect.ShowMessage -> Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
                 else -> Unit
             }
         }
-    }
-
-    val onNextSet: () -> Unit = {
-        Log.d(TAG, "onNextSet clicked. Calling onNextSetClicked on ViewModel with canStart=${ui.canStart}")
-        homeVm.onNextSetClicked(activity, ui.canStart)
-    }
-
-    val onRetrySame: () -> Unit = {
-        Log.d(TAG, "onRetrySame clicked. Setting action 'reset_same_order' to previous back stack entry.")
-        navController.previousBackStackEntry?.savedStateHandle?.set("action", "reset_same_order")
-        navController.popBackStack()
     }
 
     Scaffold(
@@ -127,15 +130,19 @@ fun ResultRoute(
 
             Spacer(Modifier.height(32.dp))
 
+            // 「次の3問へ」ボタンは、クリックイベントを ViewModel に通知するだけ
             Button(
-                onClick = onNextSet,
+                onClick = { homeVm.onNextSetClicked(activity) },
                 modifier = Modifier.fillMaxWidth()
             ) { Text("次の3問へ") }
 
             Spacer(Modifier.height(12.dp))
 
             OutlinedButton(
-                onClick = onRetrySame,
+                onClick = {
+                    navController.previousBackStackEntry?.savedStateHandle?.set("action", "reset_same_order")
+                    navController.popBackStack()
+                },
                 modifier = Modifier.fillMaxWidth()
             ) { Text("同じ順番で復習する") }
 
@@ -172,47 +179,43 @@ fun ResultRoute(
         }
     }
 
+    // ViewModelからの指示があった場合にのみ、リワード広告の提案ダイアログを表示する
     if (showOffer) {
-        val rewardedCountToday by homeVm.rewardedCountToday.collectAsStateWithLifecycle(initialValue = 0)
-        val canWatchReward = rewardedCountToday < 1
-        val scope = rememberCoroutineScope()
-        val quizVm: QuizViewModel = hiltViewModel()
-
-        if (!canWatchReward) {
-            LaunchedEffect(Unit) {
-                showOffer = false
-                Toast.makeText(activity, "本日は動画視聴による付与は上限です", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            AlertDialog(
-                onDismissRequest = { showOffer = false },
-                title = { Text("今日は無料分が終了しました") },
-                text = { Text("動画を視聴すると +1 セット解放できます。視聴しますか？") },
-                confirmButton = {
-                    TextButton(onClick = {
+        var isProcessing by remember { mutableStateOf(false) } // 広告視聴処理中フラグ
+        AlertDialog(
+            onDismissRequest = { if (!isProcessing) showOffer = false },
+            title = { Text("今日は無料分が終了しました") },
+            text = { Text("動画を視聴すると +1 セット解放できます。視聴しますか？") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        isProcessing = true // 処理開始
                         showOffer = false
                         jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper.show(
                             activity = activity,
-                            canShowToday = { canWatchReward },
+                            // このダイアログが表示される時点で、広告表示の可否はViewModelで判断済み。
+                            // そのため、UI側では常にtrueを渡す。
+                            canShowToday = { true },
                             onEarned = { _ ->
-                                scope.launch {
-                                    val ok = homeVm.tryGrantDailyPlusOne()
-                                    if (ok) {
-                                        navController.previousBackStackEntry?.savedStateHandle?.set("action", "loadNext")
-                                        navController.popBackStack()
-                                    }
-                                }
+                                Log.d(TAG, "onEarned callback triggered, calling homeVm.onRewardedAdEarned()")
+                                // Compose スコープに依存せず、ViewModel に直接処理を委譲する
+                                homeVm.onRewardedAdEarned()
                             },
                             onFail = {
+                                isProcessing = false // 処理失敗時、フラグをリセット
                                 Toast.makeText(activity, "動画を読み込めませんでした（ネットワーク/在庫/初期化）", Toast.LENGTH_SHORT).show()
                             }
                         )
-                    }) { Text("動画を視聴して +1 セット") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showOffer = false }) { Text("キャンセル") }
-                }
-            )
-        }
+                    },
+                    enabled = !isProcessing // 処理中はボタン無効化
+                ) { Text("動画を視聴して +1 セット") }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { if (!isProcessing) showOffer = false },
+                    enabled = !isProcessing // 処理中はボタン無効化
+                ) { Text("キャンセル") }
+            }
+        )
     }
 }
