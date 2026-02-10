@@ -24,7 +24,7 @@ import androidx.navigation.NavController
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeEffect
-import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeVM
+import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -48,8 +48,8 @@ fun ResultRoute(
         else      -> "まずは基礎から振り返ってみましょう。"
     }
 
-    val saver: ScoreSaverVM = hiltViewModel()
-    val homeVm: HomeVM = hiltViewModel()
+    val saver: ScoreSaverViewModel = hiltViewModel()
+    val homeVm: HomeViewModel = hiltViewModel()
 
     // この画面が表示された最初のタイミングで、今回のスコアをDBに保存する
     LaunchedEffect(Unit) {

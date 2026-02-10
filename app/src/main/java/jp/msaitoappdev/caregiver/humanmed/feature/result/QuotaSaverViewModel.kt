@@ -6,7 +6,7 @@ import javax.inject.Inject
 import jp.msaitoappdev.caregiver.humanmed.core.session.StudyQuotaRepository
 
 @HiltViewModel
-class QuotaSaverVM @Inject constructor(
+class QuotaSaverViewModel @Inject constructor(
     private val repo: StudyQuotaRepository
 ): ViewModel() {
     suspend fun markFinished() { repo.markSetFinished() }

@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -40,13 +39,13 @@ sealed interface HomeEffect {
  * レースコンディションを避けるため、状態の更新とそれに基づく判断を直列的に行う責務を持つ。
  */
 @HiltViewModel
-class HomeVM @Inject constructor(
+class HomeViewModel @Inject constructor(
     private val quotaRepo: StudyQuotaRepository,
     private val premiumRepo: PremiumRepository,
     private val interstitialHelper: InterstitialHelper
 ) : ViewModel() {
 
-    private val TAG = "HomeVM"
+    private val TAG = "HomeViewModel"
     private val rc: FirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
 
     init {

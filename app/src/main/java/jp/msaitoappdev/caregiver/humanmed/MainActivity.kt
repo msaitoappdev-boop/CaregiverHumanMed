@@ -32,7 +32,7 @@ import jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
 import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizRoute
 import jp.msaitoappdev.caregiver.humanmed.feature.result.ResultRoute
-import jp.msaitoappdev.caregiver.humanmed.feature.premium.PaywallScreen
+import jp.msaitoappdev.caregiver.humanmed.feature.premium.PaywallRoute
 import jp.msaitoappdev.caregiver.humanmed.feature.settings.SettingsRoute
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 
@@ -44,7 +44,7 @@ import jp.msaitoappdev.caregiver.humanmed.feature.review.ReviewRoute
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.rememberCoroutineScope
-import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeVM
+import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeViewModel
 import com.google.firebase.analytics.ktx.analytics
 
 @AndroidEntryPoint
@@ -94,7 +94,7 @@ private fun AppNavHost(interstitialHelper: InterstitialHelper) {
     val navController = rememberNavController()
     NavHost(navController, startDestination = NavRoutes.HOME) {
         composable(NavRoutes.HOME) {
-            HomeScreen(
+            HomeRoute(
                 onStartQuiz = { navController.navigate(NavRoutes.QUIZ) },
                 onUpgrade = { navController.navigate(NavRoutes.PAYWALL) },
                 onOpenSettings = { navController.navigate(NavRoutes.SETTINGS) }
@@ -138,7 +138,7 @@ private fun AppNavHost(interstitialHelper: InterstitialHelper) {
 
             Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { inner ->
                 Box(Modifier.padding(inner)) {
-                    PaywallScreen(
+                    PaywallRoute(
                         onUpgradeClicked = { vm.startPurchase(ctx) }
                     )
                 }
@@ -152,12 +152,12 @@ private fun AppNavHost(interstitialHelper: InterstitialHelper) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
+fun HomeRoute(
     onStartQuiz: () -> Unit,
     onUpgrade: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
-    val vm: HomeVM = hiltViewModel()
+    val vm: HomeViewModel = hiltViewModel()
     val ui by vm.uiState.collectAsStateWithLifecycle()
     var showOffer by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()

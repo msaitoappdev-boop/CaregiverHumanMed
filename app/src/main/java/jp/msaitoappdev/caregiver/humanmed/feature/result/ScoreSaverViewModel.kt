@@ -6,6 +6,6 @@ import javax.inject.Inject
 import jp.msaitoappdev.caregiver.humanmed.domain.usecase.SaveScoreUseCase
 
 @HiltViewModel
-class ScoreSaverVM @Inject constructor(
+class ScoreSaverViewModel @Inject constructor(
     val save: SaveScoreUseCase
 ) : ViewModel()

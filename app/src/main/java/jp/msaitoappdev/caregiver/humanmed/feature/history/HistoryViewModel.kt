@@ -9,7 +9,7 @@ import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 import kotlinx.coroutines.flow.Flow
 
 @HiltViewModel
-class HistoryVM @Inject constructor(
+class HistoryViewModel @Inject constructor(
     private val observeScores: ObserveScoresUseCase,
     private val clearScores: ClearScoresUseCase
 ) : ViewModel() {
