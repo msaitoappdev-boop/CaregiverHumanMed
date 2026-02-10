@@ -38,12 +38,12 @@ import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 
 import androidx.lifecycle.lifecycleScope
 import jp.msaitoappdev.caregiver.humanmed.feature.history.HistoryRoute
+import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeEffect
 import jp.msaitoappdev.caregiver.humanmed.feature.premium.PremiumViewModel
 import jp.msaitoappdev.caregiver.humanmed.feature.review.ReviewRoute
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.rememberCoroutineScope
-import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeEffect
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeVM
 import com.google.firebase.analytics.ktx.analytics
 
@@ -56,12 +56,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         Log.i("MainActivity", "onCreate called")
-        interstitialHelper.preload() // Preload interstitial ad
 
         // ライフサイクルイベントの監視
         lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onResume(owner: LifecycleOwner) {
-                // フォアグラウンド復帰のタイミングで、購入状態を同期
+                // フォアグラウンド復帰のタイミングで、ユーザーの現在の購入状態を最新に同期する
                 lifecycleScope.launch {
                     Log.d("BugHunt-Premium", "MainActivity.onResume: Kicking off refreshFromBilling()")
                     premiumRepo.refreshFromBilling()
@@ -71,21 +70,24 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                AppNavHost()
+                // Pass interstitialHelper into the NavHost so we can preload after consent & MobileAds.initialize
+                AppNavHost(interstitialHelper)
             }
         }
     }
 }
 
 @Composable
-private fun AppNavHost() {
+private fun AppNavHost(interstitialHelper: InterstitialHelper) {
     val activity = LocalContext.current as Activity
 
     LaunchedEffect(Unit) {
-        // UMP同意 → 同意OKの時のみ Ads/Analytics を有効化
+        // UMP同意ダイアログを表示し、ユーザーの選択に応じて広告とアナリティクスを初期化する
         jp.msaitoappdev.caregiver.humanmed.privacy.ConsentManager.obtain(activity) {
             com.google.android.gms.ads.MobileAds.initialize(activity.applicationContext)
             com.google.firebase.ktx.Firebase.analytics.setAnalyticsCollectionEnabled(true)
+            // AdMob is initialized; now safe to preload interstitial ads (consent respected)
+            interstitialHelper.preload()
         }
     }
 
@@ -112,10 +114,7 @@ private fun AppNavHost() {
             val score = backStackEntry.arguments?.getInt("score") ?: 0
             val total = backStackEntry.arguments?.getInt("total") ?: 0
 
-            val homeVm: HomeVM = hiltViewModel()
-            LaunchedEffect(backStackEntry.id) {
-                homeVm.onTrainingSetFinished(activity)
-            }
+            // ResultRouteは表示に専念し、ロジックはViewModelに集約されている
             ResultRoute(navController, score, total)
         }
         composable(NavRoutes.REVIEW) {
@@ -131,14 +130,12 @@ private fun AppNavHost() {
             val snackbarHostState = remember { SnackbarHostState() }
             val scope = rememberCoroutineScope()
 
-            // 任意: ViewModel からのメッセージを Snackbar に表示
             LaunchedEffect(Unit) {
                 vm.uiMessage.collect { msg ->
                     snackbarHostState.showSnackbar(message = msg)
                 }
             }
 
-            // UI 本体
             Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { inner ->
                 Box(Modifier.padding(inner)) {
                     PaywallScreen(
@@ -167,10 +164,11 @@ fun HomeScreen(
     val act = LocalContext.current as Activity
     val context = LocalContext.current
 
+    // ViewModelからの一度きりのイベント(Effect)を監視・処理する
     LaunchedEffect(vm.effect) {
         vm.effect.collect {
             when (it) {
-                is HomeEffect.NavigateToQuiz -> onStartQuiz() // Note: This is now only triggered for rewarded ad flow
+                is HomeEffect.NavigateToQuiz -> onStartQuiz()
                 is HomeEffect.ShowRewardedAdOffer -> showOffer = true
                 is HomeEffect.ShowMessage -> Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
                 else -> Unit
@@ -178,15 +176,17 @@ fun HomeScreen(
         }
     }
 
+    // 通知許可をリクエストするためのランチャー
     val requestPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
+            // 許可された場合、リマインダーをスケジュールする
             ReminderScheduler.scheduleDaily(context, 20, 0)
         }
     }
 
-    var showRationale by remember { mutableStateOf(false) }
+    var showRationale by remember { mutableStateOf(false) } // 通知許可の根拠を示すダイアログの表示状態
 
     Scaffold(
         topBar = {
@@ -205,68 +205,62 @@ fun HomeScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            Button(onClick = {
-                if (ui.canStart) {
-                    onStartQuiz()
-                } else {
-                    vm.onStartQuizClicked()
-                }
-            }) {
+            // このボタンはViewModelにイベントを通知するだけで、UI側ではロジックを持たない
+            Button(onClick = { vm.onStartQuizClicked() }) {
                 Text("クイズを開始")
             }
             Spacer(Modifier.height(12.dp))
             Button(onClick = onUpgrade) { Text("プレミアムへアップグレード") }
             Spacer(Modifier.height(12.dp))
             Button(onClick = {
+                // Android 13 (TIRAMISU) 以降では、通知許可を求めるダイアログを表示
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     showRationale = true
                 } else {
+                    // それ以前のバージョンでは、許可なしでリマインダーを設定
                     ReminderScheduler.scheduleDaily(context, 20, 0)
                 }
             }) { Text("毎日20:00にリマインドを設定") }
         }
     }
 
+    // ViewModelからの指示があった場合にのみ、リワード広告の提案ダイアログを表示する
     if (showOffer) {
-        val rewardedCountToday by vm.rewardedCountToday.collectAsStateWithLifecycle()
-        if (rewardedCountToday >= 1) {
-            LaunchedEffect(Unit) {
-                showOffer = false
-                Toast.makeText(context, "本日は動画視聴による付与は上限です", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            AlertDialog(
-                onDismissRequest = { showOffer = false },
-                title = { Text("今日は無料分が終了しました") },
-                text = { Text("動画を視聴すると +1 セット解放できます。視聴しますか？") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showOffer = false
-                        jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper.show(
-                            activity = act,
-                            canShowToday = { rewardedCountToday < 1 },
-                            onEarned = { _ ->
-                                scope.launch {
-                                    val ok = vm.tryGrantDailyPlusOne()
-                                    if (ok) {
-                                        // After getting a reward, we want to start the quiz.
-                                        // The NavigateToQuiz effect is now suitable for this.
-                                        vm.onStartQuizClicked()
-                                    }
+        AlertDialog(
+            onDismissRequest = { showOffer = false },
+            title = { Text("今日は無料分が終了しました") },
+            text = { Text("動画を視聴すると +1 セット解放できます。視聴しますか？") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showOffer = false
+                    jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper.show(
+                        activity = act,
+                        // このダイアログが表示される時点で、広告表示の可否はViewModelで判断済み。
+                        // そのため、UI側では常にtrueを渡す。
+                        canShowToday = { true },
+                        onEarned = { _ ->
+                            scope.launch {
+                                val ok = vm.tryGrantDailyPlusOne()
+                                if (ok) {
+                                    // 報酬獲得後、再度クイズ開始ロジックをトリガーする
+                                    // これにより、ViewModelは最新の状態でクイズ開始可否を判断する
+                                    vm.onStartQuizClicked()
                                 }
-                            },
-                            onFail = {
-                                Toast.makeText(context, "動画を読み込めませんでした（ネットワーク/在庫/初期化）", Toast.LENGTH_SHORT).show()
                             }
-                        )
-                    }) { Text("動画を視聴して +1 セット") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showOffer = false }) { Text("キャンセル") }
-                }
-            )
-        }
+                        },
+                        onFail = {
+                            Toast.makeText(context, "動画を読み込めませんでした（ネットワーク/在庫/初期化）", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }) { Text("動画を視聴して +1 セット") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showOffer = false }) { Text("キャンセル") }
+            }
+        )
     }
+
+    // 通知許可の根拠を示すダイアログ
     if (showRationale) {
         AlertDialog(
             onDismissRequest = { showRationale = false },

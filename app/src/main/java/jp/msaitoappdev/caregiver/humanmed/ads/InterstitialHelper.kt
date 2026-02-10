@@ -14,8 +14,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.resume
 
 @Singleton
 class InterstitialHelper @Inject constructor(
@@ -52,9 +54,8 @@ class InterstitialHelper @Inject constructor(
         activity: Activity,
         enabled: Boolean,
         sessionCap: Int,
-        minIntervalSec: Long,
-        onAdClosed: () -> Unit
-    ) {
+        minIntervalSec: Long
+    ): Boolean {
         Log.d(TAG, "tryShow called with: enabled=$enabled, sessionCap=$sessionCap, minIntervalSec=$minIntervalSec")
         val shownCount = repository.shownCountThisSession.first()
         val lastShown = repository.lastShownEpochSec.first()
@@ -62,30 +63,33 @@ class InterstitialHelper @Inject constructor(
 
         if (!enabled) {
             Log.d(TAG, "Ad not shown: Remote config is disabled.")
-            onAdClosed()
-            return
+            return false
         }
         if (ad == null) {
             Log.d(TAG, "Ad not shown: Not loaded yet. Calling preload() for next time.")
             preload()
-            onAdClosed()
-            return
+            return false
         }
         if (sessionCap > 0 && shownCount >= sessionCap) {
             Log.d(TAG, "Ad not shown: Session cap reached (count=$shownCount, cap=$sessionCap).")
-            onAdClosed()
-            return
+            return false
         }
         val now = System.currentTimeMillis() / 1000
         if (minIntervalSec > 0 && (now - lastShown) < minIntervalSec) {
             Log.d(TAG, "Ad not shown: Minimum interval not reached (now=$now, lastShown=$lastShown, interval=$minIntervalSec).")
-            onAdClosed()
-            return
+            return false
         }
 
         Log.d(TAG, "Ad is ready to be shown.")
-        ad?.let {
-            it.fullScreenContentCallback = object : FullScreenContentCallback() {
+        return suspendCancellableCoroutine { cont ->
+            val currentAd = ad
+            if (currentAd == null) {
+                Log.e(TAG, "Ad became null unexpectedly before show().")
+                cont.resume(false)
+                return@suspendCancellableCoroutine
+            }
+
+            currentAd.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
                     scope.launch {
                         repository.updateLastShownTimestamp()
@@ -93,14 +97,14 @@ class InterstitialHelper @Inject constructor(
                     ad = null // 使い捨て
                     Log.d(TAG, "Interstitial dismissed")
                     preload()
-                    onAdClosed()
+                    if (cont.isActive) cont.resume(true)
                 }
 
                 override fun onAdFailedToShowFullScreenContent(p0: com.google.android.gms.ads.AdError) {
                     ad = null
                     Log.w(TAG, "Interstitial failed to show: ${p0.code} - ${p0.message}")
                     preload()
-                    onAdClosed()
+                    if (cont.isActive) cont.resume(false)
                 }
 
                 override fun onAdShowedFullScreenContent() {
@@ -110,11 +114,19 @@ class InterstitialHelper @Inject constructor(
                     }
                 }
             }
-            it.show(activity)
-        } ?: run {
-            // Fallback in case 'ad' becomes null between the check and here.
-            Log.e(TAG, "Ad became null unexpectedly before show().")
-            onAdClosed()
+            try {
+                currentAd.show(activity)
+            } catch (t: Throwable) {
+                Log.e(TAG, "Exception while showing interstitial", t)
+                ad = null
+                preload()
+                if (cont.isActive) cont.resume(false)
+            }
+
+            cont.invokeOnCancellation {
+                // In case coroutine is cancelled, ensure we don't leak callback references
+                Log.d(TAG, "tryShow coroutine cancelled")
+            }
         }
     }
 }
