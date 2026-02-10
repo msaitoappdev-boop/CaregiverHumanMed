@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryRoute(navController: NavController) {
-    val vm: HistoryVM = hiltViewModel()
+    val vm: HistoryViewModel = hiltViewModel()
     var list by remember { mutableStateOf<List<ScoreEntry>>(emptyList()) }
 
     // 履歴を購読

@@ -10,11 +10,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
-import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeVM
+import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeViewModel
 
 /**
  * クイズ実行画面のルート Composable。
- * 課金状態などの外部の状態は [HomeVM] から受け取り、UIロジックに集中する。
+ * 課金状態などの外部の状態は [HomeViewModel] から受け取り、UIロジックに集中する。
  */
 @Composable
 fun QuizRoute(navController: NavController) {
@@ -23,8 +23,8 @@ fun QuizRoute(navController: NavController) {
     val vm: QuizViewModel = hiltViewModel()
     val state by vm.uiState.collectAsStateWithLifecycle()
 
-    // アプリ全体の状態を管理する HomeVM から、UI状態を取得
-    val homeVm: HomeVM = hiltViewModel()
+    // アプリ全体の状態を管理する HomeViewModel から、UI状態を取得
+    val homeVm: HomeViewModel = hiltViewModel()
     val homeState by homeVm.uiState.collectAsStateWithLifecycle()
 
     val backStackEntry = navController.currentBackStackEntry
