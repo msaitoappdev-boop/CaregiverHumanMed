@@ -1,26 +1,45 @@
 package jp.msaitoappdev.caregiver.humanmed.notifications
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import androidx.work.ListenableWorker
-import androidx.work.WorkerParameters
+import androidx.work.testing.TestListenableWorkerBuilder
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito.*
+import org.junit.runner.RunWith
+import org.mockito.Mockito.mockStatic
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class DailyReminderWorkerTest {
 
-    private val mockContext = mock(android.content.Context::class.java)
-    private val mockWorkerParams = mock(WorkerParameters::class.java)
-    private val worker = DailyReminderWorker(mockContext, mockWorkerParams)
+    private lateinit var context: Context
+
+    @Before
+    fun setUp() {
+        context = ApplicationProvider.getApplicationContext()
+    }
 
     @Test
-    fun `test do work`() {
-        // Arrange
-        `when`(worker.doWork()).thenReturn(ListenableWorker.Result.success())
+    fun `doWork should show notification and return success`() {
+        // ReminderNotifier objectの静的メソッド呼び出しをモックする
+        mockStatic(ReminderNotifier::class.java).use { mockedNotifier ->
+            val worker = TestListenableWorkerBuilder<DailyReminderWorker>(context).build()
+            runBlocking {
+                // Act: テスト対象のdoWork()を実際に呼び出す
+                val result = worker.doWork()
 
-        // Act
-        val result = worker.doWork()
+                // Assert
+                // 1. ReminderNotifier.show()が正しいcontextで1回呼ばれたことを検証
+                mockedNotifier.verify {
+                    ReminderNotifier.show(worker.applicationContext)
+                }
 
-        // Assert
-        assertEquals(ListenableWorker.Result.success(), result)
+                // 2. Workerの実行結果がsuccessであることを検証
+                assertEquals(ListenableWorker.Result.success(), result)
+            }
+        }
     }
 }

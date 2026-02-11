@@ -45,7 +45,7 @@ import kotlin.coroutines.resume
  * - RTDN + SubscriptionsV2 を真実源に（TODO）
  */
 @Singleton
-class BillingManager @Inject constructor(
+open class BillingManager @Inject constructor(
     @ApplicationContext private val appContext: Context
 ) : PurchasesUpdatedListener {
 
@@ -70,7 +70,7 @@ class BillingManager @Inject constructor(
 
     // ---- 外部公開：権利（isPremium）と購入イベント ----------------------------
     private val _isPremium = MutableStateFlow(loadPremiumFromPrefs())
-    val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
+    open val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
 
     sealed interface PurchaseEvent {
         data class Success(val purchase: Purchase) : PurchaseEvent
@@ -86,7 +86,7 @@ class BillingManager @Inject constructor(
 
     // ---- Public API ----------------------------------------------------------
 
-    suspend fun connect(): Boolean = suspendCancellableCoroutine { cont ->
+    open suspend fun connect(): Boolean = suspendCancellableCoroutine { cont ->
         if (isConnected) { cont.resume(true); return@suspendCancellableCoroutine }
         client.startConnection(object : BillingClientStateListener {
             override fun onBillingServiceDisconnected() {
@@ -106,7 +106,7 @@ class BillingManager @Inject constructor(
     /**
      * 無引数版：固定 Product ID（Console と同期）で ProductDetails を取得。
      */
-    suspend fun getProductDetails(): ProductDetails? {
+    open suspend fun getProductDetails(): ProductDetails? {
         if (!isConnected && !connect()) return null
         cachedProductDetails?.let { return it.takeIf { d -> d.productId == BillingConfig.PRODUCT_ID_PREMIUM_MONTHLY } }
 
@@ -133,7 +133,7 @@ class BillingManager @Inject constructor(
         }
     }
 
-    fun launchPurchase(activity: Activity, productDetails: ProductDetails) {
+    open fun launchPurchase(activity: Activity, productDetails: ProductDetails) {
         // basePlanId のみで特典を選択（より安全な方法は offerId も指定すること）
         val offerToken = productDetails.subscriptionOfferDetails
             ?.firstOrNull { it.basePlanId == BillingConfig.BASE_PLAN_ID_MONTHLY }
@@ -210,7 +210,7 @@ class BillingManager @Inject constructor(
      * 端末ローカルの所有状況から isPremium を更新。
      * 本番運用ではサーバー（SubscriptionsV2 + RTDN）を真実源にして二段チェックを推奨。
      */
-    suspend fun refreshEntitlements() {
+    open suspend fun refreshEntitlements() {
         if (!isConnected && !connect()) return
 
         val owned = suspendCancellableCoroutine<List<Purchase>> { continuation ->
@@ -242,7 +242,7 @@ class BillingManager @Inject constructor(
         _isPremium.value = premium
     }
 
-    fun setPremiumForDebug(enabled: Boolean) {
+    open fun setPremiumForDebug(enabled: Boolean) {
         savePremiumToPrefs(enabled)
         _isPremium.value = enabled
     }

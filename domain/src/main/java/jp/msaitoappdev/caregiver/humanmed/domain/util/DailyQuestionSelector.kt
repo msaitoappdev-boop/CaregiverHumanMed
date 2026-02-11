@@ -3,8 +3,8 @@ package jp.msaitoappdev.caregiver.humanmed.domain.util
 import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
 import kotlin.random.Random
 
-class DailyQuestionSelector {
-    fun select(
+open class DailyQuestionSelector {
+    open fun select(
         all: List<Question>,
         count: Int = 3
     ): List<Question> {

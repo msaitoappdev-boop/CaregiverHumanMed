@@ -2,24 +2,25 @@ package jp.msaitoappdev.caregiver.humanmed.data.score
 
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertNotNull
 import org.junit.Test
-import org.mockito.Mockito.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
 
 class ScoreRepositoryImplTest {
 
-    private val mockDataSource = mock(ScoreDataSource::class.java)
-    private val repository = ScoreRepositoryImpl(mockDataSource)
+    private val mockDao = mock(ScoreDao::class.java)
+    private val repository = ScoreRepositoryImpl(mockDao)
 
     @Test
-    fun `test save score`() = runBlocking {
+    fun `test add score`() = runBlocking {
         // Arrange
-        val scoreEntry = ScoreEntry(/* Add mock data here */)
+        val scoreEntry = ScoreEntry(timestamp = System.currentTimeMillis(), score = 1, total = 3, percent = 33)
 
         // Act
-        repository.save(scoreEntry)
+        repository.add(scoreEntry)
 
         // Assert
-        verify(mockDataSource, times(1)).save(scoreEntry)
+        verify(mockDao, times(1)).insert(scoreEntry.toEntity())
     }
 }

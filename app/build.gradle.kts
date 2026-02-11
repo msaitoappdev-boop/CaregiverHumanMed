@@ -125,5 +125,8 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:4.11.0")
+    testImplementation("org.mockito:mockito-inline:5.2.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    testImplementation("androidx.work:work-testing:2.9.1")
+    testImplementation("org.robolectric:robolectric:4.11.1")
 }
