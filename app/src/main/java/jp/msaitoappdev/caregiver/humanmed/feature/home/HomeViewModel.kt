@@ -1,7 +1,6 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.home
 
 import android.app.Activity
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
@@ -45,7 +44,6 @@ class HomeViewModel @Inject constructor(
     private val interstitialHelper: InterstitialHelper
 ) : ViewModel() {
 
-    private val TAG = "HomeViewModel"
     private val rc: FirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
 
     init {
@@ -65,7 +63,6 @@ class HomeViewModel @Inject constructor(
     private val quotaFlow: StateFlow<QuotaState?> = isPremium.flatMapLatest { isPremium ->
         val limitKey = if (isPremium) "premium_daily_sets" else "free_daily_sets"
         val limit = rc.getLong(limitKey).toInt()
-        Log.d(TAG, "New quota limit observed. isPremium: $isPremium, limit: $limit")
         quotaRepo.observe { limit }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -115,7 +112,6 @@ class HomeViewModel @Inject constructor(
     fun onStartQuizClicked() {
         viewModelScope.launch {
             val currentQuota = quotaFlow.first() ?: return@launch
-            Log.d(TAG, "onStartQuizClicked: canStart=${currentQuota.canStart}")
             if (currentQuota.canStart) {
                 _effect.emit(HomeEffect.NavigateToQuiz)
             } else {
@@ -132,13 +128,9 @@ class HomeViewModel @Inject constructor(
     fun onQuizFinished(activity: Activity, score: Int, total: Int, isReview: Boolean) {
         viewModelScope.launch {
             if (!isReview) {
-                Log.d(TAG, "onQuizFinished: Marking set as finished then checking whether to show interstitial")
-                // Ensure the completed set is recorded before we decide about ads/rewards
                 try {
                     quotaRepo.markSetFinished()
                 } catch (e: Exception) {
-                    Log.e(TAG, "onQuizFinished: Failed to mark set finished", e)
-                    // Continue; we still want to navigate to result even if saving failed
                 }
             }
 
@@ -149,9 +141,7 @@ class HomeViewModel @Inject constructor(
             }
             val cap = rc.getLong("interstitial_cap_per_session").toInt()
             val intervalSec = rc.getLong("inter_session_interval_sec")
-            // Await the suspend tryShow so we only navigate after the ad flow completes
-            val shown = interstitialHelper.tryShow(activity, true, cap, intervalSec)
-            Log.d(TAG, "onQuizFinished: interstitial shown=$shown")
+            interstitialHelper.tryShow(activity, true, cap, intervalSec)
             _effect.emit(HomeEffect.NavigateToResult(score, total))
         }
     }
@@ -162,35 +152,23 @@ class HomeViewModel @Inject constructor(
      * 重複実行を防ぐため、isNextSetProcessing フラグで多重呼び出しを排除する。
      */
     fun onNextSetClicked(activity: Activity) {
-        Log.d(TAG, "onNextSetClicked: called, isNextSetProcessing=$isNextSetProcessing")
-        // 既に処理中であれば、重複呼び出しを無視する
         if (isNextSetProcessing) {
-            Log.d(TAG, "onNextSetClicked: Already processing, ignoring duplicate call")
             return
         }
         isNextSetProcessing = true
-        Log.d(TAG, "onNextSetClicked: Set isNextSetProcessing=true")
 
         viewModelScope.launch {
             try {
-                Log.d(TAG, "onNextSetClicked: Inside viewModelScope.launch, checking quota to load next set")
-
                 val newQuota = fetchLatestQuota()
-                Log.d(TAG, "onNextSetClicked: fetchLatestQuota returned: $newQuota")
                 if (newQuota?.canStart == true) {
-                    Log.d(TAG, "onNextSetClicked: canStart=true, emitting LoadNextQuizSet effect")
-                    // Optional: show interstitial here as well if desired, but primary interstitial is shown at quiz finish
                     _effect.emit(HomeEffect.LoadNextQuizSet)
                 } else {
-                    Log.w(TAG, "onNextSetClicked: canStart=false, handling quota exceeded")
                     if (newQuota != null) {
                         handleQuotaExceeded(newQuota)
                     }
                 }
             } finally {
-                // 処理終了後、フラグをリセット
                 isNextSetProcessing = false
-                Log.d(TAG, "onNextSetClicked: Set isNextSetProcessing=false (in finally)")
             }
         }
     }
@@ -202,25 +180,16 @@ class HomeViewModel @Inject constructor(
      */
     suspend fun tryGrantDailyPlusOne(): Boolean {
         return try {
-            Log.d(TAG, "tryGrantDailyPlusOne: Starting")
             val currentQuota = fetchLatestQuota()
-            Log.d(TAG, "tryGrantDailyPlusOne: fetchLatestQuota returned: $currentQuota")
             if (currentQuota == null) {
-                Log.w(TAG, "tryGrantDailyPlusOne: currentQuota is null, returning false")
                 return false
             }
-            Log.d(TAG, "tryGrantDailyPlusOne: isPremium=${isPremium.value}, rewardedGranted=${currentQuota.rewardedGranted}")
             if (isPremium.value || currentQuota.rewardedGranted >= 1) {
-                Log.w(TAG, "tryGrantDailyPlusOne: Granting denied (premium or already granted).")
                 return false
             }
-            Log.d(TAG, "tryGrantDailyPlusOne: Granting reward.")
             quotaRepo.grantByReward()
-            Log.d(TAG, "tryGrantDailyPlusOne: quotaRepo.grantByReward() completed successfully")
-            // grant succeeded — return true; caller (UI) is responsible for navigation
             true
         } catch (t: Throwable) {
-            Log.e(TAG, "tryGrantDailyPlusOne: Failed to grant reward.", t)
             false
         }
     }
@@ -230,7 +199,6 @@ class HomeViewModel @Inject constructor(
      * @param quota 判断の基準となる最新の学習ノルマ状態。
      */
     private suspend fun handleQuotaExceeded(quota: QuotaState) {
-        Log.d(TAG, "handleQuotaExceeded: isPremium=${isPremium.value}, rewardedGranted=${quota.rewardedGranted}")
         if (isPremium.value) {
             _effect.emit(HomeEffect.ShowMessage("本日の学習上限に達しました。"))
         } else {
@@ -248,17 +216,13 @@ class HomeViewModel @Inject constructor(
     private fun showInterstitialAdIfNeeded(activity: Activity, onAdClosed: () -> Unit) {
         viewModelScope.launch {
             val interstitialEnabled = rc.getBoolean("interstitial_enabled") && !isPremium.value
-            Log.d(TAG, "showInterstitialAdIfNeeded: interstitialEnabled=$interstitialEnabled")
             if (!interstitialEnabled) {
                 onAdClosed()
                 return@launch
             }
             val cap = rc.getLong("interstitial_cap_per_session").toInt()
             val intervalSec = rc.getLong("inter_session_interval_sec")
-            // Use the new suspend tryShow and wait for its result
-            val shown = interstitialHelper.tryShow(activity, true, cap, intervalSec)
-            Log.d(TAG, "showInterstitialAdIfNeeded: tryShow returned: $shown")
-            // Either ad was shown or not—we proceed by invoking the callback to continue flow
+            interstitialHelper.tryShow(activity, true, cap, intervalSec)
             onAdClosed()
         }
     }
@@ -269,20 +233,13 @@ class HomeViewModel @Inject constructor(
      * これにより、Compose スコープに依存せず、確実に処理が実行される。
      */
     fun onRewardedAdEarned() {
-        Log.d(TAG, "onRewardedAdEarned: Starting reward grant from ViewModel")
         viewModelScope.launch {
             try {
-                Log.d(TAG, "onRewardedAdEarned: Inside viewModelScope.launch")
                 val ok = tryGrantDailyPlusOne()
-                Log.d(TAG, "onRewardedAdEarned: tryGrantDailyPlusOne returned: $ok")
                 if (ok) {
-                    Log.d(TAG, "onRewardedAdEarned: Reward granted successfully, emitting RewardGrantedAndNavigate")
                     _effect.emit(HomeEffect.RewardGrantedAndNavigate)
-                } else {
-                    Log.w(TAG, "onRewardedAdEarned: Failed to grant reward")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "onRewardedAdEarned: Exception occurred", e)
             }
         }
     }

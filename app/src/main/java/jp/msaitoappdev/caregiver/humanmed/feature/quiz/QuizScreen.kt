@@ -1,6 +1,5 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.quiz
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,9 +26,6 @@ fun QuizScreen(
     canShowFullExplanation: Boolean = true,
     onUpgrade: () -> Unit = {}
 ) {
-    val TAG = "QuizScreen"
-    Log.d(TAG, "Recomposing. isLoading=${state.isLoading}, currentIndex=${state.currentIndex}")
-
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
