@@ -38,8 +38,18 @@ class QuizViewModel @Inject constructor(
     private val shuffleQuestions: Boolean = true
     private val shuffleOptions: Boolean = true
 
+    private var isReviewSession: Boolean = false
+
     init {
         loadAndPrepare(reshuffle = false)
+    }
+
+    fun processEntryPoint(action: String?, reshuffle: Boolean?, isReview: Boolean?) {
+        this.isReviewSession = isReview ?: false
+        when {
+            action == "loadNext" -> loadNextSet()
+            reshuffle != null -> reset(reshuffle)
+        }
     }
 
     private fun getSetSize(): Int {
@@ -199,4 +209,6 @@ class QuizViewModel @Inject constructor(
             )
         }
     }
+
+    fun isReviewSession(): Boolean = isReviewSession
 }

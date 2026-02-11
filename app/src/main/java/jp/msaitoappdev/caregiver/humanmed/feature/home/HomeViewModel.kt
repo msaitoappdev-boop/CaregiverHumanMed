@@ -129,15 +129,17 @@ class HomeViewModel @Inject constructor(
      * ViewModel は必要に応じてインタースティシャル広告を表示し、
      * 表示完了後に `HomeEffect.NavigateToResult` を発行する。
      */
-    fun onQuizFinished(activity: Activity, score: Int, total: Int) {
+    fun onQuizFinished(activity: Activity, score: Int, total: Int, isReview: Boolean) {
         viewModelScope.launch {
-            Log.d(TAG, "onQuizFinished: Marking set as finished then checking whether to show interstitial")
-            // Ensure the completed set is recorded before we decide about ads/rewards
-            try {
-                quotaRepo.markSetFinished()
-            } catch (e: Exception) {
-                Log.e(TAG, "onQuizFinished: Failed to mark set finished", e)
-                // Continue; we still want to navigate to result even if saving failed
+            if (!isReview) {
+                Log.d(TAG, "onQuizFinished: Marking set as finished then checking whether to show interstitial")
+                // Ensure the completed set is recorded before we decide about ads/rewards
+                try {
+                    quotaRepo.markSetFinished()
+                } catch (e: Exception) {
+                    Log.e(TAG, "onQuizFinished: Failed to mark set finished", e)
+                    // Continue; we still want to navigate to result even if saving failed
+                }
             }
 
             val interstitialEnabled = rc.getBoolean("interstitial_enabled") && !isPremium.value

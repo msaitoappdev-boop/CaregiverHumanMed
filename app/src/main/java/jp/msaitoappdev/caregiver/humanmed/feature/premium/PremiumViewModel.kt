@@ -3,15 +3,21 @@ package jp.msaitoappdev.caregiver.humanmed.feature.premium
 import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.billingclient.api.ProductDetails
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+data class PaywallUiState(
+    val isPremium: Boolean = false
+)
+
+sealed interface PaywallEvent {
+    data class ShowMessage(val message: String) : PaywallEvent
+}
 
 @HiltViewModel
 class PremiumViewModel @Inject constructor(
@@ -19,27 +25,22 @@ class PremiumViewModel @Inject constructor(
     private val premiumRepo: PremiumRepository
 ) : ViewModel() {
 
-    // UIに公開する isPremium は、BillingManager からのリアルタイムの値を直接参照する
-    val isPremium: StateFlow<Boolean> = billing.isPremium
+    val uiState: StateFlow<PaywallUiState> = premiumRepo.isPremium
+        .map { PaywallUiState(isPremium = it) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = PaywallUiState()
+        )
 
-    private val _uiMessage = MutableSharedFlow<String>(extraBufferCapacity = 4)
-    val uiMessage: SharedFlow<String> = _uiMessage.asSharedFlow()
+    private val _event = MutableSharedFlow<PaywallEvent>()
+    val event: SharedFlow<PaywallEvent> = _event.asSharedFlow()
 
-    init {
-        // BillingManager の isPremium の変更を監視し、DataStore への永続化を指示する
-        // これにより、UIの即時性と、アプリ再起動後の状態復元を両立する
-        viewModelScope.launch {
-            billing.isPremium.collect { isPremiumValue ->
-                premiumRepo.savePremiumStatus(isPremiumValue)
-            }
-        }
-    }
-
-    fun startPurchase(activity: Activity) {
+    fun onPurchaseClick(activity: Activity) {
         viewModelScope.launch {
             val productDetails = billing.getProductDetails()
             if (productDetails == null) {
-                _uiMessage.emit("商品情報を取得できませんでした")
+                _event.emit(PaywallEvent.ShowMessage("商品情報を取得できませんでした"))
                 return@launch
             }
             billing.launchPurchase(activity, productDetails)
