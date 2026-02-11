@@ -122,4 +122,11 @@ dependencies {
     // AdMob / UMP
     implementation("com.google.android.gms:play-services-ads:22.6.0")
     implementation("com.google.android.ump:user-messaging-platform:2.2.0")
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:4.11.0")
+    testImplementation("org.mockito:mockito-inline:5.2.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    testImplementation("androidx.work:work-testing:2.9.1")
+    testImplementation("org.robolectric:robolectric:4.11.1")
 }

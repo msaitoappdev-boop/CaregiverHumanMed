@@ -61,7 +61,7 @@ class StudyQuotaRepository @Inject constructor(
             val nextUsed = currentUsed + 1
             p[P.USED_SETS] = nextUsed
             p[P.LAST_UPDATED_MS] = System.currentTimeMillis()
-            Log.d("BugHunt-Quota", "markSetFinished: usedSets updated to $nextUsed")
+            // Log.d("BugHunt-Quota", "markSetFinished: usedSets updated to $nextUsed")
         }
     }
 
