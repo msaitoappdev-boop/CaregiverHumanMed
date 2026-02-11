@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -39,7 +40,6 @@ import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import androidx.lifecycle.lifecycleScope
 import jp.msaitoappdev.caregiver.humanmed.feature.history.HistoryRoute
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeEffect
-import jp.msaitoappdev.caregiver.humanmed.feature.premium.PremiumViewModel
 import jp.msaitoappdev.caregiver.humanmed.feature.review.ReviewRoute
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -125,24 +125,7 @@ private fun AppNavHost(interstitialHelper: InterstitialHelper) {
         }
 
         composable(NavRoutes.PAYWALL) {
-            val vm: PremiumViewModel = hiltViewModel()
-            val ctx = LocalContext.current as Activity
-            val snackbarHostState = remember { SnackbarHostState() }
-            val scope = rememberCoroutineScope()
-
-            LaunchedEffect(Unit) {
-                vm.uiMessage.collect { msg ->
-                    snackbarHostState.showSnackbar(message = msg)
-                }
-            }
-
-            Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { inner ->
-                Box(Modifier.padding(inner)) {
-                    PaywallRoute(
-                        onUpgradeClicked = { vm.startPurchase(ctx) }
-                    )
-                }
-            }
+            PaywallRoute()
         }
         composable(NavRoutes.SETTINGS) {
             SettingsRoute(onBack = { navController.popBackStack() })
@@ -187,14 +170,15 @@ fun HomeRoute(
     }
 
     var showRationale by remember { mutableStateOf(false) } // 通知許可の根拠を示すダイアログの表示状態
+    val rewardedAdError = stringResource(id = R.string.common_error_rewarded_ad)
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("ホーム") },
+                title = { Text(stringResource(R.string.home_title)) },
                 actions = {
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Filled.Settings, contentDescription = "設定")
+                        Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings_title))
                     }
                 }
             )
@@ -207,10 +191,10 @@ fun HomeRoute(
         ) {
             // このボタンはViewModelにイベントを通知するだけで、UI側ではロジックを持たない
             Button(onClick = { vm.onStartQuizClicked() }) {
-                Text("クイズを開始")
+                Text(stringResource(R.string.home_start_quiz))
             }
             Spacer(Modifier.height(12.dp))
-            Button(onClick = onUpgrade) { Text("プレミアムへアップグレード") }
+            Button(onClick = onUpgrade) { Text(stringResource(R.string.home_upgrade_to_premium)) }
             Spacer(Modifier.height(12.dp))
             Button(onClick = {
                 // Android 13 (TIRAMISU) 以降では、通知許可を求めるダイアログを表示
@@ -220,7 +204,7 @@ fun HomeRoute(
                     // それ以前のバージョンでは、許可なしでリマインダーを設定
                     ReminderScheduler.scheduleDaily(context, 20, 0)
                 }
-            }) { Text("毎日20:00にリマインドを設定") }
+            }) { Text(stringResource(R.string.home_set_reminder)) }
         }
     }
 
@@ -228,8 +212,8 @@ fun HomeRoute(
     if (showOffer) {
         AlertDialog(
             onDismissRequest = { showOffer = false },
-            title = { Text("今日は無料分が終了しました") },
-            text = { Text("動画を視聴すると +1 セット解放できます。視聴しますか？") },
+            title = { Text(stringResource(R.string.dialog_rewarded_ad_title)) },
+            text = { Text(stringResource(R.string.dialog_rewarded_ad_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showOffer = false
@@ -249,13 +233,13 @@ fun HomeRoute(
                             }
                         },
                         onFail = {
-                            Toast.makeText(context, "動画を読み込めませんでした（ネットワーク/在庫/初期化）", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, rewardedAdError, Toast.LENGTH_SHORT).show()
                         }
                     )
-                }) { Text("動画を視聴して +1 セット") }
+                }) { Text(stringResource(R.string.dialog_rewarded_ad_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showOffer = false }) { Text("キャンセル") }
+                TextButton(onClick = { showOffer = false }) { Text(stringResource(R.string.dialog_rewarded_ad_dismiss)) }
             }
         )
     }
@@ -264,18 +248,18 @@ fun HomeRoute(
     if (showRationale) {
         AlertDialog(
             onDismissRequest = { showRationale = false },
-            title = { Text("通知の許可が必要です") },
-            text = { Text("毎日20:00に『今日の3問』をお知らせします。通知を許可してください。") },
+            title = { Text(stringResource(R.string.dialog_notification_permission_title)) },
+            text = { Text(stringResource(R.string.dialog_notification_permission_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showRationale = false
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         requestPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
-                }) { Text("許可する") }
+                }) { Text(stringResource(R.string.dialog_permission_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showRationale = false }) { Text("後で") }
+                TextButton(onClick = { showRationale = false }) { Text(stringResource(R.string.dialog_permission_dismiss)) }
             }
         )
     }
