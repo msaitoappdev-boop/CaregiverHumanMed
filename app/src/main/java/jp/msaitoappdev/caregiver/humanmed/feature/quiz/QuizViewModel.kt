@@ -1,6 +1,5 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.quiz
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.ktx.Firebase
@@ -25,7 +24,6 @@ class QuizViewModel @Inject constructor(
     private val getNextQuestions: GetNextQuestionsUseCase
 ) : ViewModel() {
 
-    private val TAG = "QuizViewModel"
     private val _uiState = MutableStateFlow(QuizUiState())
     val uiState: StateFlow<QuizUiState> = _uiState.asStateFlow()
 
@@ -72,7 +70,6 @@ class QuizViewModel @Inject constructor(
     }
 
     fun loadNextSet() {
-        Log.d(TAG, "loadNextSet: Received request. Updating state to loading.")
         _uiState.update { it.copy(isLoading = true, finished = false) }
         viewModelScope.launch {
             val setSize = getSetSize()
@@ -82,7 +79,6 @@ class QuizViewModel @Inject constructor(
             currentOriginalQuestions = nextQuestions
             seenQuestionIds.addAll(nextQuestions.map { it.id })
             processAndStart(nextQuestions, true)
-            Log.d(TAG, "loadNextSet: Processing finished.")
         }
     }
 
