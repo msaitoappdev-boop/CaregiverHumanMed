@@ -2,10 +2,9 @@ package jp.msaitoappdev.caregiver.humanmed.feature.quiz
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.remoteconfig.ktx.remoteConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
+import jp.msaitoappdev.caregiver.humanmed.domain.repository.RemoteConfigRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.usecase.GetDailyQuestionsUseCase
 import jp.msaitoappdev.caregiver.humanmed.domain.usecase.GetNextQuestionsUseCase
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +20,8 @@ import javax.inject.Inject
 @HiltViewModel
 class QuizViewModel @Inject constructor(
     private val getDailyQuestions: GetDailyQuestionsUseCase,
-    private val getNextQuestions: GetNextQuestionsUseCase
+    private val getNextQuestions: GetNextQuestionsUseCase,
+    private val remoteConfigRepo: RemoteConfigRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QuizUiState())
@@ -51,7 +51,7 @@ class QuizViewModel @Inject constructor(
     }
 
     private fun getSetSize(): Int {
-        return Firebase.remoteConfig.getLong("set_size").toInt().coerceAtLeast(1)
+        return remoteConfigRepo.getLong("set_size").toInt().coerceAtLeast(1)
     }
 
     private fun loadAndPrepare(reshuffle: Boolean) {
