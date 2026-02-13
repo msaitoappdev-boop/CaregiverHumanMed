@@ -43,7 +43,6 @@ import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeEffect
 import jp.msaitoappdev.caregiver.humanmed.feature.review.ReviewRoute
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.rememberCoroutineScope
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeViewModel
 import com.google.firebase.analytics.ktx.analytics
 
@@ -143,7 +142,6 @@ fun HomeRoute(
     val vm: HomeViewModel = hiltViewModel()
     val ui by vm.uiState.collectAsStateWithLifecycle()
     var showOffer by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
     val act = LocalContext.current as Activity
     val context = LocalContext.current
 
@@ -152,6 +150,7 @@ fun HomeRoute(
         vm.effect.collect {
             when (it) {
                 is HomeEffect.NavigateToQuiz -> onStartQuiz()
+                is HomeEffect.RewardGrantedAndNavigate -> onStartQuiz() // ★ Handle reward
                 is HomeEffect.ShowRewardedAdOffer -> showOffer = true
                 is HomeEffect.ShowMessage -> Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
                 else -> Unit
@@ -223,14 +222,7 @@ fun HomeRoute(
                         // そのため、UI側では常にtrueを渡す。
                         canShowToday = { true },
                         onEarned = { _ ->
-                            scope.launch {
-                                val ok = vm.tryGrantDailyPlusOne()
-                                if (ok) {
-                                    // 報酬獲得後、再度クイズ開始ロジックをトリガーする
-                                    // これにより、ViewModelは最新の状態でクイズ開始可否を判断する
-                                    vm.onStartQuizClicked()
-                                }
-                            }
+                            vm.onRewardedAdEarned() // ★ Simply call the ViewModel method
                         },
                         onFail = {
                             Toast.makeText(context, rewardedAdError, Toast.LENGTH_SHORT).show()

@@ -1,5 +1,6 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.quiz
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,12 +43,28 @@ class QuizViewModel @Inject constructor(
         loadAndPrepare(reshuffle = false)
     }
 
-    fun processEntryPoint(action: String?, reshuffle: Boolean?, isReview: Boolean?) {
+    fun processNavEvents(ssh: SavedStateHandle) {
+        val actionTick = ssh.get<Long>("action_tick")
+        val reshuffleTick = ssh.get<Long>("reshuffleTick")
+
+        if (actionTick == null && reshuffleTick == null) return
+
+        val action = ssh.get<String>("action")
+        val reshuffle = ssh.get<Boolean>("reshuffle")
+        val isReview = ssh.get<Boolean>("is_review")
+
         this.isReviewSession = isReview ?: false
+
         when {
             action == "loadNext" -> loadNextSet()
             reshuffle != null -> reset(reshuffle)
         }
+
+        ssh.remove<String>("action")
+        ssh.remove<Long>("action_tick")
+        ssh.remove<Boolean>("reshuffle")
+        ssh.remove<Long>("reshuffleTick")
+        ssh.remove<Boolean>("is_review")
     }
 
     private fun getSetSize(): Int {
