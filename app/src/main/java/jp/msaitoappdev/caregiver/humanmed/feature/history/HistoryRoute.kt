@@ -99,7 +99,7 @@ fun HistoryRoute(navController: NavController) {
                 TextButton(onClick = {
                     showConfirm = false
                     scope.launch {
-                        vm.clear()
+                        vm.clearHistory()
                         snackbarHostState.showSnackbar("履歴を削除しました")
                     }
                 }) { Text("削除する") }
