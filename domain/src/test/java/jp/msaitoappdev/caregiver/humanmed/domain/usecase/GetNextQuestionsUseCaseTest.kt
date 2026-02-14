@@ -1,40 +1,52 @@
 package jp.msaitoappdev.caregiver.humanmed.domain.usecase
 
+import com.google.common.truth.Truth.assertThat
 import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.QuestionRepository
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
 
 class GetNextQuestionsUseCaseTest {
 
-    private val mockRepository = mock(QuestionRepository::class.java)
-    private val useCase = GetNextQuestionsUseCase(mockRepository)
+    // テスト用の偽Repositoryを作成
+    private class FakeQuestionRepository(private val questions: List<Question>) : QuestionRepository {
+        var getRandomUnseenQuestions_called_with_excludingIds: Set<String>? = null
+
+        override suspend fun loadAll(): List<Question> {
+            return questions
+        }
+
+        override suspend fun getRandomUnseenQuestions(count: Int, excludingIds: Set<String>): List<Question> {
+            getRandomUnseenQuestions_called_with_excludingIds = excludingIds
+            return questions.filterNot { it.id in excludingIds }.take(count)
+        }
+    }
 
     @Test
-    fun `invoke returns random unseen questions`() {
-        runBlocking {
-            // Arrange
-            val count = 3
-            val excludingIds = setOf("id1", "id2")
-            val mockQuestions = listOf(
-                Question("id3", "text3", listOf("o1", "o2"), 0, "exp3"),
-                Question("id4", "text4", listOf("o1", "o2"), 1, "exp4"),
-                Question("id5", "text5", listOf("o1", "o2"), 0, "exp5"),
-            )
+    fun `invoke calls repository with correct parameters`() = runTest {
+        // GIVEN: 5つの質問リストを持つ偽RepositoryとUseCaseを準備
+        val allQuestions = listOf(
+            Question("q1", "text1", emptyList(), 0, ""),
+            Question("q2", "text2", emptyList(), 0, ""),
+            Question("q3", "text3", emptyList(), 0, ""),
+            Question("q4", "text4", emptyList(), 0, ""),
+            Question("q5", "text5", emptyList(), 0, "")
+        )
+        val fakeRepository = FakeQuestionRepository(allQuestions)
+        val getNextQuestionsUseCase = GetNextQuestionsUseCase(fakeRepository)
+        val excludingIds = setOf("q2", "q4")
 
-            `when`(mockRepository.getRandomUnseenQuestions(count, excludingIds)).thenReturn(mockQuestions)
+        // WHEN: UseCaseを実行する (3つの質問を要求)
+        val result = getNextQuestionsUseCase(count = 3, excludingIds = excludingIds)
 
-            // Act
-            val result = useCase(count, excludingIds)
+        // THEN: Repositoryのメソッドが正しいexcludingIdsで呼ばれたことを確認
+        assertThat(fakeRepository.getRandomUnseenQuestions_called_with_excludingIds).isEqualTo(excludingIds)
+        
+        // THEN: 結果のリストサイズが3であることを確認
+        assertThat(result).hasSize(3)
 
-            // Assert
-            assertEquals(mockQuestions, result)
-            verify(mockRepository, times(1)).getRandomUnseenQuestions(count, excludingIds)
-        }
+        // THEN: 結果に除外対象のIDが含まれていないことを確認
+        assertThat(result.any { it.id == "q2" }).isFalse()
+        assertThat(result.any { it.id == "q4" }).isFalse()
     }
 }
