@@ -1,9 +1,9 @@
-package jp.msaitoappdev.caregiver.humanmed.data.question
+package jp.msaitoappdev.caregiver.humanmed.data.repository
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import jp.msaitoappdev.caregiver.humanmed.data.question.dto.QuestionDto
-import jp.msaitoappdev.caregiver.humanmed.data.question.mapper.toDomain
+import jp.msaitoappdev.caregiver.humanmed.data.local.question.dto.QuestionDto
+import jp.msaitoappdev.caregiver.humanmed.data.mapper.toDomain
 import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.QuestionRepository
 import kotlinx.coroutines.Dispatchers

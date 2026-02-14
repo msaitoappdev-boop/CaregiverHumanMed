@@ -1,5 +1,6 @@
-package jp.msaitoappdev.caregiver.humanmed.data.score
+package jp.msaitoappdev.caregiver.humanmed.data.mapper
 
+import jp.msaitoappdev.caregiver.humanmed.data.local.db.ScoreRecord
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 
 fun ScoreRecord.toDomain(): ScoreEntry =

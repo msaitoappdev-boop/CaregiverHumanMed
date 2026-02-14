@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.data.config
+package jp.msaitoappdev.caregiver.humanmed.data.repository
 
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.RemoteConfigRepository

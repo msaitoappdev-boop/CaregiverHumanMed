@@ -1,5 +1,4 @@
-
-package jp.msaitoappdev.caregiver.humanmed.data.score
+package jp.msaitoappdev.caregiver.humanmed.data.local.db
 
 import android.content.Context
 import androidx.room.Database
@@ -7,6 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import jp.msaitoappdev.caregiver.humanmed.data.local.db.ScoreDao
+import jp.msaitoappdev.caregiver.humanmed.data.local.db.ScoreRecord
 
 @Database(
     entities = [
