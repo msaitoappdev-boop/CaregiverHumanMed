@@ -1,39 +1,48 @@
 package jp.msaitoappdev.caregiver.humanmed.domain.usecase
 
+import app.cash.turbine.test
+import com.google.common.truth.Truth.assertThat
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.ScoreRepository
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
 
 class ObserveScoresUseCaseTest {
 
-    private val mockRepository = mock(ScoreRepository::class.java)
-    private val useCase = ObserveScoresUseCase(mockRepository)
+    // テスト用の偽Repositoryを作成
+    private class FakeScoreRepository(private val historyFlow: Flow<List<ScoreEntry>>) : ScoreRepository {
+        override fun history(): Flow<List<ScoreEntry>> {
+            return historyFlow
+        }
+
+        override suspend fun add(entry: ScoreEntry) {
+            // このテストでは使わない
+        }
+
+        override suspend fun clear() {
+            // このテストでは使わない
+        }
+    }
 
     @Test
-    fun `invoke returns flow of score history`() {
-        runBlocking {
-            // Arrange
-            val mockHistory = listOf(
-                ScoreEntry(id = 1L, timestamp = 100L, score = 10, total = 10, percent = 100),
-                ScoreEntry(id = 2L, timestamp = 200L, score = 8, total = 10, percent = 80)
-            )
-            val mockFlow = flowOf(mockHistory)
-            `when`(mockRepository.history()).thenReturn(mockFlow)
+    fun `invoke returns flow from repository`() = runTest {
+        // GIVEN: 特定のテストデータを流すFlowと、それを使う偽Repository、そしてUseCaseを準備
+        val testData = listOf(ScoreEntry(score = 1, total = 3, timestamp = 1L, percent = 33))
+        val testFlow = flowOf(testData)
+        val fakeRepository = FakeScoreRepository(testFlow)
+        val observeScoresUseCase = ObserveScoresUseCase(fakeRepository)
 
-            // Act
-            val resultFlow = useCase()
+        // WHEN: UseCaseを実行し、返されたFlowをTurbineでテストする
+        observeScoresUseCase().test {
+            // THEN: Repositoryが流したテストデータと全く同じものが流れてくることを確認
+            val emission = awaitItem()
+            assertThat(emission).hasSize(1)
+            assertThat(emission[0].score).isEqualTo(1)
 
-            // Assert
-            assertEquals(mockHistory, resultFlow.first())
-            verify(mockRepository, times(1)).history()
+            // Flowが完了することを確認
+            awaitComplete()
         }
     }
 }

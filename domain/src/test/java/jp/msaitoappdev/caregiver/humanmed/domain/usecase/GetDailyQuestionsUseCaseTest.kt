@@ -1,45 +1,58 @@
 package jp.msaitoappdev.caregiver.humanmed.domain.usecase
 
+import com.google.common.truth.Truth.assertThat
 import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.QuestionRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.util.DailyQuestionSelector
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
 
 class GetDailyQuestionsUseCaseTest {
 
-    private val mockRepository = mock(QuestionRepository::class.java)
-    private val mockSelector = mock(DailyQuestionSelector::class.java)
-    private val useCase = GetDailyQuestionsUseCase(mockRepository, mockSelector)
+    // テスト用の偽Repository
+    private class FakeQuestionRepository(private val questions: List<Question>) : QuestionRepository {
+        override suspend fun loadAll(): List<Question> {
+            return questions
+        }
+
+        override suspend fun getRandomUnseenQuestions(count: Int, excludingIds: Set<String>): List<Question> {
+            // このテストでは使わない
+            return emptyList()
+        }
+    }
+
+    // テスト用の偽Selector
+    private class FakeDailyQuestionSelector : DailyQuestionSelector() {
+        var select_was_called = false
+        // selectが呼ばれたら、渡されたリストをそのまま返す
+        override fun select(all: List<Question>, count: Int): List<Question> {
+            select_was_called = true
+            return all.take(count)
+        }
+    }
 
     @Test
-    fun `invoke returns selected questions from repository`() {
-        runBlocking {
-            // Arrange
-            val allQuestions = listOf(
-                Question("id1", "text1", listOf("o1", "o2"), 0, "exp1"),
-                Question("id2", "text2", listOf("o1", "o2"), 1, "exp2"),
-                Question("id3", "text3", listOf("o1", "o2"), 0, "exp3"),
-                Question("id4", "text4", listOf("o1", "o2"), 1, "exp4"),
-            )
-            val selectedQuestions = allQuestions.take(3)
-            val defaultCount = 3
+    fun `invoke calls dependencies and returns correctly`() = runTest {
+        // GIVEN: 3つの質問を持つ偽Repositoryと、透過的な偽Selector、そしてUseCaseを準備
+        val allQuestions = listOf(
+            Question("q1", "text1", emptyList(), 0, ""),
+            Question("q2", "text2", emptyList(), 0, ""),
+            Question("q3", "text3", emptyList(), 0, "")
+        )
+        val fakeRepository = FakeQuestionRepository(allQuestions)
+        val fakeSelector = FakeDailyQuestionSelector()
+        val getDailyQuestionsUseCase = GetDailyQuestionsUseCase(fakeRepository, fakeSelector)
 
-            `when`(mockRepository.loadAll()).thenReturn(allQuestions)
-            `when`(mockSelector.select(allQuestions, defaultCount)).thenReturn(selectedQuestions)
+        // WHEN: UseCaseを実行する (2つの質問を要求)
+        val result = getDailyQuestionsUseCase(count = 2)
 
-            // Act
-            val result = useCase() // Use default parameter
+        // THEN: Selectorのselectメソッドが呼ばれたことを確認
+        assertThat(fakeSelector.select_was_called).isTrue()
 
-            // Assert
-            assertEquals(selectedQuestions, result)
-            verify(mockRepository, times(1)).loadAll()
-            verify(mockSelector, times(1)).select(allQuestions, defaultCount)
-        }
+        // THEN: 結果のリストサイズが2であることを確認
+        assertThat(result).hasSize(2)
+        
+        // THEN: 結果が期待通りであることを確認
+        assertThat(result.map { it.id }).containsExactly("q1", "q2").inOrder()
     }
 }

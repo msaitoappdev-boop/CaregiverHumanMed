@@ -21,6 +21,8 @@ dependencies {
 
     // Test dependencies
     testImplementation("junit:junit:4.13.2")
+    testImplementation("com.google.truth:truth:1.1.5")
+    testImplementation("app.cash.turbine:turbine:1.0.0") // 追加
     testImplementation("org.mockito:mockito-core:4.11.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }
