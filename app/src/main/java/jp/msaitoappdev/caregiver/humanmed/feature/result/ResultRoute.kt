@@ -15,7 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import jp.msaitoappdev.caregiver.humanmed.R
-import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
+import jp.msaitoappdev.caregiver.humanmed.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeEffect
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeViewModel

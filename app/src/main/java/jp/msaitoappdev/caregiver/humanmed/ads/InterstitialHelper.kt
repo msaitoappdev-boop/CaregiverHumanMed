@@ -8,7 +8,7 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import dagger.hilt.android.qualifiers.ApplicationContext
-import jp.msaitoappdev.caregiver.humanmed.config.AdUnits
+import jp.msaitoappdev.caregiver.humanmed.core.config.AdUnits
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -21,6 +21,7 @@ import kotlin.coroutines.resume
 @Singleton
 class InterstitialHelper @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val adUnits: AdUnits, // adUnitsを注入
     private val repository: InterstitialAdRepository
 ) {
     private val scope = CoroutineScope(Dispatchers.IO)
@@ -32,7 +33,8 @@ class InterstitialHelper @Inject constructor(
             return
         }
         val req = AdRequest.Builder().build()
-        val unitId = AdUnits.interstitialWeaktrainComplete(context)
+        // adUnitsプロパティから直接IDを取得
+        val unitId = adUnits.interstitialWeaktrainComplete
         InterstitialAd.load(context, unitId, req, object : InterstitialAdLoadCallback() {
             override fun onAdLoaded(p0: InterstitialAd) {
                 ad = p0

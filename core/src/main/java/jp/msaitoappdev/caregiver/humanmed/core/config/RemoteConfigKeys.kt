@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.config
+package jp.msaitoappdev.caregiver.humanmed.core.config
 
 object RemoteConfigKeys {
     const val FREE_DAILY_SETS = "free_daily_sets"

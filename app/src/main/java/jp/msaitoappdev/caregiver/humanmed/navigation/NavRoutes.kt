@@ -1,5 +1,4 @@
-
-package jp.msaitoappdev.caregiver.humanmed.core.navigation
+package jp.msaitoappdev.caregiver.humanmed.navigation
 
 /**
  * 画面ルートの定義を一元化。

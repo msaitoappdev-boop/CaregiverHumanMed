@@ -21,7 +21,7 @@ import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper
-import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
+import jp.msaitoappdev.caregiver.humanmed.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 import jp.msaitoappdev.caregiver.humanmed.feature.history.HistoryRoute
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeRoute
