@@ -5,10 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper
-import jp.msaitoappdev.caregiver.humanmed.core.session.QuotaState
-import jp.msaitoappdev.caregiver.humanmed.core.session.StudyQuotaRepository
+import jp.msaitoappdev.caregiver.humanmed.domain.model.QuotaState
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.RemoteConfigRepository
+import jp.msaitoappdev.caregiver.humanmed.domain.repository.StudyQuotaRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted

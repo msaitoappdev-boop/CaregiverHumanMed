@@ -17,7 +17,7 @@ class QuestionRepositoryImplTest {
         "id": "test_q1",
         "text": "This is a test question.",
         "options": ["A", "B", "C"],
-        "correct_index": 0,
+        "correctIndex": 0,
         "explanation": "This is an explanation."
       }
     ]

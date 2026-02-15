@@ -34,6 +34,9 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":domain"))
 
+    // Billing
+    implementation("com.android.billingclient:billing-ktx:6.2.1")
+
     val room = "2.6.1"
     // AppDatabase が RoomDatabase を継承 = 公開APIに露出するので api で公開
     implementation("androidx.room:room-runtime:${room}")
@@ -58,7 +61,7 @@ dependencies {
 
     // Test dependencies
     testImplementation("junit:junit:4.13.2")
-    testImplementation("com.google.truth:truth:1.1.5") // <-- 追加
+    testImplementation("com.google.truth:truth:1.1.5")
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 
@@ -66,6 +69,8 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.5.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("com.google.truth:truth:1.1.5")
+    androidTestImplementation("org.mockito:mockito-android:5.12.0") // <-- 追加
+    androidTestImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
     androidTestImplementation("androidx.room:room-testing:$room")
     androidTestImplementation("app.cash.turbine:turbine:1.0.0")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")

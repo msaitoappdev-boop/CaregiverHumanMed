@@ -11,7 +11,6 @@ data class QuestionDto(
     val id: String,
     val text: String,
     val options: List<String>,
-    @SerialName("correct_index")
     val correctIndex: Int,
     val explanation: String? = null
 )

@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.core.premium
+package jp.msaitoappdev.caregiver.humanmed.data.repository
 
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
