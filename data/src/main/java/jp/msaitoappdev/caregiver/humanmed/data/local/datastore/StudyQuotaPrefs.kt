@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.core.session
+package jp.msaitoappdev.caregiver.humanmed.data.local.datastore
 
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey

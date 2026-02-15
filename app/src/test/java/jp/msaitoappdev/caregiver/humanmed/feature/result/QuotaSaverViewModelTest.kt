@@ -2,7 +2,7 @@ package jp.msaitoappdev.caregiver.humanmed.feature.result
 
 import io.mockk.coVerify
 import io.mockk.mockk
-import jp.msaitoappdev.caregiver.humanmed.core.session.StudyQuotaRepository
+import jp.msaitoappdev.caregiver.humanmed.data.repository.StudyQuotaRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Test

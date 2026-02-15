@@ -1,5 +1,4 @@
-// core/premium/PremiumPrefs.kt
-package jp.msaitoappdev.caregiver.humanmed.core.premium
+package jp.msaitoappdev.caregiver.humanmed.data.local.datastore
 
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey

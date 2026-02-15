@@ -8,7 +8,10 @@ plugins {
 android {
     namespace = "jp.msaitoappdev.caregiver.humanmed.core"
     compileSdk = 35
-    defaultConfig { minSdk = 24 }
+    defaultConfig {
+        minSdk = 24
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -37,4 +40,10 @@ dependencies {
     testImplementation("org.mockito:mockito-core:4.11.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     testImplementation("io.mockk:mockk:1.13.13")
+
+    // Android Test dependencies
+    androidTestImplementation("androidx.test:runner:1.5.2") // <-- 追加
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("com.google.truth:truth:1.1.5")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }
