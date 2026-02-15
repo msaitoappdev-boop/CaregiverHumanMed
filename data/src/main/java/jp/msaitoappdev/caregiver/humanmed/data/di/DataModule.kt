@@ -25,4 +25,7 @@ interface DataModule {
 
     @Binds
     fun bindStudyQuotaRepository(impl: StudyQuotaRepositoryImpl): StudyQuotaRepository
+
+    @Binds
+    fun bindRewardQuotaRepository(impl: RewardQuotaRepositoryImpl): RewardQuotaRepository
 }
