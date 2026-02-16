@@ -1,7 +1,5 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.result
 
-import io.mockk.coVerify
-import io.mockk.mockk
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 import jp.msaitoappdev.caregiver.humanmed.domain.usecase.SaveScoreUseCase
 import kotlinx.coroutines.Dispatchers
@@ -13,19 +11,20 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
 
 @ExperimentalCoroutinesApi
 class ScoreSaverViewModelTest {
 
     private lateinit var viewModel: ScoreSaverViewModel
-    private lateinit var saveScoreUseCase: SaveScoreUseCase
+    private val saveScoreUseCase: SaveScoreUseCase = mock()
 
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        saveScoreUseCase = mockk(relaxed = true)
         viewModel = ScoreSaverViewModel(saveScoreUseCase)
     }
 
@@ -43,6 +42,6 @@ class ScoreSaverViewModelTest {
         viewModel.save(scoreEntry)
 
         // Assert
-        coVerify { saveScoreUseCase(scoreEntry) }
+        verify(saveScoreUseCase).invoke(scoreEntry)
     }
 }

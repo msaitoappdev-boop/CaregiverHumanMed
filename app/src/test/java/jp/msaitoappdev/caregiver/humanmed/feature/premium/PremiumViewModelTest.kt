@@ -4,10 +4,6 @@ import android.app.Activity
 import app.cash.turbine.test
 import com.android.billingclient.api.ProductDetails
 import com.google.common.truth.Truth.assertThat
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
-import io.mockk.verify
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 import kotlinx.coroutines.Dispatchers
@@ -20,13 +16,17 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.stub
+import org.mockito.kotlin.verify
 
 @ExperimentalCoroutinesApi
 class PremiumViewModelTest {
 
-    private val billingManager: BillingManager = mockk(relaxed = true)
-    private val premiumRepo: PremiumRepository = mockk(relaxed = true)
-    private val activity: Activity = mockk(relaxed = true)
+    private val billingManager: BillingManager = mock()
+    private val premiumRepo: PremiumRepository = mock()
+    private val activity: Activity = mock()
     private lateinit var viewModel: PremiumViewModel
 
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -45,7 +45,7 @@ class PremiumViewModelTest {
     fun `uiState reflects premium status`() = runTest {
         // Arrange
         val isPremiumFlow = MutableStateFlow(false)
-        coEvery { premiumRepo.isPremium } returns isPremiumFlow
+        premiumRepo.stub { on { isPremium } doReturn isPremiumFlow }
         viewModel = PremiumViewModel(billingManager, premiumRepo)
 
         // Act & Assert
@@ -54,27 +54,28 @@ class PremiumViewModelTest {
 
             isPremiumFlow.value = true
             assertThat(awaitItem().isPremium).isTrue()
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
     fun `onPurchaseClick launches billing flow when product details are available`() = runTest {
         // Arrange
-        val productDetails = mockk<ProductDetails>()
-        coEvery { billingManager.getProductDetails() } returns productDetails
+        val productDetails = mock<ProductDetails>()
+        billingManager.stub { onBlocking { getProductDetails() } doReturn productDetails }
         viewModel = PremiumViewModel(billingManager, premiumRepo)
 
         // Act
         viewModel.onPurchaseClick(activity)
 
         // Assert
-        verify { billingManager.launchPurchase(activity, productDetails) }
+        verify(billingManager).launchPurchase(activity, productDetails)
     }
 
     @Test
     fun `onPurchaseClick shows message when product details are unavailable`() = runTest {
         // Arrange
-        coEvery { billingManager.getProductDetails() } returns null
+        billingManager.stub { onBlocking { getProductDetails() } doReturn null }
         viewModel = PremiumViewModel(billingManager, premiumRepo)
 
         // Act & Assert
@@ -83,6 +84,7 @@ class PremiumViewModelTest {
             val event = awaitItem()
             assertThat(event).isInstanceOf(PaywallEvent.ShowMessage::class.java)
             assertThat((event as PaywallEvent.ShowMessage).message).isEqualTo("商品情報を取得できませんでした")
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -95,7 +97,7 @@ class PremiumViewModelTest {
         viewModel.refresh()
 
         // Assert
-        coVerify { premiumRepo.refreshFromBilling() }
+        verify(premiumRepo).refreshFromBilling()
     }
 
     @Test
@@ -107,6 +109,6 @@ class PremiumViewModelTest {
         viewModel.devTogglePremium(true)
 
         // Assert
-        coVerify { premiumRepo.setPremiumForDebug(true) }
+        verify(premiumRepo).setPremiumForDebug(true)
     }
 }
