@@ -4,18 +4,16 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.preferencesOf
+import androidx.test.core.app.ApplicationProvider
+import androidx.work.Configuration
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.testing.SynchronousExecutor
+import androidx.work.testing.WorkManagerTestInitHelper
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
-import io.mockk.verify
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderPrefs
-import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -26,13 +24,23 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.mockito.Mockito
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.stub
+import org.mockito.kotlin.verify
+import org.robolectric.RobolectricTestRunner
 
 @ExperimentalCoroutinesApi
+@RunWith(RobolectricTestRunner::class)
 class SettingsViewModelTest {
 
-    private val dataStore: DataStore<Preferences> = mockk()
-    private val premiumRepo: PremiumRepository = mockk(relaxed = true)
-    private val context: Context = mockk(relaxed = true)
+    private val dataStore: DataStore<Preferences> = mock()
+    private val premiumRepo: PremiumRepository = mock()
+    private lateinit var context: Context
+    private lateinit var workManager: WorkManager
     private lateinit var viewModel: SettingsViewModel
 
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -40,22 +48,23 @@ class SettingsViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        mockkObject(ReminderScheduler)
-
-        // Stub the static methods of ReminderScheduler to do nothing
-        every { ReminderScheduler.scheduleDaily(any(), any(), any()) } returns Unit
-        every { ReminderScheduler.cancel(any()) } returns Unit
+        context = ApplicationProvider.getApplicationContext()
+        val config = Configuration.Builder()
+            .setMinimumLoggingLevel(android.util.Log.DEBUG)
+            .setExecutor(SynchronousExecutor())
+            .build()
+        WorkManagerTestInitHelper.initializeTestWorkManager(context, config)
+        workManager = WorkManager.getInstance(context)
 
         // Mock the DataStore behavior explicitly
-        coEvery { dataStore.data } returns flowOf(preferencesOf()) // Default empty flow for init
-        coEvery { dataStore.updateData(any()) } returns preferencesOf() // Mock the update function to return empty preferences
+        dataStore.stub { onBlocking { data } doReturn flowOf(preferencesOf()) } // Default empty flow
+        dataStore.stub { onBlocking { updateData(any()) } doReturn preferencesOf() } // Mock update
 
         viewModel = SettingsViewModel(dataStore, premiumRepo)
     }
 
     @After
     fun tearDown() {
-        unmockkObject(ReminderScheduler)
         Dispatchers.resetMain()
     }
 
@@ -67,7 +76,7 @@ class SettingsViewModelTest {
             ReminderPrefs.HOUR to 21,
             ReminderPrefs.MINUTE to 30
         )
-        coEvery { dataStore.data } returns flowOf(prefs)
+        dataStore.stub { onBlocking { data } doReturn flowOf(prefs) }
         val newViewModel = SettingsViewModel(dataStore, premiumRepo)
 
         // Act & Assert
@@ -86,46 +95,57 @@ class SettingsViewModelTest {
         viewModel.setEnabled(context, true, 20, 0)
 
         // Assert
-        coVerify { dataStore.updateData(any()) }
-        verify { ReminderScheduler.scheduleDaily(context, 20, 0) }
+        verify(dataStore).updateData(any())
+        val workInfos = workManager.getWorkInfosForUniqueWork("daily-quiz-reminder").get()
+        assertThat(workInfos).hasSize(1)
+        assertThat(workInfos.first().state).isEqualTo(WorkInfo.State.ENQUEUED)
     }
 
     @Test
     fun `setEnabled false cancels reminder`() = runTest {
+        // Arrange: First, schedule a reminder
+        viewModel.setEnabled(context, true, 20, 0)
+        val initialWorkInfos = workManager.getWorkInfosForUniqueWork("daily-quiz-reminder").get()
+        assertThat(initialWorkInfos.first().state).isEqualTo(WorkInfo.State.ENQUEUED)
+
         // Act
         viewModel.setEnabled(context, false, 20, 0)
 
         // Assert
-        coVerify { dataStore.updateData(any()) }
-        verify { ReminderScheduler.cancel(context) }
+        verify(dataStore, Mockito.times(2)).updateData(any())
+        val finalWorkInfo = workManager.getWorkInfosForUniqueWork("daily-quiz-reminder").get().first()
+        assertThat(finalWorkInfo.state).isEqualTo(WorkInfo.State.CANCELLED)
     }
 
     @Test
     fun `setTime reschedules if enabled`() = runTest {
         // Arrange
         val prefs = preferencesOf(ReminderPrefs.ENABLED to true)
-        coEvery { dataStore.data } returns flowOf(prefs)
+        dataStore.stub { onBlocking { data } doReturn flowOf(prefs) }
 
         // Act
         viewModel.setTime(context, 22, 15)
 
         // Assert
-        coVerify { dataStore.updateData(any()) }
-        verify { ReminderScheduler.scheduleDaily(context, 22, 15) }
+        verify(dataStore).updateData(any())
+        val workInfos = workManager.getWorkInfosForUniqueWork("daily-quiz-reminder").get()
+        assertThat(workInfos).hasSize(1)
+        assertThat(workInfos.first().state).isEqualTo(WorkInfo.State.ENQUEUED)
     }
 
     @Test
     fun `setTime does not reschedule if disabled`() = runTest {
         // Arrange
         val prefs = preferencesOf(ReminderPrefs.ENABLED to false)
-        coEvery { dataStore.data } returns flowOf(prefs)
+        dataStore.stub { onBlocking { data } doReturn flowOf(prefs) }
 
         // Act
         viewModel.setTime(context, 22, 15)
 
         // Assert
-        coVerify { dataStore.updateData(any()) }
-        verify(exactly = 0) { ReminderScheduler.scheduleDaily(any(), any(), any()) }
+        verify(dataStore).updateData(any())
+        val workInfos = workManager.getWorkInfosForUniqueWork("daily-quiz-reminder").get()
+        assertThat(workInfos).isEmpty()
     }
 
     @Test
@@ -134,6 +154,6 @@ class SettingsViewModelTest {
         viewModel.restorePurchases()
 
         // Assert
-        coVerify { premiumRepo.refreshFromBilling() }
+        verify(premiumRepo).refreshFromBilling()
     }
 }

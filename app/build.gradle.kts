@@ -28,8 +28,9 @@ android {
         applicationId = "jp.msaitoappdev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 66
-        versionName = "0.9.65"
+        versionCode = 68
+        versionName = "0.9.67"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -64,6 +65,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions { jvmTarget = JavaVersion.VERSION_17.toString() }
 }
@@ -72,6 +74,8 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":data"))
     implementation(project(":domain"))
+
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
     implementation("androidx.core:core-ktx:1.13.1")
 
@@ -123,13 +127,22 @@ dependencies {
     implementation("com.google.android.gms:play-services-ads:22.6.0")
     implementation("com.google.android.ump:user-messaging-platform:2.2.0")
 
+    // Test dependencies
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:4.11.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
     testImplementation("org.mockito:mockito-inline:5.2.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     testImplementation("androidx.work:work-testing:2.9.1")
     testImplementation("org.robolectric:robolectric:4.11.1")
-    testImplementation("io.mockk:mockk:1.13.11")
     testImplementation("app.cash.turbine:turbine:1.1.0")
     testImplementation("com.google.truth:truth:1.4.2")
+
+    // Android Test dependencies
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("com.google.truth:truth:1.4.2")
+    androidTestImplementation("org.mockito:mockito-android:5.12.0")
+    androidTestImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
+    androidTestImplementation("androidx.work:work-testing:2.9.1")
 }

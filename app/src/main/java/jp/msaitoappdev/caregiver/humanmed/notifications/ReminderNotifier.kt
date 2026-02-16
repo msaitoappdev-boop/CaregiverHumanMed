@@ -1,10 +1,12 @@
-
 package jp.msaitoappdev.caregiver.humanmed.notifications
 
+import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import jp.msaitoappdev.caregiver.humanmed.MainActivity
@@ -33,6 +35,13 @@ object ReminderNotifier {
             .setContentIntent(contentPI)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
         NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build())
     }
 }
