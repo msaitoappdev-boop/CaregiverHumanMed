@@ -9,7 +9,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import jp.msaitoappdev.caregiver.humanmed.navigation.NavRoutes
+import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeEffect
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeViewModel
 import kotlinx.coroutines.flow.drop

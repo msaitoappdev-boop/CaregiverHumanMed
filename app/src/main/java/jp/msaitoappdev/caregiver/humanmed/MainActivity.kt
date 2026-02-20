@@ -12,24 +12,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavType
 import androidx.navigation.compose.*
-import androidx.navigation.navArgument
-import androidx.navigation.navDeepLink
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper
-import jp.msaitoappdev.caregiver.humanmed.navigation.NavRoutes
+import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
-import jp.msaitoappdev.caregiver.humanmed.feature.history.HistoryRoute
-import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeRoute
-import jp.msaitoappdev.caregiver.humanmed.feature.premium.PaywallRoute
-import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizRoute
-import jp.msaitoappdev.caregiver.humanmed.feature.result.ResultRoute
-import jp.msaitoappdev.caregiver.humanmed.feature.review.ReviewRoute
-import jp.msaitoappdev.caregiver.humanmed.feature.settings.SettingsRoute
+import jp.msaitoappdev.caregiver.humanmed.feature.history.historyGraph
+import jp.msaitoappdev.caregiver.humanmed.feature.home.homeGraph
+import jp.msaitoappdev.caregiver.humanmed.feature.premium.paywallGraph
+import jp.msaitoappdev.caregiver.humanmed.feature.quiz.quizGraph
+import jp.msaitoappdev.caregiver.humanmed.feature.result.resultGraph
+import jp.msaitoappdev.caregiver.humanmed.feature.review.reviewGraph
+import jp.msaitoappdev.caregiver.humanmed.feature.settings.settingsGraph
 import jp.msaitoappdev.caregiver.humanmed.privacy.ConsentManager
 import kotlinx.coroutines.launch
 
@@ -79,42 +76,16 @@ private fun AppNavHost(interstitialHelper: InterstitialHelper) {
 
     val navController = rememberNavController()
     NavHost(navController, startDestination = NavRoutes.HOME) {
-        composable(NavRoutes.HOME) {
-            HomeRoute(
-                onStartQuiz = { navController.navigate(NavRoutes.QUIZ) },
-                onUpgrade = { navController.navigate(NavRoutes.PAYWALL) },
-                onOpenSettings = { navController.navigate(NavRoutes.SETTINGS) }
-            )
-        }
-        composable(
-            route = NavRoutes.QUIZ,
-            deepLinks = listOf(navDeepLink { uriPattern = "caregiver://reminder" })
-        ) { QuizRoute(navController) }
-        composable(
-            route = NavRoutes.Result.PATTERN,
-            arguments = listOf(
-                navArgument("score") { type = NavType.IntType },
-                navArgument("total") { type = NavType.IntType }
-            )
-        ) { backStackEntry ->
-            val score = backStackEntry.arguments?.getInt("score") ?: 0
-            val total = backStackEntry.arguments?.getInt("total") ?: 0
-
-            // ResultRouteは表示に専念し、ロジックはViewModelに集約されている
-            ResultRoute(navController, score, total)
-        }
-        composable(NavRoutes.REVIEW) {
-            ReviewRoute(navController)
-        }
-        composable(NavRoutes.HISTORY) {
-            HistoryRoute(navController)
-        }
-
-        composable(NavRoutes.PAYWALL) {
-            PaywallRoute()
-        }
-        composable(NavRoutes.SETTINGS) {
-            SettingsRoute(onBack = { navController.popBackStack() })
-        }
+        homeGraph(
+            onStartQuiz = { navController.navigate(NavRoutes.QUIZ) },
+            onUpgrade = { navController.navigate(NavRoutes.PAYWALL) },
+            onOpenSettings = { navController.navigate(NavRoutes.SETTINGS) }
+        )
+        quizGraph(navController)
+        resultGraph(navController)
+        reviewGraph(navController)
+        historyGraph(navController)
+        paywallGraph()
+        settingsGraph(onBack = { navController.popBackStack() })
     }
 }
