@@ -106,6 +106,7 @@
 ---
 
 ## 6. 参照ドキュメント（instructions）
+- **Overall Plan**: `.github/instructions/refactoring-roadmap.md`
 - UI: `.github/instructions/ui-compose.instructions.md`
 - Navigation: `.github/instructions/navigation.instructions.md`
 - Billing: `.github/instructions/billing.instructions.md`
