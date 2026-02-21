@@ -1,3 +1,4 @@
+include(":quiz-feature-history")
 
 pluginManagement {
     repositories {

@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.history
+package com.msaitodev.quiz.feature.history
 
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
