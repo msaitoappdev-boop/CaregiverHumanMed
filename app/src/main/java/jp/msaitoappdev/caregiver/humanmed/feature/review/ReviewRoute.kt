@@ -1,12 +1,9 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.review
 
-import android.app.Activity
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,13 +20,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -38,12 +32,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import jp.msaitoappdev.caregiver.humanmed.R
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
-import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeEffect
-import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeViewModel
 import jp.msaitoappdev.caregiver.humanmed.feature.premium.PremiumViewModel
 import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizViewModel
 import jp.msaitoappdev.caregiver.humanmed.feature.quiz.ReviewItem
-import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +50,6 @@ fun ReviewRoute(navController: NavController) {
     }
     val vm: QuizViewModel = hiltViewModel(quizEntry)
     val premiumVm: PremiumViewModel = hiltViewModel()
-    val homeVm: HomeViewModel = hiltViewModel()
     val premiumState by premiumVm.uiState.collectAsStateWithLifecycle()
 
     val state by vm.uiState.collectAsState()
@@ -70,29 +60,6 @@ fun ReviewRoute(navController: NavController) {
     val CorrectBorder = Color(0xFF2F855A)
     val WrongBg = Color(0xFFFFE0E0)
     val WrongBorder = Color(0xFFC53030)
-
-    val activity = LocalContext.current as Activity
-    val context = LocalContext.current
-    var showOffer by remember { mutableStateOf(false) }
-    val rewardedAdError = stringResource(id = R.string.common_error_rewarded_ad)
-
-    LaunchedEffect(homeVm.effect) {
-        homeVm.effect.collectLatest {
-            Log.d(TAG, "Effect received: $it")
-            when (it) {
-                is HomeEffect.LoadNextQuizSet, is HomeEffect.RewardGrantedAndNavigate -> {
-                    quizEntry.savedStateHandle.set("action", "loadNext")
-                    quizEntry.savedStateHandle.set("action_tick", System.currentTimeMillis())
-                    navController.popBackStack(NavRoutes.QUIZ, inclusive = false)
-                }
-                is HomeEffect.ShowRewardedAdOffer -> {
-                    showOffer = true
-                }
-                is HomeEffect.ShowMessage -> Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
-                else -> Unit
-            }
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -106,87 +73,23 @@ fun ReviewRoute(navController: NavController) {
             )
         }
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = {
-                        quizEntry.savedStateHandle.set("reshuffle", false)
-                        quizEntry.savedStateHandle.set("is_review", true)
-                        quizEntry.savedStateHandle.set("reshuffleTick", System.currentTimeMillis())
-                        navController.popBackStack(NavRoutes.QUIZ, inclusive = false)
-                    },
-                    modifier = Modifier.weight(1f)
-                ) { Text(stringResource(R.string.result_review_same_order)) }
-
-                Button(
-                    onClick = { homeVm.onNextSetClicked(activity) },
-                    modifier = Modifier.weight(1f)
-                ) { Text(stringResource(R.string.result_next_set)) }
-            }
-
-            HorizontalDivider()
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(items, key = { it.number }) { item ->
-                    ReviewCard(
-                        item = item,
-                        correctBg = CorrectBg,
-                        correctBorder = CorrectBorder,
-                        wrongBg = WrongBg,
-                        wrongBorder = WrongBorder
-                    )
-                }
+            items(items, key = { it.number }) { item ->
+                ReviewCard(
+                    item = item,
+                    correctBg = CorrectBg,
+                    correctBorder = CorrectBorder,
+                    wrongBg = WrongBg,
+                    wrongBorder = WrongBorder
+                )
             }
         }
-    }
-    
-    if (showOffer) {
-        var isProcessing by remember { mutableStateOf(false) }
-        AlertDialog(
-            onDismissRequest = { if (!isProcessing) showOffer = false },
-            title = { Text(stringResource(R.string.dialog_rewarded_ad_title)) },
-            text = { Text(stringResource(R.string.dialog_rewarded_ad_message)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        isProcessing = true
-                        showOffer = false
-                        jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper.show(
-                            activity = activity,
-                            canShowToday = { true },
-                            onEarned = { _ ->
-                                homeVm.onRewardedAdEarned()
-                            },
-                            onFail = {
-                                isProcessing = false
-                                Toast.makeText(activity, rewardedAdError, Toast.LENGTH_SHORT).show()
-                            }
-                        )
-                    },
-                    enabled = !isProcessing
-                ) { Text(stringResource(R.string.dialog_rewarded_ad_confirm)) }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { if (!isProcessing) showOffer = false },
-                    enabled = !isProcessing
-                ) { Text(stringResource(R.string.dialog_rewarded_ad_dismiss)) }
-            }
-        )
     }
 }
 
