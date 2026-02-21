@@ -1,7 +1,6 @@
 package jp.msaitoappdev.caregiver.humanmed
 
 import android.app.Activity
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -20,7 +19,7 @@ import javax.inject.Inject
 import jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
-import jp.msaitoappdev.caregiver.humanmed.feature.history.historyGraph
+import com.msaitodev.quiz.feature.history.historyGraph
 import jp.msaitoappdev.caregiver.humanmed.feature.home.homeGraph
 import jp.msaitoappdev.caregiver.humanmed.feature.premium.paywallGraph
 import jp.msaitoappdev.caregiver.humanmed.feature.quiz.quizGraph

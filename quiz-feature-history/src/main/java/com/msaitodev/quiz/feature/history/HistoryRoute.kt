@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.history
+package com.msaitodev.quiz.feature.history
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn

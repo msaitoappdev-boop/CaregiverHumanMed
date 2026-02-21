@@ -74,6 +74,7 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":data"))
     implementation(project(":domain"))
+    implementation(project(":quiz-feature-history"))
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 

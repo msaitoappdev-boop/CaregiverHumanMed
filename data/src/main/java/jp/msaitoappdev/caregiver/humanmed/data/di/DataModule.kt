@@ -6,6 +6,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import jp.msaitoappdev.caregiver.humanmed.data.repository.*
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.*
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -15,6 +16,7 @@ interface DataModule {
     fun bindQuestionRepository(impl: QuestionRepositoryImpl): QuestionRepository
 
     @Binds
+    @Singleton
     fun bindScoreRepository(impl: ScoreRepositoryImpl): ScoreRepository
 
     @Binds
