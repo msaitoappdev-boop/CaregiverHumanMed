@@ -1,7 +1,6 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.result
 
 import android.app.Activity
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,21 +12,20 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import jp.msaitoappdev.caregiver.humanmed.R
-import jp.msaitoappdev.caregiver.humanmed.navigation.NavRoutes
+import jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
-import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeEffect
-import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeViewModel
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun ResultRoute(
-    navController: NavController,
     score: Int,
-    total: Int
+    total: Int,
+    onNextSet: () -> Unit,
+    onReview: (questionsJson: String, answersJson: String) -> Unit,
+    onReviewSameOrder: () -> Unit,
+    onShowScoreHistory: () -> Unit,
+    onBackToHome: () -> Unit
 ) {
-    val TAG = "ResultRoute"
     val pct: Int = if (total == 0) 0 else ((score.toFloat() / total) * 100).toInt()
     val message = when {
         pct >= 90 -> stringResource(id = R.string.result_excellent)
@@ -37,7 +35,7 @@ fun ResultRoute(
     }
 
     val saver: ScoreSaverViewModel = hiltViewModel()
-    val homeVm: HomeViewModel = hiltViewModel()
+    val vm: ResultViewModel = hiltViewModel()
 
     var hasSavedScore by rememberSaveable { mutableStateOf(false) }
 
@@ -55,69 +53,45 @@ fun ResultRoute(
         }
     }
 
-    val activity = LocalContext.current as Activity
     val context = LocalContext.current
     var showOffer by remember { mutableStateOf(false) }
-    val rewardedAdError = stringResource(id = R.string.common_error_rewarded_ad)
 
-    LaunchedEffect(homeVm.effect) {
-        homeVm.effect.collectLatest {
-            Log.d(TAG, "Effect received: $it")
+    LaunchedEffect(vm.effect) {
+        vm.effect.collect {
             when (it) {
-                is HomeEffect.LoadNextQuizSet, is HomeEffect.RewardGrantedAndNavigate -> {
-                    navController.previousBackStackEntry?.savedStateHandle?.set("action", "loadNext")
-                    navController.previousBackStackEntry?.savedStateHandle?.set("action_tick", System.currentTimeMillis())
-                    navController.popBackStack()
+                is ResultEffect.StartNewQuiz -> onNextSet()
+                is ResultEffect.NavigateToReview -> onReview(it.questionsJson, it.answersJson)
+                is ResultEffect.ShowRewardOffer -> showOffer = true
+                is ResultEffect.ShowMessage -> {
+                    Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
                 }
-                is HomeEffect.ShowRewardedAdOffer -> {
-                    showOffer = true
-                }
-                is HomeEffect.ShowMessage -> Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
-                else -> Unit
             }
         }
     }
 
-    val onReviewSameOrder: () -> Unit = {
-        val quizEntryBack = navController.previousBackStackEntry
-        quizEntryBack?.savedStateHandle?.set("reshuffle", false)
-        quizEntryBack?.savedStateHandle?.set("is_review", true)
-        quizEntryBack?.savedStateHandle?.set("reshuffleTick", System.currentTimeMillis())
-        navController.popBackStack()
-    }
-    val onBackToHome: () -> Unit = {
-        navController.popBackStack(NavRoutes.HOME, inclusive = false)
-    }
-    val onNavUp: () -> Unit = {
-        navController.popBackStack()
-    }
-
-    val onOfferConfirm = {
-        showOffer = false
-        jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper.show(
-            activity = activity,
-            canShowToday = { true },
-            onEarned = { _ ->
-                homeVm.onRewardedAdEarned()
-            },
-            onFail = {
-                Toast.makeText(activity, rewardedAdError, Toast.LENGTH_SHORT).show()
-            }
-        )
-    }
-
+    val activity = LocalContext.current as Activity
     ResultScreen(
         score = score,
         total = total,
         message = message,
         showOfferDialog = showOffer,
-        onOfferConfirm = onOfferConfirm,
+        onOfferConfirm = {
+            showOffer = false
+            RewardedHelper.show(
+                activity = activity,
+                canShowToday = { true },
+                onEarned = { vm.onRewardGranted() },
+                onFail = {
+                    Toast.makeText(context, R.string.common_error_rewarded_ad, Toast.LENGTH_SHORT).show()
+                }
+            )
+        },
         onOfferDismiss = { showOffer = false },
-        onNextSet = { homeVm.onNextSetClicked(activity) },
+        onNextSet = { vm.onNextSetClicked() },
         onReviewSameOrder = onReviewSameOrder,
-        onReviewList = { navController.navigate(NavRoutes.REVIEW) },
-        onScoreHistory = { navController.navigate(NavRoutes.HISTORY) },
+        onReviewList = { vm.onReviewClicked() },
+        onScoreHistory = onShowScoreHistory,
         onBackToHome = onBackToHome,
-        onNavUp = onNavUp
+        onNavUp = onBackToHome
     )
 }

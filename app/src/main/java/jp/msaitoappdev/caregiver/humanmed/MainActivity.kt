@@ -1,54 +1,75 @@
 package jp.msaitoappdev.caregiver.humanmed
 
 import android.app.Activity
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavType
-import androidx.navigation.compose.*
-import androidx.navigation.navArgument
-import androidx.navigation.navDeepLink
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
+import com.msaitodev.quiz.feature.history.historyGraph
 import dagger.hilt.android.AndroidEntryPoint
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 import jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper
-import jp.msaitoappdev.caregiver.humanmed.navigation.NavRoutes
+import jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper
+import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
+import jp.msaitoappdev.caregiver.humanmed.core.navigation.QuizActions
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
-import jp.msaitoappdev.caregiver.humanmed.feature.history.HistoryRoute
+import jp.msaitoappdev.caregiver.humanmed.domain.repository.RemoteConfigRepository
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeRoute
-import jp.msaitoappdev.caregiver.humanmed.feature.premium.PaywallRoute
-import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizRoute
-import jp.msaitoappdev.caregiver.humanmed.feature.result.ResultRoute
-import jp.msaitoappdev.caregiver.humanmed.feature.review.ReviewRoute
-import jp.msaitoappdev.caregiver.humanmed.feature.settings.SettingsRoute
+import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeViewModel
+import jp.msaitoappdev.caregiver.humanmed.feature.premium.PremiumViewModel
+import jp.msaitoappdev.caregiver.humanmed.feature.premium.paywallGraph
+import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizResult
+import jp.msaitoappdev.caregiver.humanmed.feature.quiz.quizGraph
+import jp.msaitoappdev.caregiver.humanmed.feature.result.QuotaSaverViewModel
+import jp.msaitoappdev.caregiver.humanmed.feature.result.resultGraph
+import jp.msaitoappdev.caregiver.humanmed.feature.review.reviewGraph
+import jp.msaitoappdev.caregiver.humanmed.feature.settings.settingsGraph
 import jp.msaitoappdev.caregiver.humanmed.privacy.ConsentManager
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    @Inject lateinit var premiumRepo: PremiumRepository
-    @Inject lateinit var interstitialHelper: InterstitialHelper
+    @Inject
+    lateinit var premiumRepo: PremiumRepository
+
+    @Inject
+    lateinit var interstitialHelper: InterstitialHelper
+
+    @Inject
+    lateinit var remoteConfigRepo: RemoteConfigRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         Log.i("MainActivity", "onCreate called")
 
-        // ライフサイクルイベントの監視
         lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onResume(owner: LifecycleOwner) {
-                // フォアグラウンド復帰のタイミングで、ユーザーの現在の購入状態を最新に同期する
                 lifecycleScope.launch {
-                    Log.d("BugHunt-Premium", "MainActivity.onResume: Kicking off refreshFromBilling()")
                     premiumRepo.refreshFromBilling()
                 }
             }
@@ -56,65 +77,106 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                // Pass interstitialHelper into the NavHost so we can preload after consent & MobileAds.initialize
-                AppNavHost(interstitialHelper)
+                AppNavHost(interstitialHelper, remoteConfigRepo)
             }
         }
     }
 }
 
 @Composable
-private fun AppNavHost(interstitialHelper: InterstitialHelper) {
+private fun AppNavHost(
+    interstitialHelper: InterstitialHelper,
+    remoteConfigRepo: RemoteConfigRepository
+) {
     val activity = LocalContext.current as Activity
+    val context = LocalContext.current
+
+    val navController = rememberNavController()
+    var quizResultForProcessing by remember { mutableStateOf<QuizResult?>(null) }
+
+    val quotaSaver: QuotaSaverViewModel = hiltViewModel()
+    val premiumVm: PremiumViewModel = hiltViewModel()
+    val premiumState by premiumVm.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(quizResultForProcessing) {
+        val result = quizResultForProcessing ?: return@LaunchedEffect
+
+        if (!result.isReview) {
+            quotaSaver.markFinished()
+        }
+
+        val interstitialEnabled = remoteConfigRepo.getBoolean("interstitial_enabled") && !premiumState.isPremium
+        if (interstitialEnabled) {
+            val cap = remoteConfigRepo.getLong("interstitial_cap_per_session").toInt()
+            val intervalSec = remoteConfigRepo.getLong("inter_session_interval_sec")
+            interstitialHelper.tryShow(activity, true, cap, intervalSec)
+        }
+
+        val questionsJson = URLEncoder.encode(Json.encodeToString(result.questions), StandardCharsets.UTF_8.toString())
+        val answersJson = URLEncoder.encode(Json.encodeToString(result.answers), StandardCharsets.UTF_8.toString())
+
+        navController.navigate(NavRoutes.Result.build(result.score, result.total, questionsJson, answersJson))
+        quizResultForProcessing = null // Prevent re-processing
+    }
 
     LaunchedEffect(Unit) {
-        // UMP同意ダイアログを表示し、ユーザーの選択に応じて広告とアナリティクスを初期化する
         ConsentManager.obtain(activity) {
             com.google.android.gms.ads.MobileAds.initialize(activity.applicationContext)
             Firebase.analytics.setAnalyticsCollectionEnabled(true)
-            // AdMob is initialized; now safe to preload interstitial ads (consent respected)
             interstitialHelper.preload()
         }
     }
 
-    val navController = rememberNavController()
     NavHost(navController, startDestination = NavRoutes.HOME) {
         composable(NavRoutes.HOME) {
+            val vm: HomeViewModel = hiltViewModel()
+            val rewardedAdError = stringResource(id = R.string.common_error_rewarded_ad)
+
             HomeRoute(
                 onStartQuiz = { navController.navigate(NavRoutes.QUIZ) },
+                onShowRewardedAd = {
+                    RewardedHelper.show(
+                        activity = activity,
+                        canShowToday = { true },
+                        onEarned = { vm.onRewardedAdEarned() },
+                        onFail = {
+                            Toast.makeText(context, rewardedAdError, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                },
                 onUpgrade = { navController.navigate(NavRoutes.PAYWALL) },
                 onOpenSettings = { navController.navigate(NavRoutes.SETTINGS) }
             )
         }
-        composable(
-            route = NavRoutes.QUIZ,
-            deepLinks = listOf(navDeepLink { uriPattern = "caregiver://reminder" })
-        ) { QuizRoute(navController) }
-        composable(
-            route = NavRoutes.Result.PATTERN,
-            arguments = listOf(
-                navArgument("score") { type = NavType.IntType },
-                navArgument("total") { type = NavType.IntType }
-            )
-        ) { backStackEntry ->
-            val score = backStackEntry.arguments?.getInt("score") ?: 0
-            val total = backStackEntry.arguments?.getInt("total") ?: 0
 
-            // ResultRouteは表示に専念し、ロジックはViewModelに集約されている
-            ResultRoute(navController, score, total)
-        }
-        composable(NavRoutes.REVIEW) {
-            ReviewRoute(navController)
-        }
-        composable(NavRoutes.HISTORY) {
-            HistoryRoute(navController)
-        }
+        quizGraph(
+            navController = navController,
+            onQuizFinished = { result ->
+                quizResultForProcessing = result
+            },
+            onUpgrade = { navController.navigate(NavRoutes.PAYWALL) }
+        )
 
-        composable(NavRoutes.PAYWALL) {
-            PaywallRoute()
-        }
-        composable(NavRoutes.SETTINGS) {
-            SettingsRoute(onBack = { navController.popBackStack() })
-        }
+        resultGraph(
+            navController = navController,
+            onNextSet = {
+                navController.previousBackStackEntry?.savedStateHandle?.set(QuizActions.KEY_QUIZ_ACTION, QuizActions.ACTION_START_NEW)
+                navController.popBackStack()
+            },
+            onReview = { questionsJson, answersJson ->
+                navController.navigate(NavRoutes.Review.build(questionsJson, answersJson))
+            },
+            onReviewSameOrder = {
+                navController.previousBackStackEntry?.savedStateHandle?.set(QuizActions.KEY_QUIZ_ACTION, QuizActions.ACTION_RESTART_SAME_ORDER)
+                navController.popBackStack()
+            },
+            onShowScoreHistory = { navController.navigate(NavRoutes.HISTORY) },
+            onBackToHome = { navController.popBackStack(NavRoutes.HOME, inclusive = false) }
+        )
+
+        reviewGraph(navController)
+        historyGraph(navController)
+        paywallGraph()
+        settingsGraph(onBack = { navController.popBackStack() })
     }
 }

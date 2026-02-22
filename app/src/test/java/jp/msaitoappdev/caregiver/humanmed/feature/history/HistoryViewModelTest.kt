@@ -1,5 +1,6 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.history
 
+import com.msaitodev.quiz.feature.history.HistoryViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
