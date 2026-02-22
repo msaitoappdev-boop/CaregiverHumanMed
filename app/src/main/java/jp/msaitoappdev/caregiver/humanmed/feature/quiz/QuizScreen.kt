@@ -22,9 +22,8 @@ fun QuizScreen(
     onNext: () -> Unit,
     onPrev: () -> Unit,
     onNavUp: () -> Unit,
-    // ★ 追加（デフォルト値付きで後方互換）
-    canShowFullExplanation: Boolean = true,
-    onUpgrade: () -> Unit = {}
+    canShowFullExplanation: Boolean,
+    onUpgrade: () -> Unit
 ) {
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -32,7 +31,7 @@ fun QuizScreen(
         }
         return
     }
-    val q = state.current ?: return
+    val q = state.questions.getOrNull(state.currentIndex) ?: return
 
     val progressFraction =
         if (state.total == 0) 0f else (state.currentIndex + 1f) / max(1, state.total).toFloat()

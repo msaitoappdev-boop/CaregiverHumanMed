@@ -9,5 +9,5 @@ fun QuestionDto.toDomain(): Question =
         text = text,
         options = options,
         correctIndex = correctIndex,
-        explanation = explanation
+        explanation = explanation // Now both can be null, so this should match
     )

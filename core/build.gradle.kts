@@ -24,6 +24,9 @@ dependencies {
     // Coroutine / Lifecycle（必要に応じて）
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.8.4")
+
     // ★ DataStore 型が公開API（DIコンストラクタ）に露出するため api で公開
     api("androidx.datastore:datastore-preferences:1.1.1")
 

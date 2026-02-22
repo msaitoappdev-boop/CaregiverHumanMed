@@ -1,7 +1,6 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.home
 
 import android.Manifest
-import android.app.Activity
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -40,24 +39,22 @@ import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
 @Composable
 fun HomeRoute(
     onStartQuiz: () -> Unit,
+    onShowRewardedAd: () -> Unit, // リワード広告表示の責務を外部に委譲
     onUpgrade: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
     val vm: HomeViewModel = hiltViewModel()
     val ui by vm.uiState.collectAsStateWithLifecycle()
-    var showOffer by remember { mutableStateOf(false) }
-    val act = LocalContext.current as Activity
+    var showOfferDialog by remember { mutableStateOf(false) } // ダイアログの表示状態のみを管理
     val context = LocalContext.current
 
-    // ViewModelからの一度きりのイベント(Effect)を監視・処理する
-    LaunchedEffect(vm.effect) {
-        vm.effect.collect {
+    // ViewModelからの一度きりのイベントを監視し、処理を外部のコールバックに委譲する
+    LaunchedEffect(vm.event) {
+        vm.event.collect {
             when (it) {
-                is HomeEffect.NavigateToQuiz -> onStartQuiz()
-                is HomeEffect.RewardGrantedAndNavigate -> onStartQuiz() // ★ Handle reward
-                is HomeEffect.ShowRewardedAdOffer -> showOffer = true
-                is HomeEffect.ShowMessage -> Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
-                else -> Unit
+                is HomeEvent.RequestNavigateToQuiz -> onStartQuiz()
+                is HomeEvent.RequestShowRewardedAdOffer -> showOfferDialog = true
+                is HomeEvent.ShowMessage -> Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -73,7 +70,6 @@ fun HomeRoute(
     }
 
     var showRationale by remember { mutableStateOf(false) } // 通知許可の根拠を示すダイアログの表示状態
-    val rewardedAdError = stringResource(id = R.string.common_error_rewarded_ad)
 
     Scaffold(
         topBar = {
@@ -111,31 +107,21 @@ fun HomeRoute(
         }
     }
 
-    // ViewModelからの指示があった場合にのみ、リワード広告の提案ダイアログを表示する
-    if (showOffer) {
+    // リワード広告の提案ダイアログ
+    if (showOfferDialog) {
         AlertDialog(
-            onDismissRequest = { showOffer = false },
+            onDismissRequest = { showOfferDialog = false },
             title = { Text(stringResource(R.string.dialog_rewarded_ad_title)) },
             text = { Text(stringResource(R.string.dialog_rewarded_ad_message)) },
             confirmButton = {
                 TextButton(onClick = {
-                    showOffer = false
-                    jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper.show(
-                        activity = act,
-                        // このダイアログが表示される時点で、広告表示の可否はViewModelで判断済み。
-                        // そのため、UI側では常にtrueを渡す。
-                        canShowToday = { true },
-                        onEarned = { _ ->
-                            vm.onRewardedAdEarned() // ★ Simply call the ViewModel method
-                        },
-                        onFail = {
-                            Toast.makeText(context, rewardedAdError, Toast.LENGTH_SHORT).show()
-                        }
-                    )
+                    showOfferDialog = false
+                    // 広告表示の実行を外部に委譲
+                    onShowRewardedAd()
                 }) { Text(stringResource(R.string.dialog_rewarded_ad_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showOffer = false }) { Text(stringResource(R.string.dialog_rewarded_ad_dismiss)) }
+                TextButton(onClick = { showOfferDialog = false }) { Text(stringResource(R.string.dialog_rewarded_ad_dismiss)) }
             }
         )
     }
