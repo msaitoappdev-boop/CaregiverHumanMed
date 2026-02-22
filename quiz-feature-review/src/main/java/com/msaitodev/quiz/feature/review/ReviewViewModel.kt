@@ -1,17 +1,16 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.review
+package com.msaitodev.quiz.feature.review
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import javax.inject.Inject
 
 @HiltViewModel
 class ReviewViewModel @Inject constructor(

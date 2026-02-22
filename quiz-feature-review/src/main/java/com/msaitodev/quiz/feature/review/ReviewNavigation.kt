@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.review
+package com.msaitodev.quiz.feature.review
 
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder

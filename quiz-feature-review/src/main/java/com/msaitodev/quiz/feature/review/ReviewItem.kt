@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.review
+package com.msaitodev.quiz.feature.review
 
 data class ReviewItem(
     val number: Int,
