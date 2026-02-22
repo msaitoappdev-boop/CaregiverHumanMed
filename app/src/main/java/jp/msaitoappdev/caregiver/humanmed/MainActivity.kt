@@ -44,7 +44,7 @@ import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizResult
 import jp.msaitoappdev.caregiver.humanmed.feature.quiz.quizGraph
 import jp.msaitoappdev.caregiver.humanmed.feature.result.QuotaSaverViewModel
 import jp.msaitoappdev.caregiver.humanmed.feature.result.resultGraph
-import jp.msaitoappdev.caregiver.humanmed.feature.review.reviewGraph
+import com.msaitodev.quiz.feature.review.reviewGraph
 import jp.msaitoappdev.caregiver.humanmed.feature.settings.settingsGraph
 import jp.msaitoappdev.caregiver.humanmed.privacy.ConsentManager
 import kotlinx.coroutines.launch

@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.review
+package com.msaitodev.quiz.feature.review
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import jp.msaitoappdev.caregiver.humanmed.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

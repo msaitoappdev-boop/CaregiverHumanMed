@@ -33,9 +33,6 @@
     <!-- Settings -->
     <string name="settings_title">設定</string>
 
-    <!-- Review -->
-    <string name="review_title">復習</string>
-
     <!-- Dialogs -->
     <string name="dialog_rewarded_ad_title">今日は無料分が終了しました</string>
     <string name="dialog_rewarded_ad_message">動画を視聴すると +1 セット解放できます。視聴しますか？</string>
@@ -47,7 +44,7 @@
     <string name="dialog_permission_dismiss">後で</string>
 
     <!-- Common -->
-    <string name="common_back">戻る</string>
     <string name="common_error_rewarded_ad">動画を読み込めませんでした（ネットワーク/在庫/初期化）</string>
+    <string name="common_back">戻る</string>
 
 </resources>

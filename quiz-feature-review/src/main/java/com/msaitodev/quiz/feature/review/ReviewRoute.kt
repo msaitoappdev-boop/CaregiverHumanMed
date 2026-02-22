@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.review
+package com.msaitodev.quiz.feature.review
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
