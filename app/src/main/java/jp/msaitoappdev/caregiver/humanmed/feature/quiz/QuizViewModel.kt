@@ -1,227 +1,169 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.quiz
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import jp.msaitoappdev.caregiver.humanmed.core.navigation.QuizActions
 import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
+import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.RemoteConfigRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.usecase.GetDailyQuestionsUseCase
 import jp.msaitoappdev.caregiver.humanmed.domain.usecase.GetNextQuestionsUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Random
 import javax.inject.Inject
 
+private fun calcScore(questions: List<Question>, answers: List<Int?>): Int {
+    return questions.indices.count { i -> answers.getOrNull(i) == questions[i].correctIndex }
+}
+
 @HiltViewModel
 class QuizViewModel @Inject constructor(
     private val getDailyQuestions: GetDailyQuestionsUseCase,
     private val getNextQuestions: GetNextQuestionsUseCase,
-    private val remoteConfigRepo: RemoteConfigRepository
+    private val remoteConfigRepo: RemoteConfigRepository,
+    premiumRepository: PremiumRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(QuizUiState())
-    val uiState: StateFlow<QuizUiState> = _uiState.asStateFlow()
-
-    private var answers: MutableList<Int?> = mutableListOf()
-    private var questions: List<Question> = emptyList()
-    private val seenQuestionIds = mutableSetOf<String>()
-    private var currentOriginalQuestions: List<Question> = emptyList()
-
-    private var shuffleSeed: Long = System.currentTimeMillis()
-    private val shuffleQuestions: Boolean = true
-    private val shuffleOptions: Boolean = true
-
+    private var onQuizFinished: ((result: QuizResult) -> Unit)? = null
     private var isReviewSession: Boolean = false
 
+    // Internal, mutable states that drive the logic
+    private data class InternalState(
+        val isLoading: Boolean = true,
+        val originalQuestions: List<Question> = emptyList(),
+        val questions: List<Question> = emptyList(),
+        val answers: List<Int?> = emptyList(),
+        val currentIndex: Int = 0,
+        val shuffleSeed: Long = System.currentTimeMillis(),
+        val seenQuestionIds: Set<String> = emptySet()
+    )
+    private val _internalState = MutableStateFlow(InternalState())
+
+    // Combined, immutable UiState for the UI
+    val uiState: StateFlow<QuizUiState> = combine(
+        _internalState, premiumRepository.isPremium
+    ) { internalState, isPremium ->
+        QuizUiState(
+            isLoading = internalState.isLoading,
+            questions = internalState.questions,
+            total = internalState.questions.size,
+            currentIndex = internalState.currentIndex,
+            selectedIndex = internalState.answers.getOrNull(internalState.currentIndex),
+            isAnswered = internalState.answers.getOrNull(internalState.currentIndex) != null,
+            correctCount = calcScore(internalState.questions, internalState.answers),
+            canShowFullExplanation = isPremium
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), QuizUiState())
+
     init {
-        loadAndPrepare(reshuffle = false)
+        loadAndPrepare(reshuffle = true)
     }
 
-    fun processNavEvents(ssh: SavedStateHandle) {
-        val actionTick = ssh.get<Long>("action_tick")
-        val reshuffleTick = ssh.get<Long>("reshuffleTick")
+    fun init(onQuizFinished: (result: QuizResult) -> Unit) {
+        this.onQuizFinished = onQuizFinished
+    }
 
-        if (actionTick == null && reshuffleTick == null) return
-
-        val action = ssh.get<String>("action")
-        val reshuffle = ssh.get<Boolean>("reshuffle")
-        val isReview = ssh.get<Boolean>("is_review")
-
-        this.isReviewSession = isReview ?: false
-
-        when {
-            action == "loadNext" -> loadNextSet()
-            reshuffle != null -> reset(reshuffle)
+    fun processAction(action: String) {
+        when (action) {
+            QuizActions.ACTION_START_NEW -> {
+                isReviewSession = false
+                loadNextSet()
+            }
+            QuizActions.ACTION_RESTART_SAME_ORDER -> {
+                isReviewSession = true
+                reset(reshuffle = false)
+            }
         }
-
-        ssh.remove<String>("action")
-        ssh.remove<Long>("action_tick")
-        ssh.remove<Boolean>("reshuffle")
-        ssh.remove<Long>("reshuffleTick")
-        ssh.remove<Boolean>("is_review")
-    }
-
-    private fun getSetSize(): Int {
-        return remoteConfigRepo.getLong("set_size").toInt().coerceAtLeast(1)
     }
 
     private fun loadAndPrepare(reshuffle: Boolean) {
-        _uiState.update { it.copy(isLoading = true, finished = false) }
+        _internalState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
-            val setSize = getSetSize()
+            val setSize = remoteConfigRepo.getLong("set_size").toInt().coerceAtLeast(1)
             val daily = try {
                 withContext(Dispatchers.IO) { getDailyQuestions(count = setSize) }
-            } catch (_: Exception) {
-                emptyList()
-            }
-            currentOriginalQuestions = daily
-            seenQuestionIds.addAll(daily.map { it.id })
-            processAndStart(daily, reshuffle)
+            } catch (_: Exception) { emptyList() }
+            processAndStart(daily, reshuffle, daily.map { it.id }.toSet())
         }
     }
 
-    fun loadNextSet() {
-        _uiState.update { it.copy(isLoading = true, finished = false) }
+    private fun loadNextSet() {
+        _internalState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
-            val setSize = getSetSize()
+            val setSize = remoteConfigRepo.getLong("set_size").toInt().coerceAtLeast(1)
             val nextQuestions = withContext(Dispatchers.IO) {
-                getNextQuestions(count = setSize, excludingIds = seenQuestionIds)
+                getNextQuestions(count = setSize, excludingIds = _internalState.value.seenQuestionIds)
             }
-            currentOriginalQuestions = nextQuestions
-            seenQuestionIds.addAll(nextQuestions.map { it.id })
-            processAndStart(nextQuestions, true)
+            processAndStart(nextQuestions, true, _internalState.value.seenQuestionIds + nextQuestions.map { it.id })
         }
     }
 
-    fun reset(reshuffle: Boolean) {
-        _uiState.update { it.copy(isLoading = true, finished = false) }
-        viewModelScope.launch {
-            processAndStart(currentOriginalQuestions, reshuffle)
-        }
+    private fun reset(reshuffle: Boolean) {
+        processAndStart(_internalState.value.originalQuestions, reshuffle, _internalState.value.seenQuestionIds)
     }
 
-    private fun processAndStart(source: List<Question>, reshuffle: Boolean) {
-        if (reshuffle) {
-            shuffleSeed = System.currentTimeMillis()
-        }
+    private fun processAndStart(
+        source: List<Question>,
+        reshuffle: Boolean,
+        seenIds: Set<String>
+    ) {
+        val seed = if (reshuffle) System.currentTimeMillis() else _internalState.value.shuffleSeed
+        val ordered = if (reshuffle) source.shuffled(Random(seed)) else source
+        val questions = ordered.map { it.shuffleOptions(seed) }
 
-        val ordered = if (shuffleQuestions) {
-            val order = source.indices.shuffled(Random(shuffleSeed))
-            order.map { source[it] }
-        } else {
-            source
-        }
-
-        questions = if (shuffleOptions) {
-            shuffleOptionsForAll(ordered, shuffleSeed)
-        } else {
-            ordered
-        }
-
-        answers = MutableList(questions.size) { null }
-        _uiState.update {
-            it.copy(
-                isLoading = false,
-                questions = questions,
-                currentIndex = 0,
-                selectedIndex = answers.getOrNull(0),
-                isAnswered = answers.getOrNull(0) != null,
-                correctCount = 0,
-                finished = questions.isEmpty()
-            )
-        }
+        _internalState.value = InternalState(
+            isLoading = false,
+            originalQuestions = source,
+            questions = questions,
+            answers = MutableList(questions.size) { null },
+            currentIndex = 0,
+            shuffleSeed = seed,
+            seenQuestionIds = seenIds
+        )
     }
 
     fun selectOption(index: Int) {
-        _uiState.update { state ->
-            if (state.total == 0) return@update state
-            val cur = state.currentIndex
-            answers[cur] = index
-            state.copy(
-                selectedIndex = index,
-                isAnswered = true,
-                correctCount = calcScore(questions, answers)
-            )
+        _internalState.update { state ->
+            val newAnswers = state.answers.toMutableList().also { it[state.currentIndex] = index }
+            state.copy(answers = newAnswers)
         }
     }
 
     fun next() {
-        _uiState.update { state ->
-            if (state.total == 0) return@update state
-            val last = state.currentIndex >= state.total - 1
-            if (last) {
-                state.copy(
-                    correctCount = calcScore(questions, answers),
-                    finished = true
-                )
-            } else {
-                val nextIndex = state.currentIndex + 1
-                val sel = answers.getOrNull(nextIndex)
-                state.copy(
-                    currentIndex = nextIndex,
-                    selectedIndex = sel,
-                    isAnswered = sel != null
-                )
-            }
+        val state = _internalState.value
+        if (state.currentIndex >= state.questions.size - 1) {
+            val score = calcScore(state.questions, state.answers)
+            val result = QuizResult(
+                score = score,
+                total = state.questions.size,
+                questions = state.originalQuestions,
+                answers = state.answers,
+                isReview = isReviewSession
+            )
+            onQuizFinished?.invoke(result)
+        } else {
+            _internalState.update { it.copy(currentIndex = it.currentIndex + 1) }
         }
     }
 
     fun prev() {
-        _uiState.update { state ->
-            if (state.total == 0 || state.currentIndex <= 0) return@update state
-            val prevIndex = state.currentIndex - 1
-            val sel = answers.getOrNull(prevIndex)
-            state.copy(
-                currentIndex = prevIndex,
-                selectedIndex = sel,
-                isAnswered = sel != null,
-                finished = false
-            )
-        }
+        _internalState.update { it.copy(currentIndex = (it.currentIndex - 1).coerceAtLeast(0)) }
     }
 
-    private fun calcScore(questions: List<Question>, answers: List<Int?>): Int {
-        var s = 0
-        for (i in questions.indices) {
-            val a = answers.getOrNull(i)
-            if (a != null && a == questions[i].correctIndex) s++
-        }
-        return s
+    private fun Question.shuffleOptions(seed: Long): Question {
+        val rnd = Random(seed + this.id.hashCode())
+        val indices = this.options.indices.toList().shuffled(rnd)
+        val newOptions = indices.map { this.options[it] }
+        val newCorrect = indices.indexOf(this.correctIndex)
+        return this.copy(options = newOptions, correctIndex = newCorrect)
     }
-
-    private fun shuffleOptionsForAll(src: List<Question>, seed: Long): List<Question> {
-        return src.mapIndexed { idx, q ->
-            val rnd = Random(seed + idx)
-            val indices = q.options.indices.toList().shuffled(rnd)
-            val newOptions = indices.map { q.options[it] }
-            val newCorrect = indices.indexOf(q.correctIndex)
-            q.copy(options = newOptions, correctIndex = newCorrect)
-        }
-    }
-
-    fun markResultNavigated() {
-        _uiState.update { it.copy(finished = false) }
-    }
-
-    fun getReviewItems(isPremium: Boolean): List<ReviewItem> {
-        val qs = questions
-        return qs.mapIndexed { idx, q ->
-            ReviewItem(
-                number = idx + 1,
-                question = q.text,
-                options = q.options,
-                selectedIndex = answers.getOrNull(idx),
-                correctIndex = q.correctIndex,
-                explanation = if (isPremium) q.explanation else null
-            )
-        }
-    }
-
-    fun isReviewSession(): Boolean = isReviewSession
 }

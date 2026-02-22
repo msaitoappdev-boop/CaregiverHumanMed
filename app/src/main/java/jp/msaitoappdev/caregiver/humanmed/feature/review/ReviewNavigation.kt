@@ -6,7 +6,10 @@ import androidx.navigation.compose.composable
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 
 fun NavGraphBuilder.reviewGraph(navController: NavController) {
-    composable(NavRoutes.REVIEW) {
+    composable(
+        route = NavRoutes.Review.routeWithArgs,
+        arguments = NavRoutes.Review.arguments
+    ) {
         ReviewRoute(navController)
     }
 }

@@ -3,6 +3,7 @@ plugins {
     kotlin("android")
     id("com.google.dagger.hilt.android")
     kotlin("kapt")
+    kotlin("plugin.serialization")
 }
 
 android {
@@ -24,6 +25,9 @@ dependencies {
     // Flow（kotlinx.coroutines）のみを追加
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("javax.inject:javax.inject:1")
+
+    // Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     // Test dependencies
     testImplementation("junit:junit:4.13.2")

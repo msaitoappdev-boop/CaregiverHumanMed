@@ -6,11 +6,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 
-fun NavGraphBuilder.quizGraph(navController: NavController) {
+fun NavGraphBuilder.quizGraph(
+    navController: NavController,
+    onQuizFinished: (result: QuizResult) -> Unit,
+    onUpgrade: () -> Unit
+) {
     composable(
         route = NavRoutes.QUIZ,
         deepLinks = listOf(navDeepLink { uriPattern = "caregiver://reminder" })
-    ) { 
-        QuizRoute(navController)
+    ) {
+        QuizRoute(
+            navController = navController,
+            onQuizFinished = onQuizFinished,
+            onUpgrade = onUpgrade
+        )
     }
 }
