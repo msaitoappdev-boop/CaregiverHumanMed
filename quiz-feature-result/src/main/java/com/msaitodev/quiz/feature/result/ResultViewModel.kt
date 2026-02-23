@@ -4,15 +4,18 @@ import android.app.Activity
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.msaitodev.quiz.core.ads.RewardedHelper
+import com.msaitodev.quiz.core.ads.InterstitialHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
+import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
+import jp.msaitoappdev.caregiver.humanmed.domain.repository.RemoteConfigRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.ScoreRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.StudyQuotaRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.usecase.StartNextQuizUseCase
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -33,9 +36,11 @@ sealed interface ResultEffect {
 @HiltViewModel
 class ResultViewModel @Inject constructor(
     private val startNextQuiz: StartNextQuizUseCase,
-    private val quotaRepo: StudyQuotaRepository,
+    private val studyQuotaRepository: StudyQuotaRepository,
     private val scoreRepo: ScoreRepository,
-    private val rewardedHelper: RewardedHelper,
+    private val interstitialHelper: InterstitialHelper,
+    private val remoteConfigRepo: RemoteConfigRepository,
+    private val premiumRepository: PremiumRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -44,10 +49,11 @@ class ResultViewModel @Inject constructor(
 
     private val questionsJson: String? = savedStateHandle[NavRoutes.Result.ARG_QUESTIONS_JSON]
     private val answersJson: String? = savedStateHandle[NavRoutes.Result.ARG_ANSWERS_JSON]
-    private var hasSavedScore = false
+    private val isReview: Boolean = savedStateHandle[NavRoutes.Result.ARG_IS_REVIEW] ?: false
+    private var hasProcessedResult = false
 
-    fun onScreenShown(score: Int, total: Int, pct: Int) {
-        if (hasSavedScore) return
+    fun onScreenShown(activity: Activity, score: Int, total: Int, pct: Int) {
+        if (hasProcessedResult) return
         viewModelScope.launch {
             scoreRepo.add(ScoreEntry(
                 timestamp = System.currentTimeMillis(),
@@ -55,7 +61,24 @@ class ResultViewModel @Inject constructor(
                 total = total,
                 percent = pct
             ))
-            hasSavedScore = true
+
+            if (!isReview) {
+                studyQuotaRepository.markSetFinished()
+            }
+
+            hasProcessedResult = true
+
+            showInterstitial(activity)
+        }
+    }
+
+    private suspend fun showInterstitial(activity: Activity) {
+        val isPremium = premiumRepository.isPremium.first()
+        val interstitialEnabled = remoteConfigRepo.getBoolean("interstitial_enabled") && !isPremium
+        if (interstitialEnabled) {
+            val cap = remoteConfigRepo.getLong("interstitial_cap_per_session").toInt()
+            val intervalSec = remoteConfigRepo.getLong("inter_session_interval_sec")
+            interstitialHelper.tryShow(activity, true, cap, intervalSec)
         }
     }
 
@@ -86,19 +109,10 @@ class ResultViewModel @Inject constructor(
         }
     }
 
-    fun onOfferConfirmed(activity: Activity) {
-        rewardedHelper.show(
-            activity = activity,
-            canShowToday = { true }, // ここはViewModelが本来持つべき状態
-            onEarned = { onRewardGranted() },
-            onFail = { viewModelScope.launch { _effect.emit(ResultEffect.ShowMessage("動画を読み込めませんでした")) } }
-        )
-    }
-
-    private fun onRewardGranted() {
+    fun onRewardGranted() {
         viewModelScope.launch {
             try {
-                quotaRepo.grantByReward()
+                studyQuotaRepository.grantByReward()
                 _effect.emit(ResultEffect.StartNewQuiz)
             } catch (e: Exception) {
                 _effect.emit(ResultEffect.ShowMessage("エラーが発生しました"))

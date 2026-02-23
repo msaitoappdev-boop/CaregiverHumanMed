@@ -11,11 +11,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.msaitodev.quiz.core.ads.RewardedHelper
 
 @Composable
 fun ResultRoute(
     score: Int,
     total: Int,
+    rewardedHelper: RewardedHelper,
     onNextSet: () -> Unit,
     onReview: (questionsJson: String, answersJson: String) -> Unit,
     onReviewSameOrder: () -> Unit,
@@ -31,8 +33,9 @@ fun ResultRoute(
         else -> stringResource(id = R.string.result_poor)
     }
 
+    val activity = LocalContext.current as Activity
     LaunchedEffect(Unit) {
-        viewModel.onScreenShown(score, total, pct)
+        viewModel.onScreenShown(activity, score, total, pct)
     }
 
     val context = LocalContext.current
@@ -51,7 +54,6 @@ fun ResultRoute(
         }
     }
 
-    val activity = LocalContext.current as Activity
     ResultScreen(
         score = score,
         total = total,
@@ -59,7 +61,12 @@ fun ResultRoute(
         showOfferDialog = showOffer,
         onOfferConfirm = {
             showOffer = false
-            viewModel.onOfferConfirmed(activity)
+            rewardedHelper.show(
+                activity = activity,
+                canShowToday = { true },
+                onEarned = { viewModel.onRewardGranted() },
+                onFail = { Toast.makeText(context, "動画を読み込めませんでした", Toast.LENGTH_SHORT).show() }
+            )
         },
         onOfferDismiss = { showOffer = false },
         onNextSet = { viewModel.onNextSetClicked() },

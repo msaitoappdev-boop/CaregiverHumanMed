@@ -44,7 +44,7 @@
 **目標:** `:data`および`:domain`モジュールを自己完結させ、Hiltを通じてどのモジュールからでもクラスを正しく提供できるようにする。
 
 **タスク:**
-- [ ] `:data`モジュールに`RepositoryModule.kt`を作成し、Repositoryの実装を提供する。
+- [x] `:data`モジュールの`DataModule.kt`をレビューし、DI設定を完成させる。
 - [x] `:domain`モジュールに`UseCaseModule.kt`を作成し、UseCaseの実装を提供する。
 
 ### フェーズ2：プロジェクト内でのフィーチャーモジュール化（現在のタスク）

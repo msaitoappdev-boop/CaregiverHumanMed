@@ -15,7 +15,7 @@ import javax.inject.Named
 
 class RewardedHelper @Inject constructor(
     @ApplicationContext private val context: Context,
-    @Named("rewarded_ad_id") private val adUnitId: String
+    @Named(AdModule.NAME_REWARDED_AD_ID) private val adUnitId: String
 ) {
     /**
      * 同意取得状況に関わらず initIfNeeded は呼んでOK（複数回でも 1 回だけ初期化）。
