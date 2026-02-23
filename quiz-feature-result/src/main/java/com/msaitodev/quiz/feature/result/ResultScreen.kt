@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.result
+package com.msaitodev.quiz.feature.result
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import jp.msaitoappdev.caregiver.humanmed.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

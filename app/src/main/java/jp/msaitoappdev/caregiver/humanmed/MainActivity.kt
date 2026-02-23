@@ -25,13 +25,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
+import com.msaitodev.quiz.core.ads.RewardedHelper
 import com.msaitodev.quiz.feature.history.historyGraph
 import dagger.hilt.android.AndroidEntryPoint
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 import jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper
-import jp.msaitoappdev.caregiver.humanmed.ads.RewardedHelper
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.QuizActions
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
@@ -60,6 +60,9 @@ class MainActivity : ComponentActivity() {
     lateinit var interstitialHelper: InterstitialHelper
 
     @Inject
+    lateinit var rewardedHelper: RewardedHelper
+
+    @Inject
     lateinit var remoteConfigRepo: RemoteConfigRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,7 +80,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                AppNavHost(interstitialHelper, remoteConfigRepo)
+                AppNavHost(interstitialHelper, rewardedHelper, remoteConfigRepo)
             }
         }
     }
@@ -86,6 +89,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun AppNavHost(
     interstitialHelper: InterstitialHelper,
+    rewardedHelper: RewardedHelper,
     remoteConfigRepo: RemoteConfigRepository
 ) {
     val activity = LocalContext.current as Activity
@@ -135,7 +139,7 @@ private fun AppNavHost(
             HomeRoute(
                 onStartQuiz = { navController.navigate(NavRoutes.QUIZ) },
                 onShowRewardedAd = {
-                    RewardedHelper.show(
+                    rewardedHelper.show(
                         activity = activity,
                         canShowToday = { true },
                         onEarned = { vm.onRewardedAdEarned() },

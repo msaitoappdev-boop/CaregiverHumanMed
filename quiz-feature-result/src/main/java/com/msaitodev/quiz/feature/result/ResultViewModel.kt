@@ -1,10 +1,14 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.result
+package com.msaitodev.quiz.feature.result
 
+import android.app.Activity
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.msaitodev.quiz.core.ads.RewardedHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
+import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
+import jp.msaitoappdev.caregiver.humanmed.domain.repository.ScoreRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.StudyQuotaRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.usecase.StartNextQuizUseCase
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,6 +34,8 @@ sealed interface ResultEffect {
 class ResultViewModel @Inject constructor(
     private val startNextQuiz: StartNextQuizUseCase,
     private val quotaRepo: StudyQuotaRepository,
+    private val scoreRepo: ScoreRepository,
+    private val rewardedHelper: RewardedHelper,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -38,6 +44,20 @@ class ResultViewModel @Inject constructor(
 
     private val questionsJson: String? = savedStateHandle[NavRoutes.Result.ARG_QUESTIONS_JSON]
     private val answersJson: String? = savedStateHandle[NavRoutes.Result.ARG_ANSWERS_JSON]
+    private var hasSavedScore = false
+
+    fun onScreenShown(score: Int, total: Int, pct: Int) {
+        if (hasSavedScore) return
+        viewModelScope.launch {
+            scoreRepo.add(ScoreEntry(
+                timestamp = System.currentTimeMillis(),
+                score = score,
+                total = total,
+                percent = pct
+            ))
+            hasSavedScore = true
+        }
+    }
 
     fun onNextSetClicked() {
         viewModelScope.launch {
@@ -66,7 +86,16 @@ class ResultViewModel @Inject constructor(
         }
     }
 
-    fun onRewardGranted() {
+    fun onOfferConfirmed(activity: Activity) {
+        rewardedHelper.show(
+            activity = activity,
+            canShowToday = { true }, // ここはViewModelが本来持つべき状態
+            onEarned = { onRewardGranted() },
+            onFail = { viewModelScope.launch { _effect.emit(ResultEffect.ShowMessage("動画を読み込めませんでした")) } }
+        )
+    }
+
+    private fun onRewardGranted() {
         viewModelScope.launch {
             try {
                 quotaRepo.grantByReward()
