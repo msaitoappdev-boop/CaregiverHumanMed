@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.premium
+package com.msaitodev.quiz.feature.billing
 
 import android.app.Activity
 import android.widget.Toast
@@ -20,7 +20,7 @@ fun PaywallRoute(
         viewModel.event.collect { event ->
             when (event) {
                 is PaywallEvent.ShowMessage -> {
-                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(event.messageResId), Toast.LENGTH_SHORT).show()
                 }
             }
         }

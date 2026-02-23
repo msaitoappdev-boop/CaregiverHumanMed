@@ -1,0 +1,12 @@
+<resources>
+    <!-- Paywall -->
+    <string name="paywall_title">プレミアム</string>
+    <string name="paywall_headline">毎日の学習を、もっと快適に。</string>
+    <string name="paywall_benefits">・解説の全文が閲覧可能\n・“今日の3問”の学習がスムーズに\n・将来の拡張機能にも対応</string>
+    <string name="paywall_plan_title">プラン</string>
+    <string name="paywall_plan_price">月額 ¥200（トライアルなし）</string>
+    <string name="paywall_purchase_button_text">月額 ¥200 でアップグレード（トライアルなし）</string>
+    <string name="paywall_purchase_button_purchased">購入済みです</string>
+    <string name="paywall_purchase_dialog_description">Google Play の購入ダイアログが表示されます</string>
+    <string name="paywall_error_product_details">商品情報を取得できませんでした</string>
+</resources>
