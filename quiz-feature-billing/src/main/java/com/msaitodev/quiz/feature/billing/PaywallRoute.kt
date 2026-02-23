@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jp.msaitoappdev.caregiver.humanmed.core.ui.findActivity
 
 @Composable
 fun PaywallRoute(
@@ -28,6 +29,10 @@ fun PaywallRoute(
 
     PaywallScreen(
         uiState = uiState,
-        onPurchaseClick = { viewModel.onPurchaseClick(context as Activity) },
+        onPurchaseClick = {
+            context.findActivity()?.let { activity ->
+                viewModel.onPurchaseClick(activity)
+            }
+        },
     )
 }

@@ -28,8 +28,8 @@ android {
         applicationId = "jp.msaitoappdev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 72
-        versionName = "0.9.71"
+        versionCode = 73
+        versionName = "0.9.72"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
