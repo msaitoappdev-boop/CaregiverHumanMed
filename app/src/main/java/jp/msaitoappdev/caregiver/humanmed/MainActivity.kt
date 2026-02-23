@@ -18,7 +18,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -38,8 +37,7 @@ import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.RemoteConfigRepository
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeRoute
 import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeViewModel
-import jp.msaitoappdev.caregiver.humanmed.feature.premium.PremiumViewModel
-import jp.msaitoappdev.caregiver.humanmed.feature.premium.paywallGraph
+import com.msaitodev.quiz.feature.billing.paywallGraph
 import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizResult
 import jp.msaitoappdev.caregiver.humanmed.feature.quiz.quizGraph
 import jp.msaitoappdev.caregiver.humanmed.feature.result.resultGraph

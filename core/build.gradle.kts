@@ -31,7 +31,7 @@ dependencies {
     api("androidx.datastore:datastore-preferences:1.1.1")
 
     // Play Billing（BillingManager が依存）
-    implementation("com.android.billingclient:billing-ktx:7.1.1")
+    api("com.android.billingclient:billing-ktx:7.1.1")
 
     // Hilt（KSP 版）
     val hiltVersion = "2.51.1"

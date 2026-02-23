@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.premium
+package com.msaitodev.quiz.feature.billing
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable

@@ -28,8 +28,8 @@ android {
         applicationId = "jp.msaitoappdev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 71
-        versionName = "0.9.70"
+        versionCode = 73
+        versionName = "0.9.72"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -78,6 +78,7 @@ dependencies {
     implementation(project(":quiz-feature-review"))
     implementation(project(":quiz-feature-result"))
     implementation(project(":quiz-core-ads"))
+    implementation(project(":quiz-feature-billing"))
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 

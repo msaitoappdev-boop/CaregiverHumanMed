@@ -1,9 +1,9 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.premium
+package com.msaitodev.quiz.feature.billing
 
 import android.app.Activity
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.android.billingclient.api.ProductDetails
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
@@ -16,7 +16,7 @@ data class PaywallUiState(
 )
 
 sealed interface PaywallEvent {
-    data class ShowMessage(val message: String) : PaywallEvent
+    data class ShowMessage(@StringRes val messageResId: Int) : PaywallEvent
 }
 
 @HiltViewModel
@@ -40,7 +40,7 @@ class PremiumViewModel @Inject constructor(
         viewModelScope.launch {
             val productDetails = billing.getProductDetails()
             if (productDetails == null) {
-                _event.emit(PaywallEvent.ShowMessage("商品情報を取得できませんでした"))
+                _event.emit(PaywallEvent.ShowMessage(R.string.paywall_error_product_details))
                 return@launch
             }
             billing.launchPurchase(activity, productDetails)
