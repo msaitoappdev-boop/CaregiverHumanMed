@@ -1,22 +1,23 @@
-package jp.msaitoappdev.caregiver.humanmed.ads
+package com.msaitodev.quiz.core.ads
 
 import android.app.Activity
 import android.content.Context
+import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 import jp.msaitoappdev.caregiver.humanmed.core.config.AdUnits
+import kotlin.coroutines.resume
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.coroutines.resume
 
 @Singleton
 class InterstitialHelper @Inject constructor(
@@ -87,7 +88,7 @@ class InterstitialHelper @Inject constructor(
                     if (cont.isActive) cont.resume(true)
                 }
 
-                override fun onAdFailedToShowFullScreenContent(p0: com.google.android.gms.ads.AdError) {
+                override fun onAdFailedToShowFullScreenContent(p0: AdError) {
                     ad = null
                     preload()
                     if (cont.isActive) cont.resume(false)

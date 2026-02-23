@@ -31,7 +31,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import javax.inject.Inject
-import jp.msaitoappdev.caregiver.humanmed.ads.InterstitialHelper
+import com.msaitodev.quiz.core.ads.InterstitialHelper
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.QuizActions
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
@@ -42,7 +42,6 @@ import jp.msaitoappdev.caregiver.humanmed.feature.premium.PremiumViewModel
 import jp.msaitoappdev.caregiver.humanmed.feature.premium.paywallGraph
 import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizResult
 import jp.msaitoappdev.caregiver.humanmed.feature.quiz.quizGraph
-import jp.msaitoappdev.caregiver.humanmed.feature.result.QuotaSaverViewModel
 import jp.msaitoappdev.caregiver.humanmed.feature.result.resultGraph
 import com.msaitodev.quiz.feature.review.reviewGraph
 import jp.msaitoappdev.caregiver.humanmed.feature.settings.settingsGraph
@@ -80,7 +79,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                AppNavHost(interstitialHelper, rewardedHelper, remoteConfigRepo)
+                AppNavHost(interstitialHelper, rewardedHelper)
             }
         }
     }
@@ -90,7 +89,6 @@ class MainActivity : ComponentActivity() {
 private fun AppNavHost(
     interstitialHelper: InterstitialHelper,
     rewardedHelper: RewardedHelper,
-    remoteConfigRepo: RemoteConfigRepository
 ) {
     val activity = LocalContext.current as Activity
     val context = LocalContext.current
@@ -98,28 +96,13 @@ private fun AppNavHost(
     val navController = rememberNavController()
     var quizResultForProcessing by remember { mutableStateOf<QuizResult?>(null) }
 
-    val quotaSaver: QuotaSaverViewModel = hiltViewModel()
-    val premiumVm: PremiumViewModel = hiltViewModel()
-    val premiumState by premiumVm.uiState.collectAsStateWithLifecycle()
-
     LaunchedEffect(quizResultForProcessing) {
         val result = quizResultForProcessing ?: return@LaunchedEffect
-
-        if (!result.isReview) {
-            quotaSaver.markFinished()
-        }
-
-        val interstitialEnabled = remoteConfigRepo.getBoolean("interstitial_enabled") && !premiumState.isPremium
-        if (interstitialEnabled) {
-            val cap = remoteConfigRepo.getLong("interstitial_cap_per_session").toInt()
-            val intervalSec = remoteConfigRepo.getLong("inter_session_interval_sec")
-            interstitialHelper.tryShow(activity, true, cap, intervalSec)
-        }
 
         val questionsJson = URLEncoder.encode(Json.encodeToString(result.questions), StandardCharsets.UTF_8.toString())
         val answersJson = URLEncoder.encode(Json.encodeToString(result.answers), StandardCharsets.UTF_8.toString())
 
-        navController.navigate(NavRoutes.Result.build(result.score, result.total, questionsJson, answersJson))
+        navController.navigate(NavRoutes.Result.build(result.score, result.total, result.isReview, questionsJson, answersJson))
         quizResultForProcessing = null // Prevent re-processing
     }
 
@@ -163,6 +146,7 @@ private fun AppNavHost(
 
         resultGraph(
             navController = navController,
+            rewardedHelper = rewardedHelper,
             onNextSet = {
                 navController.previousBackStackEntry?.savedStateHandle?.set(QuizActions.KEY_QUIZ_ACTION, QuizActions.ACTION_START_NEW)
                 navController.popBackStack()

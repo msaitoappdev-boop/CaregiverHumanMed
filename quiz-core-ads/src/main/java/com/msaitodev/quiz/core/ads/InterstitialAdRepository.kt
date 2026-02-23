@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.ads
+package com.msaitodev.quiz.core.ads
 
 import android.content.Context
 import androidx.datastore.core.DataStore
