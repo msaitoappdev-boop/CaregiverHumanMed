@@ -28,30 +28,34 @@
 - **Hub（ハブ: `:app`）**: アプリ固有の要素（問題JSON、アプリ名、テーマ、DI設定など）のみを含む、非常に薄いアプリケーションモジュール。
 - **Spokes（スポーク: クイズ共通機能群）**: 全てのコア機能を含む、共有ライブラリモジュールのセット。モジュール名自体も、クイズ用であることがわかるように接頭辞をつけます。
     - `:quiz-feature-main`
+    - `:quiz-feature-review`
+    - `:quiz-feature-result`
     - `:quiz-feature-history`
     - `:quiz-feature-billing`
     - `:quiz-core-ui`
     - `:quiz-core-domain`
     - `:quiz-core-data`
+    - `:quiz-core-ads`
 
 ## 3段階計画
 
-### フェーズ1：強固なDI基盤の確立（現在のタスク）
+### フェーズ1：強固なDI基盤の確立
 
-**目標:** `:data`および`:domain`モジュールを自己完結させ、Hiltを通じてどのモジュールからでもクラスを正しく提供できるようにする。これは、DI関連のビルド失敗を防ぐための必須の第一歩です。
+**目標:** `:data`および`:domain`モジュールを自己完結させ、Hiltを通じてどのモジュールからでもクラスを正しく提供できるようにする。
 
 **タスク:**
-1. `:data`モジュールに`RepositoryModule.kt`を作成し、Repositoryの実装を提供する。
-2. `:domain`モジュールに`UseCaseModule.kt`を作成し、UseCaseの実装を提供する。
+- [ ] `:data`モジュールに`RepositoryModule.kt`を作成し、Repositoryの実装を提供する。
+- [x] `:domain`モジュールに`UseCaseModule.kt`を作成し、UseCaseの実装を提供する。
 
-### フェーズ2：プロジェクト内でのフィーチャーモジュール化
+### フェーズ2：プロジェクト内でのフィーチャーモジュール化（現在のタスク）
 
 **目標:** `:app`モジュールから各機能を、プロジェクト内の専用ライブラリモジュールとして分離する。
 
 **タスク:**
-1. `:quiz-feature-history`や`:quiz-feature-main`などの新しいフィーチャーモジュールを一つずつ作成する。
-2. 関連する全てのファイル（Route, ViewModel, Navigationなど）を新しいモジュールに移動する。
-3. プロジェクトレベルの依存関係（`implementation(project(":quiz-feature-history"))`）を使用するように`build.gradle.kts`を更新する。
+1. `:quiz-feature-review`モジュールを分離
+2. `:quiz-feature-result`モジュールを分離
+3. `:quiz-core-ads`モジュールを分離し、広告関連機能を配置
+4. （以降、`main`, `billing`...と続く）
 
 ### フェーズ3：共有ライブラリリポジトリへの抽出（将来の目標）
 

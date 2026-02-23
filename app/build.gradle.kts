@@ -76,6 +76,8 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":quiz-feature-history"))
     implementation(project(":quiz-feature-review"))
+    implementation(project(":quiz-feature-result"))
+    implementation(project(":quiz-core-ads"))
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 

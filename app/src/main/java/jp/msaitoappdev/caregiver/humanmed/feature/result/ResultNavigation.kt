@@ -3,6 +3,7 @@ package jp.msaitoappdev.caregiver.humanmed.feature.result
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.msaitodev.quiz.feature.result.ResultRoute
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 
 fun NavGraphBuilder.resultGraph(
