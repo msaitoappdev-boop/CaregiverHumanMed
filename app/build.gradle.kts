@@ -71,9 +71,9 @@ android {
 }
 
 dependencies {
-    implementation(project(":core"))
-    implementation(project(":data"))
-    implementation(project(":domain"))
+    implementation(project(":quiz-core-common"))
+    implementation(project(":quiz-core-data"))
+    implementation(project(":quiz-core-domain"))
     implementation(project(":quiz-feature-history"))
     implementation(project(":quiz-feature-review"))
     implementation(project(":quiz-feature-result"))
