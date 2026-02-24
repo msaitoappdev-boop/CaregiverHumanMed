@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.notifications
+package com.msaitodev.quiz.core.notifications
 
 import android.content.Context
 import androidx.work.CoroutineWorker

@@ -32,10 +32,12 @@
     - `:quiz-feature-result`
     - `:quiz-feature-history`
     - `:quiz-feature-billing`
+    - `:quiz-feature-settings`
     - `:quiz-core-common`
     - `:quiz-core-domain`
     - `:quiz-core-data`
     - `:quiz-core-ads`
+    - `:quiz-core-notifications`
 
 ## 3段階計画
 
@@ -57,7 +59,9 @@
 3. [x] `:quiz-core-ads`モジュールを分離し、広告関連機能を配置
 4. [x] `:quiz-feature-billing`モジュールを分離
 5. [x] `:quiz-feature-history`モジュールを分離
-6. （以降、`main`...と続く）
+6. [x] `:quiz-feature-settings`モジュールを分離
+7. [x] `:quiz-core-notifications`モジュールを分離
+8. `:quiz-feature-main`モジュールを分離
 
 ### フェーズ3：共有ライブラリリポジトリへの抽出（将来の目標）
 

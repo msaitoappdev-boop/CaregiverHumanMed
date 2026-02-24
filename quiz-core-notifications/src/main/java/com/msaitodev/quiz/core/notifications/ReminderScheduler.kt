@@ -1,10 +1,11 @@
-package jp.msaitoappdev.caregiver.humanmed.notifications
+package com.msaitodev.quiz.core.notifications
 
 import android.content.Context
-import androidx.work.*
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import java.time.Duration
 import java.time.LocalDateTime
-import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
 object ReminderScheduler {

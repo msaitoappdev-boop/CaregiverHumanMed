@@ -5,14 +5,11 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
 import androidx.core.content.getSystemService
-import dagger.hilt.android.HiltAndroidApp
-
-// Firebase
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.analytics.ktx.analytics
-
-import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderNotifier
+import com.msaitodev.quiz.core.notifications.ReminderNotifier
+import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
 class CaregiverApp : Application() {

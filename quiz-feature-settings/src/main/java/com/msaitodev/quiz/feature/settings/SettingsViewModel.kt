@@ -1,17 +1,17 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.settings
+package com.msaitodev.quiz.feature.settings
 
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import com.msaitodev.quiz.core.notifications.ReminderPrefs
+import com.msaitodev.quiz.core.notifications.ReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import androidx.lifecycle.ViewModel
-import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderPrefs
-import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 
 data class ReminderSettings(

@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.notifications
+package com.msaitodev.quiz.core.notifications
 
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey

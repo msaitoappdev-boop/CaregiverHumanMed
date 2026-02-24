@@ -32,8 +32,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.msaitodev.quiz.core.notifications.ReminderScheduler
 import jp.msaitoappdev.caregiver.humanmed.R
-import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderScheduler
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
