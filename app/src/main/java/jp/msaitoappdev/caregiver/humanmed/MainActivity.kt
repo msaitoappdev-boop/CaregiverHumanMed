@@ -41,7 +41,7 @@ import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeViewModel
 import com.msaitodev.quiz.feature.billing.paywallGraph
 import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizResult
 import jp.msaitoappdev.caregiver.humanmed.feature.quiz.quizGraph
-import jp.msaitoappdev.caregiver.humanmed.feature.result.resultGraph
+import com.msaitodev.quiz.feature.result.resultGraph
 import com.msaitodev.quiz.feature.review.reviewGraph
 import jp.msaitoappdev.caregiver.humanmed.feature.settings.settingsGraph
 import com.msaitodev.quiz.core.ads.ConsentManager

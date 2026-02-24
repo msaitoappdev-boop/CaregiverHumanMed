@@ -52,10 +52,11 @@
 **目標:** `:app`モジュールから各機能を、プロジェクト内の専用ライブラリモジュールとして分離する。
 
 **タスク:**
-1. `:quiz-feature-review`モジュールを分離
-2. `:quiz-feature-result`モジュールを分離
-3. `:quiz-core-ads`モジュールを分離し、広告関連機能を配置
-4. （以降、`main`, `billing`...と続く）
+1. [x] `:quiz-feature-review`モジュールを分離
+2. [x] `:quiz-feature-result`モジュールを分離
+3. [x] `:quiz-core-ads`モジュールを分離し、広告関連機能を配置
+4. [x] `:quiz-feature-billing`モジュールを分離
+5. （以降、`main`, `history`...と続く）
 
 ### フェーズ3：共有ライブラリリポジトリへの抽出（将来の目標）
 
