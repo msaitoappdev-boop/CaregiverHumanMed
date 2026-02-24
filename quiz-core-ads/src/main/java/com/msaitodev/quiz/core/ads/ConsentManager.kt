@@ -1,6 +1,7 @@
-package jp.msaitoappdev.caregiver.humanmed.privacy
+package com.msaitodev.quiz.core.ads
 
 import android.app.Activity
+import com.google.android.ump.ConsentDebugSettings
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
@@ -14,10 +15,20 @@ import com.google.android.ump.UserMessagingPlatform
  */
 object ConsentManager {
     fun obtain(activity: Activity, onReady: () -> Unit = {}) {
-        val params = ConsentRequestParameters.Builder().build()
+        val paramsBuilder = ConsentRequestParameters.Builder()
+
+        // デバッグビルドでは、強制的にEEA（欧州経済領域）からアクセスしたとみなし、
+        // フォームが必ず表示されるようにしてテストを容易にする。
+        if (BuildConfig.DEBUG) {
+            val debugSettings = ConsentDebugSettings.Builder(activity)
+                .setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
+                .build()
+            paramsBuilder.setConsentDebugSettings(debugSettings)
+        }
+
         val ci: ConsentInformation = UserMessagingPlatform.getConsentInformation(activity)
         // 毎起動で最新状態を取得
-        ci.requestConsentInfoUpdate(activity, params,
+        ci.requestConsentInfoUpdate(activity, paramsBuilder.build(),
             {
                 // 必要なら同意フォームを即時表示
                 UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) {

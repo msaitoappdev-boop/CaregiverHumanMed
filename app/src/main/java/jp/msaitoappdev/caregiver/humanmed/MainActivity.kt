@@ -22,6 +22,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.ads.MobileAds
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
 import com.msaitodev.quiz.core.ads.RewardedHelper
@@ -43,7 +44,7 @@ import jp.msaitoappdev.caregiver.humanmed.feature.quiz.quizGraph
 import jp.msaitoappdev.caregiver.humanmed.feature.result.resultGraph
 import com.msaitodev.quiz.feature.review.reviewGraph
 import jp.msaitoappdev.caregiver.humanmed.feature.settings.settingsGraph
-import jp.msaitoappdev.caregiver.humanmed.privacy.ConsentManager
+import com.msaitodev.quiz.core.ads.ConsentManager
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -106,7 +107,7 @@ private fun AppNavHost(
 
     LaunchedEffect(Unit) {
         ConsentManager.obtain(activity) {
-            com.google.android.gms.ads.MobileAds.initialize(activity.applicationContext)
+            MobileAds.initialize(activity.applicationContext)
             Firebase.analytics.setAnalyticsCollectionEnabled(true)
             interstitialHelper.preload()
         }
