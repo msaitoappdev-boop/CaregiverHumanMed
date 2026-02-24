@@ -1,10 +1,9 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.result
+package com.msaitodev.quiz.feature.result
 
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.msaitodev.quiz.core.ads.RewardedHelper
-import com.msaitodev.quiz.feature.result.ResultRoute
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 
 fun NavGraphBuilder.resultGraph(

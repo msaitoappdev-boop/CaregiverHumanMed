@@ -1,9 +1,9 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.result
+package com.msaitodev.quiz.feature.result
 
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import jp.msaitoappdev.caregiver.humanmed.domain.usecase.SaveScoreUseCase
+import javax.inject.Inject
 
 @HiltViewModel
 class ScoreSaverViewModel @Inject constructor(
