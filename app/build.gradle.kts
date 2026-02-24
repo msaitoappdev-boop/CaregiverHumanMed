@@ -79,6 +79,8 @@ dependencies {
     implementation(project(":quiz-feature-result"))
     implementation(project(":quiz-core-ads"))
     implementation(project(":quiz-feature-billing"))
+    implementation(project(":quiz-feature-settings"))
+    implementation(project(":quiz-core-notifications"))
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
