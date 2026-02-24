@@ -18,9 +18,9 @@ dependencyResolutionManagement {
 
 rootProject.name = "CaregiverHumanMed"
 include(":app")
-include(":core")
-include(":data")
-include(":domain")
+include(":quiz-core-common")
+include(":quiz-core-data")
+include(":quiz-core-domain")
 include(":quiz-feature-review")
 include(":quiz-feature-result")
 include(":quiz-core-ads")

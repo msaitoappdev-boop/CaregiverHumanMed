@@ -20,7 +20,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":domain"))
+    implementation(project(":quiz-core-domain"))
     // Coroutine / Lifecycle（必要に応じて）
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 

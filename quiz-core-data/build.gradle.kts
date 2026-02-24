@@ -31,8 +31,8 @@ ksp {
 }
 
 dependencies {
-    implementation(project(":core"))
-    implementation(project(":domain"))
+    implementation(project(":quiz-core-common"))
+    implementation(project(":quiz-core-domain"))
 
     // Billing
     implementation("com.android.billingclient:billing-ktx:6.2.1")
