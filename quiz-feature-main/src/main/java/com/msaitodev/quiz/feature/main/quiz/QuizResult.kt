@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.quiz
+package com.msaitodev.quiz.feature.main.quiz
 
 import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
 import kotlinx.serialization.Serializable

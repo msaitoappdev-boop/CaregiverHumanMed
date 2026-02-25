@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.home
+package com.msaitodev.quiz.feature.main.home
 
 import android.Manifest
 import android.os.Build
@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.msaitodev.quiz.core.notifications.ReminderScheduler
-import jp.msaitoappdev.caregiver.humanmed.R
+import com.msaitodev.quiz.feature.main.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.home
+package com.msaitodev.quiz.feature.main.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

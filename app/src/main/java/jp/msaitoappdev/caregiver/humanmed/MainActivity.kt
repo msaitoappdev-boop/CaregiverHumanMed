@@ -34,6 +34,10 @@ import javax.inject.Inject
 import com.msaitodev.quiz.core.ads.InterstitialHelper
 import com.msaitodev.quiz.core.ads.ConsentManager
 import com.msaitodev.quiz.feature.billing.paywallGraph
+import com.msaitodev.quiz.feature.main.home.HomeRoute
+import com.msaitodev.quiz.feature.main.home.HomeViewModel
+import com.msaitodev.quiz.feature.main.quiz.QuizResult
+import com.msaitodev.quiz.feature.main.quiz.quizGraph
 import com.msaitodev.quiz.feature.result.resultGraph
 import com.msaitodev.quiz.feature.review.reviewGraph
 import com.msaitodev.quiz.feature.settings.settingsGraph
@@ -41,10 +45,6 @@ import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.core.navigation.QuizActions
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.RemoteConfigRepository
-import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeRoute
-import jp.msaitoappdev.caregiver.humanmed.feature.home.HomeViewModel
-import jp.msaitoappdev.caregiver.humanmed.feature.quiz.QuizResult
-import jp.msaitoappdev.caregiver.humanmed.feature.quiz.quizGraph
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json

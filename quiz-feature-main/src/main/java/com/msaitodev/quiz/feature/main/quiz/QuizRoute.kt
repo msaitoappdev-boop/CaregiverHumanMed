@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.quiz
+package com.msaitodev.quiz.feature.main.quiz
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
