@@ -72,7 +72,6 @@ android {
 
 dependencies {
     implementation(project(":quiz-core-common"))
-    implementation(project(":quiz-core-data"))
     implementation(project(":quiz-core-domain"))
     implementation(project(":quiz-feature-history"))
     implementation(project(":quiz-feature-review"))
@@ -80,6 +79,7 @@ dependencies {
     implementation(project(":quiz-core-ads"))
     implementation(project(":quiz-feature-billing"))
     implementation(project(":quiz-feature-settings"))
+    implementation(project(":quiz-core-navigation"))
     implementation(project(":quiz-core-notifications"))
     implementation(project(":quiz-feature-main"))
 

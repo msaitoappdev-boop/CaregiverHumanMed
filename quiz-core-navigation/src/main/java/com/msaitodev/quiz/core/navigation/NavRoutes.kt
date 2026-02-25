@@ -1,4 +1,4 @@
-package jp.msaitoappdev.caregiver.humanmed.core.navigation
+package com.msaitodev.quiz.core.navigation
 
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -23,11 +23,13 @@ object NavRoutes {
 
         val routeWithArgs = "$ROUTE/{$ARG_SCORE}/{$ARG_TOTAL}/{$ARG_IS_REVIEW}?$ARG_QUESTIONS_JSON={$ARG_QUESTIONS_JSON}&$ARG_ANSWERS_JSON={$ARG_ANSWERS_JSON}"
         val arguments = listOf(
-            navArgument(ARG_SCORE) { type = NavType.IntType },
-            navArgument(ARG_TOTAL) { type = NavType.IntType },
-            navArgument(ARG_IS_REVIEW) { type = NavType.BoolType; defaultValue = false },
-            navArgument(ARG_QUESTIONS_JSON) { type = NavType.StringType; nullable = true },
-            navArgument(ARG_ANSWERS_JSON) { type = NavType.StringType; nullable = true },
+            navArgument(ARG_SCORE) { type = NavType.Companion.IntType },
+            navArgument(ARG_TOTAL) { type = NavType.Companion.IntType },
+            navArgument(ARG_IS_REVIEW) { type = NavType.Companion.BoolType; defaultValue = false },
+            navArgument(ARG_QUESTIONS_JSON) {
+                type = NavType.Companion.StringType; nullable = true
+            },
+            navArgument(ARG_ANSWERS_JSON) { type = NavType.Companion.StringType; nullable = true },
         )
 
         fun build(score: Int, total: Int, isReview: Boolean, questionsJson: String? = null, answersJson: String? = null): String {
@@ -46,8 +48,8 @@ object NavRoutes {
 
         val routeWithArgs = "$ROUTE/{$ARG_QUESTIONS_JSON}/{$ARG_ANSWERS_JSON}"
         val arguments = listOf(
-            navArgument(ARG_QUESTIONS_JSON) { type = NavType.StringType },
-            navArgument(ARG_ANSWERS_JSON) { type = NavType.StringType },
+            navArgument(ARG_QUESTIONS_JSON) { type = NavType.Companion.StringType },
+            navArgument(ARG_ANSWERS_JSON) { type = NavType.Companion.StringType },
         )
 
         fun build(questionsJson: String, answersJson: String): String = "$ROUTE/$questionsJson/$answersJson"

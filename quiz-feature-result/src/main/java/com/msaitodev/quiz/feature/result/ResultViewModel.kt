@@ -5,8 +5,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.msaitodev.quiz.core.ads.InterstitialHelper
+import com.msaitodev.quiz.core.navigation.NavRoutes
 import dagger.hilt.android.lifecycle.HiltViewModel
-import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.RemoteConfigRepository
