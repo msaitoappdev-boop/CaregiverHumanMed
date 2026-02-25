@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "jp.msaitoappdev.caregiver.humanmed.core"
+    namespace = "com.msaitodev.quiz.core.common"
     compileSdk = 35
     defaultConfig {
         minSdk = 24

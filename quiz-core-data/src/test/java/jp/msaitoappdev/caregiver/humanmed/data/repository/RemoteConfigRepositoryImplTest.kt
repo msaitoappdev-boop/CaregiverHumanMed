@@ -2,6 +2,7 @@ package jp.msaitoappdev.caregiver.humanmed.data.repository
 
 import com.google.common.truth.Truth.assertThat
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.msaitodev.quiz.core.data.repository.RemoteConfigRepositoryImpl
 import org.junit.Test
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock

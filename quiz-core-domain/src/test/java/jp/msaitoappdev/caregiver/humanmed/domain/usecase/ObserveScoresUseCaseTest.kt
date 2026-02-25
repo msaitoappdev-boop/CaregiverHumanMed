@@ -2,8 +2,9 @@ package jp.msaitoappdev.caregiver.humanmed.domain.usecase
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
-import jp.msaitoappdev.caregiver.humanmed.domain.repository.ScoreRepository
+import com.msaitodev.quiz.core.domain.model.ScoreEntry
+import com.msaitodev.quiz.core.domain.repository.ScoreRepository
+import com.msaitodev.quiz.core.domain.usecase.ObserveScoresUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest

@@ -1,8 +1,8 @@
 package jp.msaitoappdev.caregiver.humanmed.data.mapper
 
 import com.google.common.truth.Truth.assertThat
-import jp.msaitoappdev.caregiver.humanmed.data.local.question.dto.QuestionDto
-import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
+import com.msaitodev.quiz.core.data.mapper.toDomain
+import com.msaitodev.quiz.core.data.local.dto.QuestionDto
 import org.junit.Test
 
 class QuestionMapperTest {

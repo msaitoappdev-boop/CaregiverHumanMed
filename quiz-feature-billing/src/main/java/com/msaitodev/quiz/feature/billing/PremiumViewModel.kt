@@ -5,8 +5,8 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
-import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
+import com.msaitodev.quiz.core.common.billing.BillingManager
+import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject

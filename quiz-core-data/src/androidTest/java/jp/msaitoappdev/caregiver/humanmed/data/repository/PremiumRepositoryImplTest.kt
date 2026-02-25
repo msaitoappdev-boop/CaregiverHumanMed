@@ -3,7 +3,8 @@ package jp.msaitoappdev.caregiver.humanmed.data.repository
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
+import com.msaitodev.quiz.core.common.billing.BillingManager
+import com.msaitodev.quiz.core.data.repository.PremiumRepositoryImpl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Test

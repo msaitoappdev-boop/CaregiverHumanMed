@@ -6,9 +6,10 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import jp.msaitoappdev.caregiver.humanmed.data.local.db.AppDatabase
-import jp.msaitoappdev.caregiver.humanmed.data.local.db.ScoreDao
-import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
+import com.msaitodev.quiz.core.data.repository.ScoreRepositoryImpl
+import com.msaitodev.quiz.core.data.local.db.AppDatabase
+import com.msaitodev.quiz.core.data.local.db.ScoreDao
+import com.msaitodev.quiz.core.domain.model.ScoreEntry
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before

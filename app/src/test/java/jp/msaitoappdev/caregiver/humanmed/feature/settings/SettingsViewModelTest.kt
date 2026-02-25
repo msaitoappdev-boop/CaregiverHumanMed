@@ -12,7 +12,7 @@ import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
+import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import jp.msaitoappdev.caregiver.humanmed.notifications.ReminderPrefs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

@@ -6,8 +6,8 @@ import com.android.billingclient.api.ProductDetails
 import com.google.common.truth.Truth.assertThat
 import com.msaitodev.quiz.feature.billing.PaywallEvent
 import com.msaitodev.quiz.feature.billing.PremiumViewModel
-import jp.msaitoappdev.caregiver.humanmed.core.billing.BillingManager
-import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
+import com.msaitodev.quiz.core.common.billing.BillingManager
+import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow

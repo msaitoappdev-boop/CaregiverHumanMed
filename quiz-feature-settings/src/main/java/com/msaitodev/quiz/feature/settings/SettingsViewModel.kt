@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import androidx.lifecycle.ViewModel
-import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
+import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 
 data class ReminderSettings(
     val enabled: Boolean,

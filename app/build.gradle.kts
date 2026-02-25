@@ -21,11 +21,11 @@ val localProps = Properties().apply {
 }
 
 android {
-    namespace = "jp.msaitoappdev.caregiver.humanmed"
+    namespace = "com.msaitodev.caregiver.humanmed"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "jp.msaitoappdev.caregiver.humanmed"
+        applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
         versionCode = 73

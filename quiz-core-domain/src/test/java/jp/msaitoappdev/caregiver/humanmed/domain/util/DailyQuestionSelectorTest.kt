@@ -1,7 +1,8 @@
 package jp.msaitoappdev.caregiver.humanmed.domain.util
 
 import com.google.common.truth.Truth.assertThat
-import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
+import com.msaitodev.quiz.core.domain.model.Question
+import com.msaitodev.quiz.core.domain.ui.DailyQuestionSelector
 import org.junit.Test
 
 class DailyQuestionSelectorTest {

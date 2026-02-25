@@ -1,8 +1,8 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.result
 
 import com.msaitodev.quiz.feature.result.ScoreSaverViewModel
-import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
-import jp.msaitoappdev.caregiver.humanmed.domain.usecase.SaveScoreUseCase
+import com.msaitodev.quiz.core.domain.model.ScoreEntry
+import com.msaitodev.quiz.core.domain.usecase.SaveScoreUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher

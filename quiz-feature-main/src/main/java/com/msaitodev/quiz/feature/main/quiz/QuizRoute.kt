@@ -7,7 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import jp.msaitoappdev.caregiver.humanmed.core.navigation.QuizActions
+import com.msaitodev.quiz.core.common.navigation.QuizActions
 
 @Composable
 fun QuizRoute(

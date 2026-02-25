@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import com.msaitodev.quiz.core.common.billing.BillingManager
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test

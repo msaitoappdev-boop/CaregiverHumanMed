@@ -2,7 +2,7 @@ package jp.msaitoappdev.caregiver.humanmed.data.repository
 
 import android.content.Context
 import com.google.common.truth.Truth.assertThat
-import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
+import com.msaitodev.quiz.core.data.repository.QuestionRepositoryImpl
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.mockito.kotlin.doReturn
