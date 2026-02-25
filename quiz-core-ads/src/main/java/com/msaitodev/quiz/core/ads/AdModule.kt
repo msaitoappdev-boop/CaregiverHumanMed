@@ -4,7 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import jp.msaitoappdev.caregiver.humanmed.core.config.AdUnits
+import com.msaitodev.quiz.core.common.config.AdUnits
 import javax.inject.Named
 import javax.inject.Singleton
 

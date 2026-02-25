@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
-import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
+import com.msaitodev.quiz.core.domain.model.Question
+import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch

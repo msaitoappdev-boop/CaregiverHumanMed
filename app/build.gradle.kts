@@ -21,11 +21,11 @@ val localProps = Properties().apply {
 }
 
 android {
-    namespace = "jp.msaitoappdev.caregiver.humanmed"
+    namespace = "com.msaitodev.caregiver.humanmed"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "jp.msaitoappdev.caregiver.humanmed"
+        applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
         versionCode = 73
@@ -72,7 +72,6 @@ android {
 
 dependencies {
     implementation(project(":quiz-core-common"))
-    implementation(project(":quiz-core-data"))
     implementation(project(":quiz-core-domain"))
     implementation(project(":quiz-feature-history"))
     implementation(project(":quiz-feature-review"))
@@ -80,7 +79,9 @@ dependencies {
     implementation(project(":quiz-core-ads"))
     implementation(project(":quiz-feature-billing"))
     implementation(project(":quiz-feature-settings"))
+    implementation(project(":quiz-core-navigation"))
     implementation(project(":quiz-core-notifications"))
+    implementation(project(":quiz-feature-main"))
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 

@@ -11,7 +11,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
-import jp.msaitoappdev.caregiver.humanmed.core.config.AdUnits
+import com.msaitodev.quiz.core.common.config.AdUnits
 import kotlin.coroutines.resume
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

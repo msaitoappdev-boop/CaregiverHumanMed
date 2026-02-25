@@ -3,9 +3,9 @@ package com.msaitodev.quiz.feature.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
-import jp.msaitoappdev.caregiver.humanmed.domain.usecase.ClearScoresUseCase
-import jp.msaitoappdev.caregiver.humanmed.domain.usecase.ObserveScoresUseCase
+import com.msaitodev.quiz.core.domain.model.ScoreEntry
+import com.msaitodev.quiz.core.domain.usecase.ClearScoresUseCase
+import com.msaitodev.quiz.core.domain.usecase.ObserveScoresUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject

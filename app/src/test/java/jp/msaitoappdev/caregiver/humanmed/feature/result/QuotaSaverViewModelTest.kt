@@ -1,7 +1,7 @@
 package jp.msaitoappdev.caregiver.humanmed.feature.result
 
 import com.msaitodev.quiz.feature.result.QuotaSaverViewModel
-import jp.msaitoappdev.caregiver.humanmed.domain.repository.StudyQuotaRepository
+import com.msaitodev.quiz.core.domain.repository.StudyQuotaRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Test

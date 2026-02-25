@@ -1,6 +1,5 @@
 package com.msaitodev.quiz.feature.billing
 
-import android.app.Activity
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -8,7 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import jp.msaitoappdev.caregiver.humanmed.core.ui.findActivity
+import com.msaitodev.quiz.core.common.ui.findActivity
 
 @Composable
 fun PaywallRoute(

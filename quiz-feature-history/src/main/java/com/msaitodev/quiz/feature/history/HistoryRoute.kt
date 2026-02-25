@@ -14,7 +14,7 @@ import androidx.navigation.NavController
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.hilt.navigation.compose.hiltViewModel
-import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
+import com.msaitodev.quiz.core.domain.model.ScoreEntry
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 

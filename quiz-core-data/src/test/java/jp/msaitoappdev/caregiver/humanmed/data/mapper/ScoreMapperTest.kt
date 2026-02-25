@@ -1,8 +1,10 @@
 package jp.msaitoappdev.caregiver.humanmed.data.mapper
 
 import com.google.common.truth.Truth.assertThat
-import jp.msaitoappdev.caregiver.humanmed.data.local.db.ScoreRecord
-import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
+import com.msaitodev.quiz.core.data.mapper.toDomain
+import com.msaitodev.quiz.core.data.mapper.toEntity
+import com.msaitodev.quiz.core.data.local.db.ScoreRecord
+import com.msaitodev.quiz.core.domain.model.ScoreEntry
 import org.junit.Test
 
 class ScoreMapperTest {

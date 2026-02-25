@@ -5,14 +5,14 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.msaitodev.quiz.core.ads.InterstitialHelper
+import com.msaitodev.quiz.core.navigation.ResultDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
-import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
-import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
-import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
-import jp.msaitoappdev.caregiver.humanmed.domain.repository.RemoteConfigRepository
-import jp.msaitoappdev.caregiver.humanmed.domain.repository.ScoreRepository
-import jp.msaitoappdev.caregiver.humanmed.domain.repository.StudyQuotaRepository
-import jp.msaitoappdev.caregiver.humanmed.domain.usecase.StartNextQuizUseCase
+import com.msaitodev.quiz.core.domain.model.ScoreEntry
+import com.msaitodev.quiz.core.domain.repository.PremiumRepository
+import com.msaitodev.quiz.core.domain.repository.RemoteConfigRepository
+import com.msaitodev.quiz.core.domain.repository.ScoreRepository
+import com.msaitodev.quiz.core.domain.repository.StudyQuotaRepository
+import com.msaitodev.quiz.core.domain.usecase.StartNextQuizUseCase
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
@@ -47,9 +47,9 @@ class ResultViewModel @Inject constructor(
     private val _effect = MutableSharedFlow<ResultEffect>()
     val effect = _effect.asSharedFlow()
 
-    private val questionsJson: String? = savedStateHandle[NavRoutes.Result.ARG_QUESTIONS_JSON]
-    private val answersJson: String? = savedStateHandle[NavRoutes.Result.ARG_ANSWERS_JSON]
-    private val isReview: Boolean = savedStateHandle[NavRoutes.Result.ARG_IS_REVIEW] ?: false
+    private val questionsJson: String? = savedStateHandle[ResultDestination.ARG_QUESTIONS_JSON]
+    private val answersJson: String? = savedStateHandle[ResultDestination.ARG_ANSWERS_JSON]
+    private val isReview: Boolean = savedStateHandle[ResultDestination.ARG_IS_REVIEW] ?: false
     private var hasProcessedResult = false
 
     fun onScreenShown(activity: Activity, score: Int, total: Int, pct: Int) {

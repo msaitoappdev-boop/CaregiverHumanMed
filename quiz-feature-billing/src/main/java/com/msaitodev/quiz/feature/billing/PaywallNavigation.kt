@@ -2,10 +2,10 @@ package com.msaitodev.quiz.feature.billing
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import jp.msaitoappdev.caregiver.humanmed.core.navigation.NavRoutes
+import com.msaitodev.quiz.core.navigation.PaywallDestination
 
 fun NavGraphBuilder.paywallGraph() {
-    composable(NavRoutes.PAYWALL) {
+    composable(PaywallDestination.route) {
         PaywallRoute()
     }
 }

@@ -46,6 +46,7 @@ dependencies {
     implementation(project(":quiz-core-common"))
     implementation(project(":quiz-core-domain"))
     implementation(project(":quiz-core-data"))
+    implementation(project(":quiz-core-navigation"))
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 

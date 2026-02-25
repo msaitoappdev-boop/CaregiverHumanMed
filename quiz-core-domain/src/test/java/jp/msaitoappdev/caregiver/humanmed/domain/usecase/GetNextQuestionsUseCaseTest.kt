@@ -1,8 +1,9 @@
 package jp.msaitoappdev.caregiver.humanmed.domain.usecase
 
 import com.google.common.truth.Truth.assertThat
-import jp.msaitoappdev.caregiver.humanmed.domain.model.Question
-import jp.msaitoappdev.caregiver.humanmed.domain.repository.QuestionRepository
+import com.msaitodev.quiz.core.domain.model.Question
+import com.msaitodev.quiz.core.domain.repository.QuestionRepository
+import com.msaitodev.quiz.core.domain.usecase.GetNextQuestionsUseCase
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 

@@ -7,8 +7,8 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import jp.msaitoappdev.caregiver.humanmed.domain.usecase.ClearScoresUseCase
-import jp.msaitoappdev.caregiver.humanmed.domain.usecase.ObserveScoresUseCase
+import com.msaitodev.quiz.core.domain.usecase.ClearScoresUseCase
+import com.msaitodev.quiz.core.domain.usecase.ObserveScoresUseCase
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
