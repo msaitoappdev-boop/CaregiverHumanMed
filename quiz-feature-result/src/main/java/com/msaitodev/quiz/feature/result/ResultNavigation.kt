@@ -4,7 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.msaitodev.quiz.core.ads.RewardedHelper
-import com.msaitodev.quiz.core.navigation.NavRoutes
+import com.msaitodev.quiz.core.navigation.ResultDestination
 
 fun NavGraphBuilder.resultGraph(
     navController: NavController,
@@ -16,11 +16,11 @@ fun NavGraphBuilder.resultGraph(
     onBackToHome: () -> Unit
 ) {
     composable(
-        route = NavRoutes.Result.routeWithArgs,
-        arguments = NavRoutes.Result.arguments
+        route = ResultDestination.routeWithArgs,
+        arguments = ResultDestination.arguments
     ) { backStackEntry ->
-        val score = backStackEntry.arguments?.getInt(NavRoutes.Result.ARG_SCORE) ?: 0
-        val total = backStackEntry.arguments?.getInt(NavRoutes.Result.ARG_TOTAL) ?: 0
+        val score = backStackEntry.arguments?.getInt(ResultDestination.ARG_SCORE) ?: 0
+        val total = backStackEntry.arguments?.getInt(ResultDestination.ARG_TOTAL) ?: 0
         ResultRoute(
             score = score,
             total = total,

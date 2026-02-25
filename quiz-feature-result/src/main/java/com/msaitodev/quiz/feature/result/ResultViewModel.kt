@@ -5,7 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.msaitodev.quiz.core.ads.InterstitialHelper
-import com.msaitodev.quiz.core.navigation.NavRoutes
+import com.msaitodev.quiz.core.navigation.ResultDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jp.msaitoappdev.caregiver.humanmed.domain.model.ScoreEntry
 import jp.msaitoappdev.caregiver.humanmed.domain.repository.PremiumRepository
@@ -47,9 +47,9 @@ class ResultViewModel @Inject constructor(
     private val _effect = MutableSharedFlow<ResultEffect>()
     val effect = _effect.asSharedFlow()
 
-    private val questionsJson: String? = savedStateHandle[NavRoutes.Result.ARG_QUESTIONS_JSON]
-    private val answersJson: String? = savedStateHandle[NavRoutes.Result.ARG_ANSWERS_JSON]
-    private val isReview: Boolean = savedStateHandle[NavRoutes.Result.ARG_IS_REVIEW] ?: false
+    private val questionsJson: String? = savedStateHandle[ResultDestination.ARG_QUESTIONS_JSON]
+    private val answersJson: String? = savedStateHandle[ResultDestination.ARG_ANSWERS_JSON]
+    private val isReview: Boolean = savedStateHandle[ResultDestination.ARG_IS_REVIEW] ?: false
     private var hasProcessedResult = false
 
     fun onScreenShown(activity: Activity, score: Int, total: Int, pct: Int) {

@@ -33,7 +33,13 @@ import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 import com.msaitodev.quiz.core.ads.InterstitialHelper
 import com.msaitodev.quiz.core.ads.ConsentManager
-import com.msaitodev.quiz.core.navigation.NavRoutes
+import com.msaitodev.quiz.core.navigation.HistoryDestination
+import com.msaitodev.quiz.core.navigation.HomeDestination
+import com.msaitodev.quiz.core.navigation.PaywallDestination
+import com.msaitodev.quiz.core.navigation.QuizDestination
+import com.msaitodev.quiz.core.navigation.ResultDestination
+import com.msaitodev.quiz.core.navigation.ReviewDestination
+import com.msaitodev.quiz.core.navigation.SettingsDestination
 import com.msaitodev.quiz.feature.billing.paywallGraph
 import com.msaitodev.quiz.feature.main.home.HomeRoute
 import com.msaitodev.quiz.feature.main.home.HomeViewModel
@@ -101,7 +107,7 @@ private fun AppNavHost(
         val questionsJson = URLEncoder.encode(Json.encodeToString(result.questions), StandardCharsets.UTF_8.toString())
         val answersJson = URLEncoder.encode(Json.encodeToString(result.answers), StandardCharsets.UTF_8.toString())
 
-        navController.navigate(NavRoutes.Result.build(result.score, result.total, result.isReview, questionsJson, answersJson))
+        navController.navigate(ResultDestination.build(result.score, result.total, result.isReview, questionsJson, answersJson))
         quizResultForProcessing = null // Prevent re-processing
     }
 
@@ -113,13 +119,13 @@ private fun AppNavHost(
         }
     }
 
-    NavHost(navController, startDestination = NavRoutes.HOME) {
-        composable(NavRoutes.HOME) {
+    NavHost(navController, startDestination = HomeDestination.route) {
+        composable(HomeDestination.route) {
             val vm: HomeViewModel = hiltViewModel()
             val rewardedAdError = stringResource(id = R.string.common_error_rewarded_ad)
 
             HomeRoute(
-                onStartQuiz = { navController.navigate(NavRoutes.QUIZ) },
+                onStartQuiz = { navController.navigate(QuizDestination.route) },
                 onShowRewardedAd = {
                     rewardedHelper.show(
                         activity = activity,
@@ -130,8 +136,8 @@ private fun AppNavHost(
                         }
                     )
                 },
-                onUpgrade = { navController.navigate(NavRoutes.PAYWALL) },
-                onOpenSettings = { navController.navigate(NavRoutes.SETTINGS) }
+                onUpgrade = { navController.navigate(PaywallDestination.route) },
+                onOpenSettings = { navController.navigate(SettingsDestination.route) }
             )
         }
 
@@ -140,7 +146,7 @@ private fun AppNavHost(
             onQuizFinished = { result ->
                 quizResultForProcessing = result
             },
-            onUpgrade = { navController.navigate(NavRoutes.PAYWALL) }
+            onUpgrade = { navController.navigate(PaywallDestination.route) }
         )
 
         resultGraph(
@@ -151,14 +157,14 @@ private fun AppNavHost(
                 navController.popBackStack()
             },
             onReview = { questionsJson, answersJson ->
-                navController.navigate(NavRoutes.Review.build(questionsJson, answersJson))
+                navController.navigate(ReviewDestination.build(questionsJson, answersJson))
             },
             onReviewSameOrder = {
                 navController.previousBackStackEntry?.savedStateHandle?.set(QuizActions.KEY_QUIZ_ACTION, QuizActions.ACTION_RESTART_SAME_ORDER)
                 navController.popBackStack()
             },
-            onShowScoreHistory = { navController.navigate(NavRoutes.HISTORY) },
-            onBackToHome = { navController.popBackStack(NavRoutes.HOME, inclusive = false) }
+            onShowScoreHistory = { navController.navigate(HistoryDestination.route) },
+            onBackToHome = { navController.popBackStack(HomeDestination.route, inclusive = false) }
         )
 
         reviewGraph(navController)

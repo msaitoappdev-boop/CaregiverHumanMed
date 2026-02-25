@@ -4,7 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
-import com.msaitodev.quiz.core.navigation.NavRoutes
+import com.msaitodev.quiz.core.navigation.QuizDestination
 
 fun NavGraphBuilder.quizGraph(
     navController: NavController,
@@ -12,7 +12,7 @@ fun NavGraphBuilder.quizGraph(
     onUpgrade: () -> Unit
 ) {
     composable(
-        route = NavRoutes.QUIZ,
+        route = QuizDestination.route,
         deepLinks = listOf(navDeepLink { uriPattern = "caregiver://reminder" })
     ) {
         QuizRoute(
