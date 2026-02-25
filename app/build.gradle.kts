@@ -28,8 +28,8 @@ android {
         applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 73
-        versionName = "0.9.72"
+        versionCode = 2
+        versionName = "0.9.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -50,8 +50,10 @@ android {
                 "ca-app-pub-3940256099942544~3347511713"
         }
         release {
+            // The admob.app.id is loaded from local.properties, but if it's not present,
+            // this fallback is used. We are updating the fallback to the new App ID.
             val appId = localProps.getProperty("admob.app.id")
-                ?: "ca-app-pub-2149916445602223~1245613844"
+                ?: "ca-app-pub-2149916445602223~3292882590"
             manifestPlaceholders["admob_app_id"] = appId
             signingConfig = signingConfigs.getByName("release")
         }
