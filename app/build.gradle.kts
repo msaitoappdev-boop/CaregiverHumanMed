@@ -28,8 +28,8 @@ android {
         applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.9.5"
+        versionCode = 19
+        versionName = "0.9.19"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -135,7 +135,7 @@ dependencies {
 
     // AdMob / UMP
     implementation("com.google.android.gms:play-services-ads:22.6.0")
-    implementation("com.google.android.ump:user-messaging-platform:2.2.0")
+    implementation("com.google.android.ump:user-messaging-platform:4.0.0")
 
     // Test dependencies
     testImplementation("junit:junit:4.13.2")
