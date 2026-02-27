@@ -1,8 +1,6 @@
 package com.msaitodev.quiz.core.notifications
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -27,17 +25,18 @@ object ReminderNotifier {
         else PendingIntent.FLAG_UPDATE_CURRENT
         val contentPI = PendingIntent.getActivity(context, 0, intent, flags)
 
-        // アイコンIDを名前で動的に解決することで、共通モジュールからアプリ固有リソースへの直接参照を断ち切る
-        val iconResId = context.resources.getIdentifier("ic_stat_quiz", "drawable", context.packageName)
-
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(iconResId)
+            .setSmallIcon(R.drawable.ic_stat_quiz)
             .setContentTitle("今日の3問を解きましょう")
             .setContentText("毎日の積み重ねが合格に近づきます。今すぐスタート！")
             .setAutoCancel(true)
             .setContentIntent(contentPI)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
-        NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build())
+        try {
+            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build())
+        } catch (e: SecurityException) {
+            // Permission missing at runtime
+        }
     }
 }

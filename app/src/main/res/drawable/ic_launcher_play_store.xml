@@ -1,21 +1,23 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
+    android:width="512dp"
+    android:height="512dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
 
-    <!--
-        Monochrome Layer for Themed Icons.
-        It should only contain the icon silhouette.
-        The system will apply the theme color to this path.
-    -->
+    <!-- Background (Pale Green) -->
+    <path
+        android:fillColor="#A5D6A7"
+        android:pathData="M0,0 h512 v512 h-512 z" />
+
+    <!-- Quiz Icon (Centered) -->
+    <!-- Original scale 960x960. Target size approx 300dp. Scale: 300/960 = 0.3125. Translate: (512-300)/2 = 106 -->
     <group
-        android:translateX="27"
-        android:translateY="27"
-        android:scaleX="0.056"
-        android:scaleY="0.056">
+        android:translateX="106"
+        android:translateY="106"
+        android:scaleX="0.3125"
+        android:scaleY="0.3125">
         <path
-            android:fillColor="#FF000000"
+            android:fillColor="#FFFFFF"
             android:pathData="M160,840Q127,840 103.5,816.5Q80,793 80,760L80,200Q80,167 103.5,143.5Q127,120 160,120L800,120Q833,120 856.5,143.5Q880,167 880,200L880,760Q880,793 856.5,816.5Q833,840 800,840L160,840ZM160,760L800,760Q800,760 800,760Q800,760 800,760L800,200Q800,200 800,200Q800,200 800,200L160,200Q160,200 160,200Q160,200 160,200L160,760Q160,760 160,760Q160,760 160,760ZM200,680L400,680L400,600L200,600L200,680ZM582,600L780,402L723,345L582,487L525,430L469,487L582,600ZM200,520L400,520L400,440L200,440L200,520ZM200,360L400,360L400,280L200,280L200,360ZM160,760L160,760Q160,760 160,760Q160,760 160,760L160,200Q160,200 160,200Q160,200 160,200L160,200Q160,200 160,200Q160,200 160,200L160,760Q160,760 160,760Q160,760 160,760Z"/>
     </group>
 </vector>

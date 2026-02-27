@@ -1,3 +1,18 @@
 <resources>
     <string name="privacy_policy_url">https://msaitodev.com/privacy-policy.html</string>
+
+    <!-- Settings -->
+    <string name="settings_title">設定</string>
+    <string name="settings_back">戻る</string>
+    <string name="settings_reminder_title">リマインド通知</string>
+    <string name="settings_reminder_switch_label">毎日リマインドを受け取る</string>
+    <string name="settings_reminder_hour_label">時</string>
+    <string name="settings_reminder_minute_label">分</string>
+    <string name="settings_reminder_description">指定時刻（既定 20:00）に1日1回通知します。Doze 等により前後する場合があります。</string>
+    <string name="settings_reminder_test_button">【テスト】5秒後に通知を送信</string>
+    <string name="settings_restore_title">購入の復元</string>
+    <string name="settings_restore_description">アカウント切替や端末移行後に、購入状態を手動で同期します。</string>
+    <string name="settings_restore_button">購入を復元</string>
+    <string name="settings_manage_subscription">定期購入を管理（Google Play）</string>
+    <string name="settings_privacy_policy">プライバシーポリシーを開く</string>
 </resources>
