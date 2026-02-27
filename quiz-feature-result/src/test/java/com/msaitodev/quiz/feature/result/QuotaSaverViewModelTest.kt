@@ -1,8 +1,6 @@
-package jp.msaitoappdev.caregiver.humanmed.feature.result
+package com.msaitodev.quiz.feature.result
 
-import com.msaitodev.quiz.feature.result.ScoreSaverViewModel
-import com.msaitodev.quiz.core.domain.model.ScoreEntry
-import com.msaitodev.quiz.core.domain.usecase.SaveScoreUseCase
+import com.msaitodev.quiz.core.domain.repository.StudyQuotaRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -16,17 +14,17 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 
 @ExperimentalCoroutinesApi
-class ScoreSaverViewModelTest {
+class QuotaSaverViewModelTest {
 
-    private lateinit var viewModel: ScoreSaverViewModel
-    private val saveScoreUseCase: SaveScoreUseCase = mock()
+    private val studyQuotaRepository: StudyQuotaRepository = mock()
+    private lateinit var viewModel: QuotaSaverViewModel
 
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = ScoreSaverViewModel(saveScoreUseCase)
+        viewModel = QuotaSaverViewModel(studyQuotaRepository)
     }
 
     @After
@@ -35,14 +33,12 @@ class ScoreSaverViewModelTest {
     }
 
     @Test
-    fun `save calls use case`() = runTest {
-        // Arrange
-        val scoreEntry = ScoreEntry(timestamp = 1L, score = 2, total = 3, percent = 66)
-
+    fun `markFinished calls repository`() = runTest {
         // Act
-        viewModel.save(scoreEntry)
+        viewModel.markFinished()
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Assert
-        verify(saveScoreUseCase).invoke(scoreEntry)
+        verify(studyQuotaRepository).markSetFinished()
     }
 }

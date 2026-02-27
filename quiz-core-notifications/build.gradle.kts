@@ -50,4 +50,14 @@ dependencies {
 
     // Other necessary dependencies
     implementation("androidx.core:core-ktx:1.13.1")
+
+    // Testing
+    androidTestImplementation("androidx.test.ext:junit-ktx:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation("com.google.truth:truth:1.4.2")
+    androidTestImplementation("org.mockito:mockito-core:5.12.0")
+    androidTestImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+    androidTestImplementation("org.mockito:mockito-inline:5.2.1") // For mocking static methods and more
+    androidTestImplementation("androidx.work:work-testing:2.9.0")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }
