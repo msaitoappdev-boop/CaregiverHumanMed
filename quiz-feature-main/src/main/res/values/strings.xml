@@ -3,17 +3,12 @@
     <string name="home_title">ホーム</string>
     <string name="home_start_quiz">クイズを開始</string>
     <string name="home_upgrade_to_premium">プレミアムへアップグレード</string>
-    <string name="home_set_reminder">毎日20:00にリマインドを設定</string>
 
     <!-- Dialogs -->
     <string name="dialog_rewarded_ad_title">今日は無料分が終了しました</string>
     <string name="dialog_rewarded_ad_message">動画を視聴すると +1 セット解放できます。視聴しますか？</string>
     <string name="dialog_rewarded_ad_confirm">動画を視聴して +1 セット</string>
     <string name="dialog_rewarded_ad_dismiss">キャンセル</string>
-    <string name="dialog_notification_permission_title">通知の許可が必要です</string>
-    <string name="dialog_notification_permission_message">毎日20:00に『今日の3問』をお知らせします。通知を許可してください。</string>
-    <string name="dialog_permission_confirm">許可する</string>
-    <string name="dialog_permission_dismiss">後で</string>
 
     <!-- Settings (used in Home) -->
     <string name="settings_title">設定</string>
