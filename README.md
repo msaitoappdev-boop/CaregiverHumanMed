@@ -1,105 +1,77 @@
-# W1 配布物（Android・即時上書き可能）
+# 介護福祉士 毎日3問トレーナー
 
-パッケージ名：`jp.msaitoappdev.caregiver.humanmed`
+## 1. プロジェクト概要
 
-この ZIP は **プロジェクト直下に上書き展開**すれば、そのまま配置される構成です。
-（`app/`配下の res/xml・res/values、Kotlinファイル、Firebaseテンプレート、web公開用 app-ads.txt など）
+「介護福祉士 毎日3問トレーナー」は、介護福祉士国家試験の合格を目指す学習者を支援するためのAndroidアプリです。毎日少しずつクイズ形式で問題を解くことで、継続的な学習をサポートします。
+
+### 主要な技術スタック
+- **言語**: Kotlin
+- **UI**: Jetpack Compose (Material 3)
+- **アーキテクチャ**: MVVM + UDF (単方向データフロー)
+- **非同期処理**: Kotlin Coroutines & Flow
+- **DI (依存性注入)**: Hilt
+- **画面遷移**: Jetpack Navigation for Compose
 
 ---
 
-## 1. ファイル配置（この ZIP のまま上書き）
+## 2. アーキテクチャとモジュール構成
+
+本プロジェクトは、関心事の分離とビルド効率の向上を目的としたマルチモジュール構成を採用しています。
 
 ```
-deliverables_w1_android/
-├─ app/
-│  └─ src/main/
-│     ├─ res/
-│     │  ├─ xml/remote_config_defaults.xml          # Remote Config デフォルト
-│     │  └─ values/admob_ids.xml                    # AdMob App ID / Ad Unit ID（テストID）
-│     └─ java/jp/msaitoappdev/caregiver/humanmed/config/
-│        ├─ RemoteConfigKeys.kt                     # RC キー定数
-│        └─ AdUnits.kt                              # Ad Unit 参照ヘルパ
-├─ firebase/remote_config_template.json             # Console インポート用テンプレ
-├─ deploy/web/app-ads.txt                           # Web ルートに設置するファイル
-└─ documentation/README.md                          # 本ドキュメント複製
+:app ——————————————> :core ——————————> :domain
+ |      |      |      |      |                   ^
+ |      |      |      |      └————> :data —————┘
+ |      |      |      |
+ |      |      |      └—> :quiz-feature-billing
+ |      |      |
+ |      |      └—> :quiz-feature-review
+ |      |
+ |      └—> :quiz-feature-result
+ |
+ └—> :quiz-core-ads
 ```
 
-> **手順**：ZIP をプロジェクト直下に展開 → 既存ファイルに上書き。
+### 各モジュールの役割
+
+| モジュール名                 | 役割                                                              |
+| -------------------------- | ----------------------------------------------------------------- |
+| `:app`                     | アプリケーションのエントリポイント。画面遷移の定義など、Android固有のUI層。 |
+| `:core`                    | 全モジュールで共有される基盤機能。拡張関数、ナビゲーション定義など。     |
+| `:data`                    | データソースへのアクセスを抽象化するRepositoryの実装。                  |
+| `:domain`                  | アプリのビジネスロジック（UseCase）とドメインモデルを定義。             |
+| `:quiz-core-ads`           | 広告表示と同意取得（UMP）に関する共通機能。                         |
+| `:quiz-feature-billing`    | 課金（プレミアム機能）に関するUIとロジック。                          |
+| `:quiz-feature-history`    | スコア履歴機能。 (現在 `app` 内に未分離の機能あり)                     |
+| `:quiz-feature-result`     | クイズ結果表示機能。                                              |
+| `:quiz-feature-review`     | クイズの復習機能。                                                |
 
 ---
 
-## 2. Remote Config（アプリ側のデフォルト）
-- `app/src/main/res/xml/remote_config_defaults.xml` を **setDefaultsAsync** に渡して使用します。
+## 3. 開発ガイドライン
 
-### 初期化例（Kotlin）
-```kotlin
-val rc = com.google.firebase.remoteconfig.FirebaseRemoteConfig.getInstance()
-rc.setDefaultsAsync(R.xml.remote_config_defaults)
-rc.fetchAndActivate()
-```
+本プロジェクトにおける開発は、`AGENTS.md`に定義された規約に厳格に従います。特に重要な原則は以下の通りです。
 
-### Console テンプレート
-- `firebase/remote_config_template.json` を **Firebase Console > Remote Config > インポート**で読み込み可能。
+- **MVVM + UDF**: ViewModelが不変の`UiState`を`StateFlow`で公開し、UI（Screen）はそれを購読して表示に専念します。
+- **Route/Screen分離**: Composableを`Route`（状態管理とイベント処理）と`Screen`（UI表示）に分離します。
+- **ビジネスロジックの集約**: ビジネスロジックは`:domain`モジュールの`UseCase`に集約し、UI層から切り離します。
 
----
+詳細は `AGENTS.md` を参照してください。
 
-## 3. AdMob（テスト ID で動作）
-- `app/src/main/res/values/admob_ids.xml` は **Google テストID**を設定済みです（開発向け）。
-  - App ID（テスト）：`ca-app-pub-3940256099942544~3347511713`
-  - Interstitial（テスト）：`ca-app-pub-3940256099942544/1033173712`
-  - Rewarded（テスト）：`ca-app-pub-3940256099942544/5224354917`
-- リリース前に **実ID**へ差し替えてください（AdMob コンソールで発行）。
+### Geminiによる開発支援
 
-### 初期化例（Android）
-```kotlin
-com.google.android.gms.ads.MobileAds.initialize(this) {{}}
-```
+リファクタリング、機能実装、エラー解析など、開発の様々な場面でAIアシスタント(Gemini in Android Studio)を活用しています。効率的かつ高品質な開発を維持するため、以下のドキュメントにまとめられた実践的なプロンプト集を積極的に利用してください。
 
-### 取得例（Ad Unit）
-```kotlin
-val interstitialId = AdUnits.interstitialWeaktrainComplete(context)
-val rewardedId = AdUnits.rewardedWeaktrainPlusOne(context)
-```
+- **プロンプト集**: [docs/gemini_prompts_android_studio.md](docs/gemini_prompts_android_studio.md)
 
 ---
 
-## 4. app-ads.txt（Web ルート）
-- このファイルは **Android プロジェクトではなく**、あなたの**ドメインのルート**に配置します。
-  - 例：`https://YOUR-DOMAIN.com/app-ads.txt`
-  - 内容：`deploy/web/app-ads.txt` をアップロードし、`pub-XXXXXXXXXXXXXXXX` を **実 Publisher ID** に置換。
-- AdMob 側で **ドメインを登録**すると検証されます（設置は任意ですが推奨）。
+## 4. セットアップとビルド
+
+1. プロジェクトをAndroid Studioで開きます。
+2. 初回ビルドの前に、Gradle Syncが自動的に実行されるのを待ちます。
+3. ビルド構成として`:app`モジュールの`debug`バリアントを選択し、ビルドまたは実行します。
 
 ---
 
-## 5. 依存関係（build.gradle）
-```gradle
-implementation platform('com.google.firebase:firebase-bom:32.7.4')
-implementation 'com.google.firebase:firebase-config-ktx'
-implementation 'com.google.firebase:firebase-analytics-ktx'
-implementation 'com.google.android.gms:play-services-ads:22.6.0'
-implementation 'com.google.android.ump:user-messaging-platform:2.2.0'
-```
-> 各バージョンは将来更新されるため、実装時は最新安定版をご確認ください。
-
----
-
-## 6. UMP（同意）
-- **EEA/UK**：起動時に UMP 同意フォーム表示。
-- **日本**：同意 UI なし（任意）。アプリ内「設定＞プライバシー」に案内を常設してください。
-
----
-
-## 7. よくある質問
-
-**Q. Remote Config のキーを追加したい**
-- `remote_config_defaults.xml` と Console テンプレの両方にキーを追加してください。
-
-**Q. テスト広告が表示されない**
-- 端末をテストデバイスに登録、もしくは **Google テスト AdUnit** を使用してください（本XMLはテストIDになっています）。
-
-**Q. app-ads.txt はいつまでに必要？**
-- 任意ですが、設置すると **広告配信の透明性**が向上します。AdMob コンソールで検証状態を確認できます。
-
----
-
-不明点があれば、この README と同梱ファイルのままご質問ください。迅速にフォローします。
+*This `README.md` was last updated by Gemini in Android Studio.*

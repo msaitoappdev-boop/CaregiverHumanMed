@@ -21,15 +21,15 @@ val localProps = Properties().apply {
 }
 
 android {
-    namespace = "jp.msaitoappdev.caregiver.humanmed"
+    namespace = "com.msaitodev.caregiver.humanmed"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "jp.msaitoappdev.caregiver.humanmed"
+        applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 68
-        versionName = "0.9.67"
+        versionCode = 19
+        versionName = "0.9.19"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -50,8 +50,10 @@ android {
                 "ca-app-pub-3940256099942544~3347511713"
         }
         release {
+            // The admob.app.id is loaded from local.properties, but if it's not present,
+            // this fallback is used. We are updating the fallback to the new App ID.
             val appId = localProps.getProperty("admob.app.id")
-                ?: "ca-app-pub-2149916445602223~1245613844"
+                ?: "ca-app-pub-2149916445602223~3292882590"
             manifestPlaceholders["admob_app_id"] = appId
             signingConfig = signingConfigs.getByName("release")
         }
@@ -71,9 +73,17 @@ android {
 }
 
 dependencies {
-    implementation(project(":core"))
-    implementation(project(":data"))
-    implementation(project(":domain"))
+    implementation(project(":quiz-core-common"))
+    implementation(project(":quiz-core-domain"))
+    implementation(project(":quiz-feature-history"))
+    implementation(project(":quiz-feature-review"))
+    implementation(project(":quiz-feature-result"))
+    implementation(project(":quiz-core-ads"))
+    implementation(project(":quiz-feature-billing"))
+    implementation(project(":quiz-feature-settings"))
+    implementation(project(":quiz-core-navigation"))
+    implementation(project(":quiz-core-notifications"))
+    implementation(project(":quiz-feature-main"))
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
@@ -125,7 +135,7 @@ dependencies {
 
     // AdMob / UMP
     implementation("com.google.android.gms:play-services-ads:22.6.0")
-    implementation("com.google.android.ump:user-messaging-platform:2.2.0")
+    implementation("com.google.android.ump:user-messaging-platform:4.0.0")
 
     // Test dependencies
     testImplementation("junit:junit:4.13.2")

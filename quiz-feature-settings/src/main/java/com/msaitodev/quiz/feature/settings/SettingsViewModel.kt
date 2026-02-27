@@ -1,0 +1,62 @@
+package com.msaitodev.quiz.feature.settings
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import com.msaitodev.quiz.core.notifications.ReminderPrefs
+import com.msaitodev.quiz.core.notifications.ReminderScheduler
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import androidx.lifecycle.ViewModel
+import com.msaitodev.quiz.core.domain.repository.PremiumRepository
+
+data class ReminderSettings(
+    val enabled: Boolean,
+    val hour: Int,
+    val minute: Int
+)
+
+@HiltViewModel
+class SettingsViewModel @Inject constructor(
+    private val dataStore: DataStore<Preferences>,
+    private val premiumRepo: PremiumRepository
+) : ViewModel() {
+
+    val settings: Flow<ReminderSettings> = dataStore.data.map { pref ->
+        ReminderSettings(
+            enabled = pref[ReminderPrefs.ENABLED] ?: false,
+            hour = pref[ReminderPrefs.HOUR] ?: 20,
+            minute = pref[ReminderPrefs.MINUTE] ?: 0
+        )
+    }
+
+    suspend fun setEnabled(context: Context, enabled: Boolean, hour: Int, minute: Int) {
+        dataStore.edit {
+            it[ReminderPrefs.ENABLED] = enabled
+            if (enabled) {
+                it[ReminderPrefs.HOUR] = hour
+                it[ReminderPrefs.MINUTE] = minute
+            }
+        }
+        if (enabled) ReminderScheduler.scheduleDaily(context, hour, minute)
+        else ReminderScheduler.cancel(context)
+    }
+
+    suspend fun setTime(context: Context, hour: Int, minute: Int) {
+        dataStore.edit {
+            it[ReminderPrefs.HOUR] = hour
+            it[ReminderPrefs.MINUTE] = minute
+        }
+        val enabled = dataStore.data.map { it[ReminderPrefs.ENABLED] ?: false }.first()
+        if (enabled) ReminderScheduler.scheduleDaily(context, hour, minute)
+    }
+
+    /** 「購入を復元」押下時に、Play の状態をローカルへ同期 */
+    suspend fun restorePurchases() {
+        premiumRepo.refreshFromBilling()
+    }
+}

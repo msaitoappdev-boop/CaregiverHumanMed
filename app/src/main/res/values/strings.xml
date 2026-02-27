@@ -12,18 +12,6 @@
     <string name="paywall_purchase_button_purchased">購入済みです</string>
     <string name="paywall_purchase_dialog_description">Google Play の購入ダイアログが表示されます</string>
 
-    <!-- Result -->
-    <string name="result_title">結果</string>
-    <string name="result_excellent">素晴らしい！ほぼ完璧です。</string>
-    <string name="result_good">とても良いです。あと少し！</string>
-    <string name="result_average">合格ライン目前。復習しましょう。</string>
-    <string name="result_poor">まずは基礎から振り返ってみましょう。</string>
-    <string name="result_next_set">次の3問へ</string>
-    <string name="result_review_same_order">同じ順番で復習する</string>
-    <string name="result_review_list">復習一覧を見る</string>
-    <string name="result_score_history">スコア履歴を見る</string>
-    <string name="result_back_to_home">ホームへ戻る</string>
-
     <!-- Home -->
     <string name="home_title">ホーム</string>
     <string name="home_start_quiz">クイズを開始</string>
@@ -32,9 +20,6 @@
 
     <!-- Settings -->
     <string name="settings_title">設定</string>
-
-    <!-- Review -->
-    <string name="review_title">復習</string>
 
     <!-- Dialogs -->
     <string name="dialog_rewarded_ad_title">今日は無料分が終了しました</string>
@@ -47,7 +32,7 @@
     <string name="dialog_permission_dismiss">後で</string>
 
     <!-- Common -->
-    <string name="common_back">戻る</string>
     <string name="common_error_rewarded_ad">動画を読み込めませんでした（ネットワーク/在庫/初期化）</string>
+    <string name="common_back">戻る</string>
 
 </resources>

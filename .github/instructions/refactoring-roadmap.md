@@ -28,30 +28,49 @@
 - **Hub（ハブ: `:app`）**: アプリ固有の要素（問題JSON、アプリ名、テーマ、DI設定など）のみを含む、非常に薄いアプリケーションモジュール。
 - **Spokes（スポーク: クイズ共通機能群）**: 全てのコア機能を含む、共有ライブラリモジュールのセット。モジュール名自体も、クイズ用であることがわかるように接頭辞をつけます。
     - `:quiz-feature-main`
+    - `:quiz-feature-review`
+    - `:quiz-feature-result`
     - `:quiz-feature-history`
     - `:quiz-feature-billing`
-    - `:quiz-core-ui`
+    - `:quiz-feature-settings`
+    - `:quiz-core-common`
     - `:quiz-core-domain`
     - `:quiz-core-data`
+    - `:quiz-core-ads`
+    - `:quiz-core-notifications`
 
 ## 3段階計画
 
-### フェーズ1：強固なDI基盤の確立（現在のタスク）
+### フェーズ1：強固なDI基盤の確立（完了）
 
-**目標:** `:data`および`:domain`モジュールを自己完結させ、Hiltを通じてどのモジュールからでもクラスを正しく提供できるようにする。これは、DI関連のビルド失敗を防ぐための必須の第一歩です。
+**目標:** `:data`および`:domain`モジュールを自己完結させ、Hiltを通じてどのモジュールからでもクラスを正しく提供できるようにする。
 
 **タスク:**
-1. `:data`モジュールに`RepositoryModule.kt`を作成し、Repositoryの実装を提供する。
-2. `:domain`モジュールに`UseCaseModule.kt`を作成し、UseCaseの実装を提供する。
+- [x] `:data`モジュールの`DataModule.kt`をレビューし、DI設定を完成させる。
+- [x] `:domain`モジュールに`UseCaseModule.kt`を作成し、UseCaseの実装を提供する。
 
-### フェーズ2：プロジェクト内でのフィーチャーモジュール化
+### フェーズ2：プロジェクト内でのフィーチャーモジュール化（完了）
 
 **目標:** `:app`モジュールから各機能を、プロジェクト内の専用ライブラリモジュールとして分離する。
 
 **タスク:**
-1. `:quiz-feature-history`や`:quiz-feature-main`などの新しいフィーチャーモジュールを一つずつ作成する。
-2. 関連する全てのファイル（Route, ViewModel, Navigationなど）を新しいモジュールに移動する。
-3. プロジェクトレベルの依存関係（`implementation(project(":quiz-feature-history"))`）を使用するように`build.gradle.kts`を更新する。
+1. [x] `:quiz-feature-review`モジュールを分離
+2. [x] `:quiz-feature-result`モジュールを分離
+3. [x] `:quiz-core-ads`モジュールを分離し、広告関連機能を配置
+4. [x] `:quiz-feature-billing`モジュールを分離
+5. [x] `:quiz-feature-history`モジュールを分離
+6. [x] `:quiz-feature-settings`モジュールを分離
+7. [x] `:quiz-core-notifications`モジュールを分離
+8. [x] `:quiz-feature-main`モジュールを分離
+
+### フェーズ2.5：ナビゲーション定義の分離とアーキテクチャの一貫性向上（完了）
+
+**目標:** `:app`モジュールに起因する最後の依存関係違反を解消し、ComposeのアーキテクチャをAGENTS.mdの規約に完全に準拠させる。
+
+**タスク:**
+1. [x] **ナビゲーション定義の分離 (`NavRoutes` → `...Destinations`)**: 肥大化した`NavRoutes`オブジェクトを廃止し、各機能に対応するルート文字列定義を、`:quiz-core-navigation`モジュール内に`...Destinations`オブジェクトとして個別に作成・移行する。
+2. [x] **`AppNavHost` の分離**: `MainActivity`からナビゲーショングラフの責務を`ui.AppNavHost`へ切り出し、Activityの責務を明確化する。
+3. [x] **Route/Screen の完全分離**: 各フィーチャーモジュールにおいて、UI定義（Screen）とロジック（Route）の責務を完全に分離する。
 
 ### フェーズ3：共有ライブラリリポジトリへの抽出（将来の目標）
 
@@ -61,3 +80,32 @@
 1. `:quiz-feature:*`および`:quiz-core:*`モジュール群を、新しい別のGitリポジトリに移動する。
 2. これらのモジュールをMavenリポジトリに公開するために`maven-publish`を設定する。
 3. アプリの依存関係を`project(...)`から新しいMaven座標（例: `"com.msaitodev.quiz:feature-history:1.0.0"`）に変更する。
+
+### フェーズ4：パッケージ名変更に伴う外部サービス再設定
+
+**目標:** アプリケーションのパッケージ名（`applicationId`）変更に伴い、Google Play Console をはじめとする全ての外部連携サービスを再設定し、新旧アプリの移行を計画的に実施する。これは、ユーザー基盤や収益への影響を最小限に抑えるための最重要フェーズです。
+
+**背景:** パッケージ名は、Google Playストアや各種Googleサービスにおいてアプリケーションを識別するユニークなIDです。これを変更したことは、事実上「全く新しいアプリケーション」を作成したことと同義であり、既存の各種設定は引き継がれません。
+
+**タスク:**
+
+1. [ ] **Google Play Console の再設定**:
+    - [ ] 新しいパッケージ名 (`com.msaitodev.caregiver.humanmed`) で、Play Consoleに**新しいアプリケーションとして登録**する。
+    - [ ] ストアのリスティング情報（説明文、スクリーンショット等）をすべて再設定する。
+    - [ ] **【最重要】既存ユーザーの移行戦略を策定する**。旧アプリのユーザーは自動で新アプリに移行されません。旧アプリのアップデートで新アプリへの移行を促す等の告知が必要です。
+
+2. [ ] **課金（Google Play Billing）の再設定**:
+    - [ ] 新アプリのPlay Consoleで、全ての**アプリ内アイテムと定期購入（サブスクリプション）を再作成**する。IDは旧アプリと同一にすることが推奨されます。
+    - [ ] **【最重要】既存の有料会員の移行戦略を策定する**。サブスクリプションは旧パッケージ名に紐づいているため、ユーザー自身に「旧アプリの解約」と「新アプリでの再契約」を依頼する必要があります。
+
+3. [ ] **広告（AdMob）の再設定**:
+    - [ ] AdMob管理画面で、アプリのリンク先を新しいPlayストアURLに更新する。
+    - [ ] 必要に応じて、新しいパッケージ名用の広告ユニットIDを再発行し、アプリ内のID（`strings.xml`等）が正しいかを再確認する。
+
+4. [ ] **Firebase プロジェクトの検証**:
+    - [ ] Firebase Consoleで、新しいパッケージ名を持つアプリが正しく登録・認識されていることを再確認する（`google-services.json`の更新は実施済み）。
+    - [ ] Analytics, Remote Config, Crashlytics 等の各サービスが、新アプリからデータを正しく受信できているかを検証する。
+
+5. [ ] **（該当する場合）外部リンクの更新**:
+    - [ ] アプリケーションのウェブサイト等に設置しているPlayストアへのリンクURLを、新アプリのものに更新する。
+    - [ ] App Linksを使用している場合、ウェブサーバー上の `assetlinks.json` ファイルに新アプリの情報を追記する。
