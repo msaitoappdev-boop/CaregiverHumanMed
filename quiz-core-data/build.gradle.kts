@@ -64,6 +64,7 @@ dependencies {
     testImplementation("com.google.truth:truth:1.1.5")
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    testImplementation("app.cash.turbine:turbine:1.0.0")
 
     // Android Test dependencies
     androidTestImplementation("androidx.test:runner:1.5.2")
