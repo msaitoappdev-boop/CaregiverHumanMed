@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -33,7 +34,7 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsScreen(
-    state: ReminderSettings,
+    state: SettingsUiState,
     onBack: () -> Unit,
     onReminderEnabledChange: (Boolean) -> Unit,
     onTimeChange: (Int, Int) -> Unit,
@@ -64,16 +65,16 @@ internal fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // リマインド設定セクション
-            Card {
+            Card(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         stringResource(R.string.settings_reminder_title),
                         style = MaterialTheme.typography.titleMedium
                     )
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(R.string.settings_reminder_switch_label))
                         Switch(
-                            checked = state.enabled,
+                            checked = state.reminderEnabled,
                             onCheckedChange = onReminderEnabledChange
                         )
                     }
@@ -100,32 +101,71 @@ internal fun SettingsScreen(
                 }
             }
 
-            // 購入の復元セクション
-            Card {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // プランと購入管理セクション
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text(
-                        stringResource(R.string.settings_restore_title),
+                        stringResource(R.string.settings_premium_status_title),
                         style = MaterialTheme.typography.titleMedium
                     )
-                    Text(stringResource(R.string.settings_restore_description))
-                    Button(
-                        onClick = onRestorePurchases,
-                        modifier = Modifier.fillMaxWidth()
+
+                    // 現在のステータスを表示
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(stringResource(R.string.settings_restore_button))
+                        Text(
+                            stringResource(R.string.settings_current_plan_label),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = if (state.isPremium) {
+                                stringResource(R.string.settings_premium_status_active)
+                            } else {
+                                stringResource(R.string.settings_premium_status_free)
+                            },
+                            style = MaterialTheme.typography.titleSmall,
+                            color = if (state.isPremium) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                    }
+
+                    Text(
+                        stringResource(R.string.settings_restore_description),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    // ボタン類
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = onRestorePurchases,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !state.isPremium // プレミアムなら無効化
+                        ) {
+                            Text(
+                                if (state.isPremium) {
+                                    stringResource(R.string.settings_restore_button_done)
+                                } else {
+                                    stringResource(R.string.settings_restore_button)
+                                }
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = onManageSubscription,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(stringResource(R.string.settings_manage_subscription))
+                        }
                     }
                 }
             }
 
-            // その他リンク
-            Button(
-                onClick = onManageSubscription,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.settings_manage_subscription))
-            }
-
-            Button(
+            // その他
+            OutlinedButton(
                 onClick = onOpenPrivacyPolicy,
                 modifier = Modifier.fillMaxWidth()
             ) {
