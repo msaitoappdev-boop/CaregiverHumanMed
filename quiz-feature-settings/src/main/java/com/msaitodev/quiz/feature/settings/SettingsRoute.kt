@@ -4,9 +4,11 @@ import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -19,19 +21,29 @@ fun SettingsRoute(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val state by viewModel.settings.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(viewModel.events) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is SettingsEvent.RestoreResult -> {
+                    Toast.makeText(context, context.getString(event.messageResId), Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
 
     val requestPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
             viewModel.setReminderEnabled(true)
-            ReminderScheduler.scheduleDaily(context, state.hour, state.minute)
+            ReminderScheduler.scheduleDaily(context, uiState.hour, uiState.minute)
         }
     }
 
     SettingsScreen(
-        state = state,
+        state = uiState,
         onBack = onBack,
         onReminderEnabledChange = { enabled ->
             if (enabled) {
@@ -39,7 +51,7 @@ fun SettingsRoute(
                     requestPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                 } else {
                     viewModel.setReminderEnabled(true)
-                    ReminderScheduler.scheduleDaily(context, state.hour, state.minute)
+                    ReminderScheduler.scheduleDaily(context, uiState.hour, uiState.minute)
                 }
             } else {
                 viewModel.setReminderEnabled(false)
@@ -48,7 +60,7 @@ fun SettingsRoute(
         },
         onTimeChange = { h, m ->
             viewModel.setReminderTime(h, m)
-            if (state.enabled) {
+            if (uiState.reminderEnabled) {
                 ReminderScheduler.scheduleDaily(context, h, m)
             }
         },
