@@ -48,6 +48,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.activity:activity-compose:1.9.0")
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     // Compose
     val composeBom = platform("androidx.compose:compose-bom:2024.06.00")

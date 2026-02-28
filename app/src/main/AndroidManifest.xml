@@ -22,26 +22,33 @@
 
         <activity
             android:name="com.msaitodev.caregiver.humanmed.MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.App.Starting">
             <!-- ランチャー -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-            <!-- 通知からは setClass(MainActivity) + data=caregiver://reminder で明示起動。
-                 NavGraph の deepLink 定義が解決するため、Manifest での deep link 宣言は不要。 -->
         </activity>
 
-        <!-- WorkManager はデフォルト初期化（カスタム Initializer がないため Manifest 追記不要） -->
+        <!-- WorkManager のカスタム初期化（Hilt 連携）のため、デフォルト初期化子を無効化 -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
 
-        <!-- AdMob App ID（ビルドタイプ別に placeholder から注入） -->
-        <!-- debug では Google のサンプル App ID を使うので安全です -->
+        <!-- AdMob App ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${admob_app_id}" />
 
-        <!-- AdServices の競合を GMA 側に寄せる（公式推奨の回避策） -->
+        <!-- AdServices の競合を GMA 側に寄せる -->
         <property
             android:name="android.adservices.AD_SERVICES_CONFIG"
             android:resource="@xml/ad_services_config"

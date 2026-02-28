@@ -1,18 +1,19 @@
 package com.msaitodev.quiz.feature.settings
 
-import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import com.msaitodev.quiz.core.notifications.ReminderPrefs
-import com.msaitodev.quiz.core.notifications.ReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import androidx.lifecycle.ViewModel
-import com.msaitodev.quiz.core.domain.repository.PremiumRepository
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class ReminderSettings(
     val enabled: Boolean,
@@ -26,37 +27,43 @@ class SettingsViewModel @Inject constructor(
     private val premiumRepo: PremiumRepository
 ) : ViewModel() {
 
-    val settings: Flow<ReminderSettings> = dataStore.data.map { pref ->
+    val settings: StateFlow<ReminderSettings> = dataStore.data.map { pref ->
         ReminderSettings(
-            enabled = pref[ReminderPrefs.ENABLED] ?: false,
-            hour = pref[ReminderPrefs.HOUR] ?: 20,
-            minute = pref[ReminderPrefs.MINUTE] ?: 0
+            enabled = pref[ReminderPrefs.ENABLED] ?: ReminderPrefs.DEFAULT_ENABLED,
+            hour = pref[ReminderPrefs.HOUR] ?: ReminderPrefs.DEFAULT_HOUR,
+            minute = pref[ReminderPrefs.MINUTE] ?: ReminderPrefs.DEFAULT_MINUTE
         )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = ReminderSettings(
+            enabled = ReminderPrefs.DEFAULT_ENABLED,
+            hour = ReminderPrefs.DEFAULT_HOUR,
+            minute = ReminderPrefs.DEFAULT_MINUTE
+        )
+    )
+
+    fun setReminderEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            dataStore.edit {
+                it[ReminderPrefs.ENABLED] = enabled
+            }
+        }
     }
 
-    suspend fun setEnabled(context: Context, enabled: Boolean, hour: Int, minute: Int) {
-        dataStore.edit {
-            it[ReminderPrefs.ENABLED] = enabled
-            if (enabled) {
+    fun setReminderTime(hour: Int, minute: Int) {
+        viewModelScope.launch {
+            dataStore.edit {
                 it[ReminderPrefs.HOUR] = hour
                 it[ReminderPrefs.MINUTE] = minute
             }
         }
-        if (enabled) ReminderScheduler.scheduleDaily(context, hour, minute)
-        else ReminderScheduler.cancel(context)
-    }
-
-    suspend fun setTime(context: Context, hour: Int, minute: Int) {
-        dataStore.edit {
-            it[ReminderPrefs.HOUR] = hour
-            it[ReminderPrefs.MINUTE] = minute
-        }
-        val enabled = dataStore.data.map { it[ReminderPrefs.ENABLED] ?: false }.first()
-        if (enabled) ReminderScheduler.scheduleDaily(context, hour, minute)
     }
 
     /** 「購入を復元」押下時に、Play の状態をローカルへ同期 */
-    suspend fun restorePurchases() {
-        premiumRepo.refreshFromBilling()
+    fun restorePurchases() {
+        viewModelScope.launch {
+            premiumRepo.refreshFromBilling()
+        }
     }
 }

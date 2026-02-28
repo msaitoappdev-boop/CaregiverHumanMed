@@ -12,7 +12,7 @@ object ReminderScheduler {
 
     private const val UNIQUE_NAME = "daily-quiz-reminder"
 
-    fun scheduleDaily(context: Context, hour: Int = 20, minute: Int = 0) {
+    fun scheduleDaily(context: Context, hour: Int = 8, minute: Int = 0) {
         val initialDelay = computeInitialDelayMinutes(hour, minute)
         val request = PeriodicWorkRequestBuilder<DailyReminderWorker>(
             24, TimeUnit.HOURS
@@ -20,9 +20,11 @@ object ReminderScheduler {
             .setInitialDelay(initialDelay, TimeUnit.MINUTES)
             .build()
 
+        // UPDATE ではなく CANCEL_AND_REENQUEUE を使用することで、
+        // 時刻変更時に古いスケジュールを破棄し、新しい initialDelay を即座に反映させる。
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             UNIQUE_NAME,
-            ExistingPeriodicWorkPolicy.UPDATE, // 最新設定で差し替え
+            ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
             request
         )
     }

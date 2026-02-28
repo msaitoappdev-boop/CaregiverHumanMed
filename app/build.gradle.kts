@@ -28,8 +28,8 @@ android {
         applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 19
-        versionName = "0.9.19"
+        versionCode = 21
+        versionName = "0.9.21"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -88,6 +88,7 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
     implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     // Compose BOM
     val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
@@ -121,6 +122,7 @@ dependencies {
     implementation("com.android.billingclient:billing-ktx:7.1.1")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation("androidx.hilt:hilt-work:1.2.0")
     implementation("androidx.lifecycle:lifecycle-process:2.8.6")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
 
