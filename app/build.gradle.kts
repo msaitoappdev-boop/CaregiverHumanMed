@@ -122,6 +122,7 @@ dependencies {
     implementation("com.android.billingclient:billing-ktx:7.1.1")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation("androidx.hilt:hilt-work:1.2.0")
     implementation("androidx.lifecycle:lifecycle-process:2.8.6")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
 

@@ -87,7 +87,7 @@ internal fun SettingsScreen(
                         }
                         TimeDropdown(
                             stringResource(R.string.settings_reminder_minute_label),
-                            listOf(0, 15, 30, 45),
+                            (0..55 step 5).toList(),
                             state.minute
                         ) { m ->
                             onTimeChange(state.hour, m)

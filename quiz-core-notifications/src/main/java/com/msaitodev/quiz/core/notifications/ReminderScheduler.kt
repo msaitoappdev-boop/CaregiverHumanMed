@@ -20,9 +20,11 @@ object ReminderScheduler {
             .setInitialDelay(initialDelay, TimeUnit.MINUTES)
             .build()
 
+        // UPDATE ではなく CANCEL_AND_REENQUEUE を使用することで、
+        // 時刻変更時に古いスケジュールを破棄し、新しい initialDelay を即座に反映させる。
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             UNIQUE_NAME,
-            ExistingPeriodicWorkPolicy.UPDATE, // 最新設定で差し替え
+            ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
             request
         )
     }

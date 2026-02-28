@@ -1,6 +1,7 @@
 package com.msaitodev.quiz.core.notifications
 
 import android.content.Context
+import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -22,6 +23,11 @@ class DailyReminderWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         return try {
+            // 通知権限の確認
+            if (!NotificationManagerCompat.from(applicationContext).areNotificationsEnabled()) {
+                return Result.success()
+            }
+
             val isPremium = premiumRepo.isPremium.value
             val limitKey = if (isPremium) "premium_daily_sets" else "free_daily_sets"
             val limit = remoteConfigRepo.getLong(limitKey).toInt()

@@ -31,7 +31,17 @@
             </intent-filter>
         </activity>
 
-        <!-- WorkManager はデフォルト初期化 -->
+        <!-- WorkManager のカスタム初期化（Hilt 連携）のため、デフォルト初期化子を無効化 -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
 
         <!-- AdMob App ID -->
         <meta-data
