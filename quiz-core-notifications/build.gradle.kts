@@ -34,6 +34,7 @@ android {
 
 dependencies {
     implementation(project(":quiz-core-common"))
+    implementation(project(":quiz-core-domain"))
 
     // WorkManager for background tasks
     implementation("androidx.work:work-runtime-ktx:2.9.0")

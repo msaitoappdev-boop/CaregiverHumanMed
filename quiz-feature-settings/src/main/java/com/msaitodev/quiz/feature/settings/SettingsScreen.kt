@@ -37,7 +37,6 @@ internal fun SettingsScreen(
     onBack: () -> Unit,
     onReminderEnabledChange: (Boolean) -> Unit,
     onTimeChange: (Int, Int) -> Unit,
-    onTestReminder: () -> Unit,
     onRestorePurchases: () -> Unit,
     onManageSubscription: () -> Unit,
     onOpenPrivacyPolicy: () -> Unit
@@ -98,13 +97,6 @@ internal fun SettingsScreen(
                         stringResource(R.string.settings_reminder_description),
                         style = MaterialTheme.typography.bodySmall
                     )
-                    
-                    Button(
-                        onClick = onTestReminder,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.settings_reminder_test_button))
-                    }
                 }
             }
 

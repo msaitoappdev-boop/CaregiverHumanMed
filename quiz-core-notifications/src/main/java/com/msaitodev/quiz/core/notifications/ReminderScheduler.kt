@@ -12,7 +12,7 @@ object ReminderScheduler {
 
     private const val UNIQUE_NAME = "daily-quiz-reminder"
 
-    fun scheduleDaily(context: Context, hour: Int = 20, minute: Int = 0) {
+    fun scheduleDaily(context: Context, hour: Int = 8, minute: Int = 0) {
         val initialDelay = computeInitialDelayMinutes(hour, minute)
         val request = PeriodicWorkRequestBuilder<DailyReminderWorker>(
             24, TimeUnit.HOURS

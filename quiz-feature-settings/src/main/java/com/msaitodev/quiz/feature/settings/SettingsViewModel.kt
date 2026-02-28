@@ -29,14 +29,18 @@ class SettingsViewModel @Inject constructor(
 
     val settings: StateFlow<ReminderSettings> = dataStore.data.map { pref ->
         ReminderSettings(
-            enabled = pref[ReminderPrefs.ENABLED] ?: false,
-            hour = pref[ReminderPrefs.HOUR] ?: 20,
-            minute = pref[ReminderPrefs.MINUTE] ?: 0
+            enabled = pref[ReminderPrefs.ENABLED] ?: ReminderPrefs.DEFAULT_ENABLED,
+            hour = pref[ReminderPrefs.HOUR] ?: ReminderPrefs.DEFAULT_HOUR,
+            minute = pref[ReminderPrefs.MINUTE] ?: ReminderPrefs.DEFAULT_MINUTE
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = ReminderSettings(enabled = false, hour = 20, minute = 0)
+        initialValue = ReminderSettings(
+            enabled = ReminderPrefs.DEFAULT_ENABLED,
+            hour = ReminderPrefs.DEFAULT_HOUR,
+            minute = ReminderPrefs.DEFAULT_MINUTE
+        )
     )
 
     fun setReminderEnabled(enabled: Boolean) {

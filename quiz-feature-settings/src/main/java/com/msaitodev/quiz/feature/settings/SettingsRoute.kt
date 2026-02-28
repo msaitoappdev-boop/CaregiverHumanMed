@@ -11,11 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import com.msaitodev.quiz.core.notifications.DailyReminderWorker
 import com.msaitodev.quiz.core.notifications.ReminderScheduler
-import java.util.concurrent.TimeUnit
 
 @Composable
 fun SettingsRoute(
@@ -55,12 +51,6 @@ fun SettingsRoute(
             if (state.enabled) {
                 ReminderScheduler.scheduleDaily(context, h, m)
             }
-        },
-        onTestReminder = {
-            val request = OneTimeWorkRequestBuilder<DailyReminderWorker>()
-                .setInitialDelay(5, TimeUnit.SECONDS)
-                .build()
-            WorkManager.getInstance(context).enqueue(request)
         },
         onRestorePurchases = {
             viewModel.restorePurchases()
