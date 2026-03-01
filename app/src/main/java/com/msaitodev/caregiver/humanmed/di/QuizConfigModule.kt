@@ -15,7 +15,7 @@ object QuizConfigModule {
     @Singleton
     fun provideQuizAssetConfig(): QuizAssetConfig {
         return QuizAssetConfig(
-            questionsJsonPath = "questions.json"
+            quizDataRootDirectory = "quiz_data"
         )
     }
 }
