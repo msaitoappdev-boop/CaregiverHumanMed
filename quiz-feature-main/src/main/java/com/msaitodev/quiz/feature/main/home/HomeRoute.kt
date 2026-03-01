@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.msaitodev.quiz.feature.main.R
 
 @Composable
 fun HomeRoute(
@@ -44,6 +45,7 @@ fun HomeRoute(
         onOfferConfirm = {
             showOfferDialog = false
             onShowRewardedAd()
+            Toast.makeText(context, context.getString(R.string.home_reward_granted), Toast.LENGTH_LONG).show()
         },
         onOfferDismiss = { showOfferDialog = false }
     )
