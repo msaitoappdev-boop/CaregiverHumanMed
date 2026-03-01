@@ -89,6 +89,7 @@ internal fun AppNavHost(
                         }
                     )
                 },
+                onViewHistory = { navController.navigate(HistoryDestination.route) },
                 onUpgrade = { navController.navigate(PaywallDestination.route) },
                 onOpenSettings = { navController.navigate(SettingsDestination.route) }
             )
