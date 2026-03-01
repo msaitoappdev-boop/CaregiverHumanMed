@@ -8,8 +8,8 @@
 
     <!-- スプラッシュ画面用テーマ (Android 12+) -->
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
-        <!-- 背景色: アイコンの背景と同じ淡いグリーン -->
-        <item name="windowSplashScreenBackground">#A5D6A7</item>
+        <!-- 背景色: アプリの背景と同じ極めて淡いグリーン -->
+        <item name="windowSplashScreenBackground">#F1F8E9</item>
         <!-- アイコン: 作成したクイズアイコンの前景 -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
         <!-- スプラッシュ終了後に表示するテーマ -->

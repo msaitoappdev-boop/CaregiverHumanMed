@@ -36,9 +36,24 @@ class DailyReminderWorker @AssistedInject constructor(
             // 今日の進捗を確認
             val quota = quotaRepo.observe { limit }.first()
 
-            // 1セットも完了していない（未実施）場合のみ通知を表示
-            if (quota.usedSets == 0) {
-                ReminderNotifier.show(applicationContext)
+            when {
+                // 1セットも完了していない場合（全ユーザー）
+                quota.usedSets == 0 -> {
+                    ReminderNotifier.show(
+                        context = applicationContext,
+                        title = applicationContext.getString(R.string.notification_reminder_title_start),
+                        text = applicationContext.getString(R.string.notification_reminder_text_start)
+                    )
+                }
+                // プレミアムユーザーで、かつ残りセット数がある場合
+                isPremium && quota.usedSets < limit -> {
+                    val remaining = limit - quota.usedSets
+                    ReminderNotifier.show(
+                        context = applicationContext,
+                        title = applicationContext.getString(R.string.notification_reminder_title_continue),
+                        text = applicationContext.getString(R.string.notification_reminder_text_continue, remaining)
+                    )
+                }
             }
             Result.success()
         } catch (e: Exception) {
