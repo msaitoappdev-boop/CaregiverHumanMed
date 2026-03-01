@@ -28,8 +28,8 @@ android {
         applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 26
-        versionName = "0.9.26"
+        versionCode = 39
+        versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -45,13 +45,18 @@ android {
     buildTypes {
         debug {
             // Debug は Google のサンプル App ID に固定（安全）
-            //    公式サンプル: ca-app-pub-3940256099942544~3347511713
             manifestPlaceholders["admob_app_id"] =
                 "ca-app-pub-3940256099942544~3347511713"
         }
         release {
-            // The admob.app.id is loaded from local.properties, but if it's not present,
-            // this fallback is used. We are updating the fallback to the new App ID.
+            // リリース品質の難読化と最適化を有効化
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+
             val appId = localProps.getProperty("admob.app.id")
                 ?: "ca-app-pub-2149916445602223~3292882590"
             manifestPlaceholders["admob_app_id"] = appId
@@ -141,7 +146,7 @@ dependencies {
 
     // Test dependencies
     testImplementation("junit:junit:4.13.2")
-    testImplementation(project(":quiz-core-data")) // <-- テストから QuestionDto を参照するために追加
+    testImplementation(project(":quiz-core-data"))
     testImplementation("org.mockito:mockito-core:4.11.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
     testImplementation("org.mockito:mockito-inline:5.2.0")
