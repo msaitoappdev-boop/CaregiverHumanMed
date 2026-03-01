@@ -3,6 +3,7 @@ package com.msaitodev.quiz.feature.main.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
 import com.msaitodev.quiz.core.domain.model.QuotaState
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import com.msaitodev.quiz.core.domain.repository.RemoteConfigRepository
@@ -36,7 +37,7 @@ class HomeViewModel @Inject constructor(
     private val isPremium: StateFlow<Boolean> = premiumRepo.isPremium
 
     private val quotaFlow: StateFlow<QuotaState?> = isPremium.flatMapLatest { isPremium ->
-        val limitKey = if (isPremium) "premium_daily_sets" else "free_daily_sets"
+        val limitKey = if (isPremium) RemoteConfigKeys.PREMIUM_DAILY_SETS else RemoteConfigKeys.FREE_DAILY_SETS
         val limit = remoteConfigRepo.getLong(limitKey).toInt()
         quotaRepo.observe { limit }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)

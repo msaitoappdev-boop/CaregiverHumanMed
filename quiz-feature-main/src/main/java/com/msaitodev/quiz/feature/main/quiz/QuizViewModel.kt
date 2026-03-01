@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.msaitodev.quiz.core.common.navigation.QuizActions
+import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
 import com.msaitodev.quiz.core.domain.model.Question
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import com.msaitodev.quiz.core.domain.repository.RemoteConfigRepository
@@ -88,7 +89,7 @@ class QuizViewModel @Inject constructor(
     private fun loadAndPrepare(reshuffle: Boolean) {
         _internalState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
-            val setSize = remoteConfigRepo.getLong("set_size").toInt().coerceAtLeast(1)
+            val setSize = remoteConfigRepo.getLong(RemoteConfigKeys.SET_SIZE).toInt().coerceAtLeast(1)
             val daily = try {
                 withContext(Dispatchers.IO) { getDailyQuestions(count = setSize) }
             } catch (_: Exception) { emptyList() }
@@ -99,7 +100,7 @@ class QuizViewModel @Inject constructor(
     private fun loadNextSet() {
         _internalState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
-            val setSize = remoteConfigRepo.getLong("set_size").toInt().coerceAtLeast(1)
+            val setSize = remoteConfigRepo.getLong(RemoteConfigKeys.SET_SIZE).toInt().coerceAtLeast(1)
             val nextQuestions = withContext(Dispatchers.IO) {
                 getNextQuestions(count = setSize, excludingIds = _internalState.value.seenQuestionIds)
             }
@@ -145,7 +146,7 @@ class QuizViewModel @Inject constructor(
             val result = QuizResult(
                 score = score,
                 total = state.questions.size,
-                questions = state.questions, // 修正：originalQuestions ではなく、シャッフル済みの questions を渡す
+                questions = state.questions,
                 answers = state.answers,
                 isReview = isReviewSession
             )
