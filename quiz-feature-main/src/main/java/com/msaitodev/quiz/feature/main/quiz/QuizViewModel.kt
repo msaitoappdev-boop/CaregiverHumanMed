@@ -145,7 +145,7 @@ class QuizViewModel @Inject constructor(
             val result = QuizResult(
                 score = score,
                 total = state.questions.size,
-                questions = state.originalQuestions,
+                questions = state.questions, // 修正：originalQuestions ではなく、シャッフル済みの questions を渡す
                 answers = state.answers,
                 isReview = isReviewSession
             )

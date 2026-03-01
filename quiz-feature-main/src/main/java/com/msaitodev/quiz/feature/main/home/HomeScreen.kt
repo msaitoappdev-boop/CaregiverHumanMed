@@ -2,15 +2,20 @@ package com.msaitodev.quiz.feature.main.home
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -24,8 +29,10 @@ import com.msaitodev.quiz.feature.main.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HomeScreen(
+    uiState: HomeViewModel.HomeUiState,
     showOfferDialog: Boolean,
     onStartQuiz: () -> Unit,
+    onViewHistory: () -> Unit,
     onUpgrade: () -> Unit,
     onOpenSettings: () -> Unit,
     onOfferConfirm: () -> Unit,
@@ -36,8 +43,21 @@ internal fun HomeScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.home_title)) },
                 actions = {
+                    // 無料ユーザーの場合のみ、ツールバーにアップグレードへの導線（プレミアムバッジ）を表示
+                    if (!uiState.canShowFullExplanation) {
+                        IconButton(onClick = onUpgrade) {
+                            Icon(
+                                imageVector = Icons.Filled.WorkspacePremium,
+                                contentDescription = stringResource(R.string.home_upgrade_to_premium),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings_title))
+                        Icon(
+                            Icons.Filled.Settings,
+                            contentDescription = stringResource(R.string.settings_title)
+                        )
                     }
                 }
             )
@@ -46,13 +66,26 @@ internal fun HomeScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(24.dp)
+                .fillMaxSize()
         ) {
-            Button(onClick = onStartQuiz) {
+            // メインアクション（上部）
+            Button(
+                onClick = onStartQuiz,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading
+            ) {
                 Text(stringResource(R.string.home_start_quiz))
             }
-            Spacer(Modifier.height(12.dp))
-            Button(onClick = onUpgrade) { Text(stringResource(R.string.home_upgrade_to_premium)) }
+
+            Spacer(Modifier.height(16.dp))
+
+            OutlinedButton(
+                onClick = onViewHistory,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.home_view_history))
+            }
         }
     }
 

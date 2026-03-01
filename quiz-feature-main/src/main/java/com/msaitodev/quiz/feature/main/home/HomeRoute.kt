@@ -10,16 +10,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.msaitodev.quiz.feature.main.R
 
 @Composable
 fun HomeRoute(
     onStartQuiz: () -> Unit,
     onShowRewardedAd: () -> Unit,
+    onViewHistory: () -> Unit,
     onUpgrade: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
     val vm: HomeViewModel = hiltViewModel()
-    val ui by vm.uiState.collectAsStateWithLifecycle()
+    val uiState by vm.uiState.collectAsStateWithLifecycle()
     var showOfferDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -34,13 +36,16 @@ fun HomeRoute(
     }
 
     HomeScreen(
+        uiState = uiState,
         showOfferDialog = showOfferDialog,
         onStartQuiz = { vm.onStartQuizClicked() },
+        onViewHistory = onViewHistory,
         onUpgrade = onUpgrade,
         onOpenSettings = onOpenSettings,
         onOfferConfirm = {
             showOfferDialog = false
             onShowRewardedAd()
+            Toast.makeText(context, context.getString(R.string.home_reward_granted), Toast.LENGTH_LONG).show()
         },
         onOfferDismiss = { showOfferDialog = false }
     )
