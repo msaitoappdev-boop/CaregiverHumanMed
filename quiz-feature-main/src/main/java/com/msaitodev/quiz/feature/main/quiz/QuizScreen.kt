@@ -3,15 +3,35 @@ package com.msaitodev.quiz.feature.main.quiz
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.msaitodev.quiz.core.common.ui.LocalQuizColors
 import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,6 +56,8 @@ fun QuizScreen(
     val progressFraction =
         if (state.total == 0) 0f else (state.currentIndex + 1f) / max(1, state.total).toFloat()
 
+    val quizColors = LocalQuizColors.current
+
     Scaffold(
         topBar = {
             Column {
@@ -55,12 +77,6 @@ fun QuizScreen(
         }
     ) { innerPadding ->
 
-        val CorrectBg = Color(0xFFDFF5E1)
-        val CorrectBorder = Color(0xFF2F855A)
-        val WrongBg = Color(0xFFFFE0E0)
-        val WrongBorder = Color(0xFFC53030)
-        val SelectedBg = Color(0xFFE5E5E5)
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -76,14 +92,14 @@ fun QuizScreen(
                 val isSelected = idx == state.selectedIndex
                 val isCorrect = idx == q.correctIndex
                 val bg = when {
-                    state.isAnswered && isCorrect -> CorrectBg
-                    state.isAnswered && isSelected && !isCorrect -> WrongBg
-                    isSelected && !state.isAnswered -> SelectedBg
+                    state.isAnswered && isCorrect -> quizColors.correctBackground
+                    state.isAnswered && isSelected && !isCorrect -> quizColors.wrongBackground
+                    isSelected && !state.isAnswered -> quizColors.selectedBackground
                     else -> Color.Transparent
                 }
                 val borderColor = when {
-                    state.isAnswered && isCorrect -> CorrectBorder
-                    state.isAnswered && isSelected && !isCorrect -> WrongBorder
+                    state.isAnswered && isCorrect -> quizColors.correctBorder
+                    state.isAnswered && isSelected && !isCorrect -> quizColors.wrongBorder
                     else -> Color.Transparent
                 }
                 Surface(
@@ -115,13 +131,13 @@ fun QuizScreen(
                         Text(
                             text = "解説：${q.explanation}",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color(0xFF2F855A)
+                            color = MaterialTheme.colorScheme.primary
                         )
                     } else {
                         Text(
                             text = "解説の全文はプレミアムで解放されます。",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color(0xFF2F855A)
+                            color = MaterialTheme.colorScheme.primary
                         )
                         Spacer(Modifier.height(8.dp))
                         OutlinedButton(onClick = onUpgrade) {
@@ -135,7 +151,7 @@ fun QuizScreen(
                 Text(
                     text = "選択肢をタップしてください",
                     style = MaterialTheme.typography.labelLarge,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 

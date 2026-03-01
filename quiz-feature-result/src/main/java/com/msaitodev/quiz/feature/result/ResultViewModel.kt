@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.msaitodev.quiz.core.ads.InterstitialHelper
+import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
 import com.msaitodev.quiz.core.navigation.ResultDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.msaitodev.quiz.core.domain.model.ScoreEntry
@@ -74,10 +75,10 @@ class ResultViewModel @Inject constructor(
 
     private suspend fun showInterstitial(activity: Activity) {
         val isPremium = premiumRepository.isPremium.first()
-        val interstitialEnabled = remoteConfigRepo.getBoolean("interstitial_enabled") && !isPremium
+        val interstitialEnabled = remoteConfigRepo.getBoolean(RemoteConfigKeys.INTERSTITIAL_ENABLED) && !isPremium
         if (interstitialEnabled) {
-            val cap = remoteConfigRepo.getLong("interstitial_cap_per_session").toInt()
-            val intervalSec = remoteConfigRepo.getLong("inter_session_interval_sec")
+            val cap = remoteConfigRepo.getLong(RemoteConfigKeys.INTERSTITIAL_CAP_PER_SESSION).toInt()
+            val intervalSec = remoteConfigRepo.getLong(RemoteConfigKeys.INTER_SESSION_INTERVAL_SEC)
             interstitialHelper.tryShow(activity, true, cap, intervalSec)
         }
     }

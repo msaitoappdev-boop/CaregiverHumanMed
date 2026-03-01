@@ -1,5 +1,6 @@
 package com.msaitodev.quiz.core.domain.usecase
 
+import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import com.msaitodev.quiz.core.domain.repository.RemoteConfigRepository
 import com.msaitodev.quiz.core.domain.repository.StudyQuotaRepository
@@ -17,7 +18,7 @@ class StartNextQuizUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(): Result {
         val isPremium = premiumRepo.isPremium.first()
-        val limitKey = if (isPremium) "premium_daily_sets" else "free_daily_sets"
+        val limitKey = if (isPremium) RemoteConfigKeys.PREMIUM_DAILY_SETS else RemoteConfigKeys.FREE_DAILY_SETS
         val limit = remoteConfigRepo.getLong(limitKey).toInt()
         val currentQuota = quotaRepo.observe { limit }.first()
 

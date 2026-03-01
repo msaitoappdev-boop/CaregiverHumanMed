@@ -1,11 +1,12 @@
 package com.msaitodev.quiz.core.data.repository
 
 import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.msaitodev.quiz.core.common.config.QuizAssetConfig
 import com.msaitodev.quiz.core.data.local.dto.QuestionDto
 import com.msaitodev.quiz.core.data.mapper.toDomain
 import com.msaitodev.quiz.core.domain.model.Question
 import com.msaitodev.quiz.core.domain.repository.QuestionRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
@@ -15,7 +16,8 @@ import javax.inject.Singleton
 
 @Singleton
 class QuestionRepositoryImpl @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val config: QuizAssetConfig
 ) : QuestionRepository {
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -23,7 +25,7 @@ class QuestionRepositoryImpl @Inject constructor(
 
     override suspend fun loadAll(): List<Question> = withContext(Dispatchers.IO) {
         cachedQuestions?.let { return@withContext it }
-        val questions = context.assets.open("questions.json").bufferedReader().use { reader ->
+        val questions = context.assets.open(config.questionsJsonPath).bufferedReader().use { reader ->
             val text = reader.readText()
             val dtos = json.decodeFromString(ListSerializer(QuestionDto.serializer()), text)
             dtos.map { it.toDomain() }
