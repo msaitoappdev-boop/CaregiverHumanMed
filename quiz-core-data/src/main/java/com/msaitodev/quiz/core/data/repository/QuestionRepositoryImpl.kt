@@ -25,20 +25,43 @@ class QuestionRepositoryImpl @Inject constructor(
 
     override suspend fun loadAll(): List<Question> = withContext(Dispatchers.IO) {
         cachedQuestions?.let { return@withContext it }
-        val questions = context.assets.open(config.questionsJsonPath).bufferedReader().use { reader ->
-            val text = reader.readText()
-            val dtos = json.decodeFromString(ListSerializer(QuestionDto.serializer()), text)
-            dtos.map { it.toDomain() }
-        }
+
+        val allQuestions = mutableListOf<QuestionDto>()
+        
+        // 指定されたルートディレクトリ配下のファイルを再帰的にスキャン
+        loadQuestionsRecursively(config.quizDataRootDirectory, allQuestions)
+
+        val questions = allQuestions.map { it.toDomain() }
         cachedQuestions = questions
         questions
+    }
+
+    private fun loadQuestionsRecursively(path: String, outList: MutableList<QuestionDto>) {
+        val assets = context.assets
+        val items = assets.list(path) ?: return
+
+        if (items.isEmpty()) {
+            // ファイルの可能性がある場合（ディレクトリでなければ空のリストが返ることがある）
+            if (path.endsWith(".json")) {
+                assets.open(path).bufferedReader().use { reader ->
+                    val text = reader.readText()
+                    val dtos = json.decodeFromString(ListSerializer(QuestionDto.serializer()), text)
+                    outList.addAll(dtos)
+                }
+            }
+        } else {
+            // ディレクトリの場合
+            for (item in items) {
+                val fullPath = if (path.isEmpty()) item else "$path/$item"
+                loadQuestionsRecursively(fullPath, outList)
+            }
+        }
     }
 
     override suspend fun getRandomUnseenQuestions(count: Int, excludingIds: Set<String>): List<Question> {
         val allQuestions = loadAll()
         val unseenQuestions = allQuestions.filterNot { it.id in excludingIds }
         return if (unseenQuestions.size < count) {
-            // Reset if not enough questions are available
             allQuestions.shuffled().take(count)
         } else {
             unseenQuestions.shuffled().take(count)

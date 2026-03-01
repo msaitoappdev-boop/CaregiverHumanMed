@@ -2,8 +2,8 @@ package com.msaitodev.quiz.core.common.config
 
 /**
  * クイズデータのロードに必要なアセット設定。
- * アプリ（Hub）ごとに異なるファイル名やパスを指定できるように DI で注入する。
+ * 指定された [quizDataRootDirectory] 配下の全 JSON ファイルを自動的にロードする。
  */
 data class QuizAssetConfig(
-    val questionsJsonPath: String
+    val quizDataRootDirectory: String
 )
