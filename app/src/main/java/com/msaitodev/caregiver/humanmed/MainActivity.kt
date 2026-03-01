@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // Android 15 (Target SDK 35) で必須となる Edge-to-Edge を有効化
-        enableEdgeToEdge()
+        //enableEdgeToEdge()
 
         Log.i("MainActivity", "onCreate called")
 
