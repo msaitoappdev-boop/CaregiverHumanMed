@@ -16,7 +16,11 @@ object ReminderNotifier {
     private const val NOTIFICATION_ID = 1001
 
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
-    fun show(context: Context) {
+    fun show(
+        context: Context,
+        title: String? = null,
+        text: String? = null
+    ) {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse("caregiver://reminder") // DeepLink
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -26,11 +30,13 @@ object ReminderNotifier {
         else PendingIntent.FLAG_UPDATE_CURRENT
         val contentPI = PendingIntent.getActivity(context, 0, intent, flags)
 
-        // キャッシュ問題を断ち切るため、刷新されたリソース名を参照
+        val finalTitle = title ?: context.getString(R.string.notification_reminder_title_start)
+        val finalText = text ?: context.getString(R.string.notification_reminder_text_start)
+
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_daily_quiz)
-            .setContentTitle("今日の3問を解きましょう")
-            .setContentText("毎日の積み重ねが合格に近づきます。今すぐスタート！")
+            .setContentTitle(finalTitle)
+            .setContentText(finalText)
             .setAutoCancel(true)
             .setContentIntent(contentPI)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

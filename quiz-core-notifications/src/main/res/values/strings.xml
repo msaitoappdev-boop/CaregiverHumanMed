@@ -1,0 +1,7 @@
+<resources>
+    <string name="notification_reminder_title_start">今日の3問を解きましょう</string>
+    <string name="notification_reminder_text_start">毎日の積み重ねが合格に近づきます。今すぐスタート！</string>
+
+    <string name="notification_reminder_title_continue">今日の目標まであと少し！</string>
+    <string name="notification_reminder_text_continue">今日はあと %1$d セット残っています。この調子で進めましょう！</string>
+</resources>
