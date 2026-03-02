@@ -7,7 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.msaitodev.quiz.core.common.navigation.QuizActions
+import com.msaitodev.core.common.navigation.AppActions
 
 @Composable
 fun QuizRoute(
@@ -24,9 +24,9 @@ fun QuizRoute(
     val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
     LaunchedEffect(savedStateHandle) {
         savedStateHandle
-            ?.getLiveData<String>(QuizActions.KEY_QUIZ_ACTION)?.observe(navController.currentBackStackEntry!!) {
+            ?.getLiveData<String>(AppActions.KEY_ACTION)?.observe(navController.currentBackStackEntry!!) {
                 vm.processAction(it)
-                savedStateHandle.remove<String>(QuizActions.KEY_QUIZ_ACTION)
+                savedStateHandle.remove<String>(AppActions.KEY_ACTION)
             }
     }
 

@@ -34,7 +34,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":quiz-core-common"))
+    implementation(project(":core-common"))
     implementation(project(":quiz-core-domain"))
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")

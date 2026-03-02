@@ -3,7 +3,7 @@ package com.msaitodev.quiz.feature.main.quiz
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import com.msaitodev.quiz.core.common.navigation.QuizActions
+import com.msaitodev.core.common.navigation.AppActions
 import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
 import com.msaitodev.quiz.core.domain.model.Question
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
@@ -75,11 +75,11 @@ class QuizViewModel @Inject constructor(
 
     fun processAction(action: String) {
         when (action) {
-            QuizActions.ACTION_START_NEW -> {
+            AppActions.ACTION_START_NEW -> {
                 isReviewSession = false
                 loadNextSet()
             }
-            QuizActions.ACTION_RESTART_SAME_ORDER -> {
+            AppActions.ACTION_RESTART_SAME_ORDER -> {
                 isReviewSession = true
                 reset(reshuffle = false)
             }

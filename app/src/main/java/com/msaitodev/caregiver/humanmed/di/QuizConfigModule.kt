@@ -1,6 +1,6 @@
 package com.msaitodev.caregiver.humanmed.di
 
-import com.msaitodev.quiz.core.common.config.QuizAssetConfig
+import com.msaitodev.core.common.config.AppAssetConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,9 +13,9 @@ object QuizConfigModule {
 
     @Provides
     @Singleton
-    fun provideQuizAssetConfig(): QuizAssetConfig {
-        return QuizAssetConfig(
-            quizDataRootDirectory = "quiz_data"
+    fun provideAppAssetConfig(): AppAssetConfig {
+        return AppAssetConfig(
+            assetDataDirectory = "quiz_data"
         )
     }
 }

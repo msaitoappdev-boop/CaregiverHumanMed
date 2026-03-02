@@ -28,7 +28,7 @@ android {
         applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 41
+        versionCode = 42
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -78,7 +78,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":quiz-core-common"))
+    implementation(project(":core-common"))
     implementation(project(":quiz-core-domain"))
     implementation(project(":quiz-feature-history"))
     implementation(project(":quiz-feature-review"))
@@ -142,7 +142,7 @@ dependencies {
 
     // AdMob / UMP
     implementation("com.google.android.gms:play-services-ads:22.6.0")
-    implementation("com.google.android.ump:user-messaging-platform:4.0.0")
+    implementation("com.google.android.ump:user-messaging-platform:2.2.0")
 
     // Test dependencies
     testImplementation("junit:junit:4.13.2")

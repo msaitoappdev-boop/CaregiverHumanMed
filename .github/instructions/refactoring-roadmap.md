@@ -32,12 +32,13 @@
     - `:quiz-feature-result`
     - `:quiz-feature-history`
     - `:feature-billing` (汎用化済み)
-    - `:quiz-feature-settings`
-    - `:quiz-core-common`
+    - `:feature-settings` (汎用化済み)
+    - `:core-common` (汎用化済み)
     - `:quiz-core-domain`
     - `:quiz-core-data`
     - `:core-ads` (汎用化済み)
-    - `:quiz-core-notifications`
+    - `:core-notifications` (汎用化済み)
+    - `:core-navigation`
 
 ## 3段階計画
 
@@ -58,7 +59,7 @@
 
 ### フェーズ2.5：ナビゲーション定義の分離とアーキテクチャの一貫性向上（完了）
 
-**目標:** `:app`モジュールに起による最後の依存関係違反を解消し、ComposeのアーキテクチャをAGENTS.mdの規約に完全に準拠させる。
+**目標:** `:app`モジュールに起因する最後の依存関係違反を解消し、ComposeのアーキテクチャをAGENTS.mdの規約に完全に準拠させる。
 
 **タスク:**
 1. [x] **ナビゲーション定義の分離**: `:quiz-core-navigation` モジュールへの集約。 (完了)
@@ -91,22 +92,24 @@
 3. [x] **Edge-to-Edge 表示の最終適合**: 全画面（Home, Quiz, Result, History, Review）での TopAppBar 修正完了。 (完了)
 4. [x] **問題データの高品質化と ID 体系刷新**: 厳選 120 問の配置と、カテゴリ接頭辞方式への移行。 (完了)
 
-### フェーズ 2.9：コアモジュールのドメイン・フリー化（リリース前最終タスク）
+### フェーズ 2.9：コアモジュールのドメイン・フリー化（完了）
 
 **目標:** `billing`, `ads`, `notifications`, `settings` などの汎用モジュールから「クイズ」という具体的なドメイン知識を排除し、他ジャンルのアプリでもそのまま利用可能な「純粋なプラグイン」として洗練させる。
 
 **タスク:**
 - [x] **Billing の抽象化**: 課金アイテム ID の外部注入化、Paywall 特典テキストの動的供給対応、ハードコード定数の整理。 (完了)
 - [x] **Ads の汎用化**: モジュール名 (`:core-ads`) とパッケージ名の刷新、広告 ID 注入の整理、マジックストリングの排除。 (完了)
-- [x] **Notifications のテンプレート化**: メッセージ内容および判定ロジックを NotificationPolicy へ抽出し、ドメインフリー化。 (完了)
-- [ ] **Settings の整理**: 共通項目（課金復元・ポリシー等）とアプリ固有項目の分離構成。
+- [x] **Notifications のテンプレート化**: メッセージ内容および判定ロジックを NotificationPolicy へ抽出し、ドメインフリー化とリネーム (`:core-notifications`) 完了。 (完了)
+- [x] **Settings の整理**: `SettingsProvider` 導入によるドメイン知識の分離、リネーム (`:feature-settings`)、および全画面のハードコード一掃。 (完了)
+- [x] **Core Common の刷新**: `:quiz-core-common` を `:core-common` へリネーム。パッケージから `quiz` を除去し、AdUnits や AppColors 等をドメインフリー化。 (完了)
+- [ ] **Navigation の汎用化**: `:quiz-core-navigation` を `:core-navigation` へリネームし、パッケージから `quiz` を完全に除去。全画面の遷移定義をドメインフリーな基盤として整理。
 
 ### フェーズ3：共有ライブラリリポジトリへの抽出（初回リリース後の目標）
 
 **目標:** 共通モジュール群を、別の再利用可能なライブラリプロジェクトに移動する。リリースの確実性を優先し、ストア公開後の安定期に実施する。
 
 **タスク:**
-1. [ ] `:feature-billing`、`:quiz-feature:*`および`:quiz-core:*`モジュール群を、新しい別のGitリポジトリに移動する。
+1. [ ] `:feature-billing`、`:feature-settings`、`:core-*` および `:quiz-feature-*` モジュール群を、新しい別のGitリポジトリに移動する。
 2. [ ] `maven-publish`を設定し、共通機能をMavenライブラリとして利用可能にする。
 
 ### フェーズ4：パッケージ名変更に伴う外部サービス再設定（完了）

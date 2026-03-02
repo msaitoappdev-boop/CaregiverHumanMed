@@ -4,7 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import com.msaitodev.quiz.core.common.config.AdUnits
+import com.msaitodev.core.common.config.AdUnits
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -22,8 +22,8 @@ object AdModule {
         @Named(NAME_REWARDED_AD_ID) rewardedAdId: String
     ): AdUnits {
         return AdUnits(
-            interstitialWeaktrainComplete = interstitialAdId,
-            rewardedWeaktrainPlusOne = rewardedAdId
+            interstitialUnitA = interstitialAdId,
+            rewardedUnitA = rewardedAdId
         )
     }
 }

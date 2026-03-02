@@ -2,8 +2,8 @@ package com.msaitodev.caregiver.humanmed.di
 
 import android.content.Context
 import com.msaitodev.caregiver.humanmed.R
-import com.msaitodev.quiz.core.common.billing.BillingProvider
-import com.msaitodev.quiz.core.common.billing.PaywallConfig
+import com.msaitodev.core.common.billing.BillingProvider
+import com.msaitodev.core.common.billing.PaywallConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

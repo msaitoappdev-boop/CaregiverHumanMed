@@ -9,7 +9,7 @@ plugins {
 // 強制再同期のためのコメント
 
 android {
-    namespace = "jp.msaitoappdev.caregiver.humanmed.data"
+    namespace = "com.msaitodev.quiz.core.data"
     compileSdk = 35
     defaultConfig {
         minSdk = 24
@@ -31,7 +31,7 @@ ksp {
 }
 
 dependencies {
-    implementation(project(":quiz-core-common"))
+    implementation(project(":core-common"))
     implementation(project(":quiz-core-domain"))
 
     // Billing

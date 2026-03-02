@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.msaitodev.core.billing"
+    namespace = "com.msaitodev.feature.billing"
     compileSdk = 34
 
     defaultConfig {
@@ -40,7 +40,7 @@ android {
 
 dependencies {
     implementation(project(":quiz-core-navigation"))
-    implementation(project(":quiz-core-common"))
+    implementation(project(":core-common"))
     implementation(project(":quiz-core-domain"))
 
     implementation("androidx.core:core-ktx:1.13.1")

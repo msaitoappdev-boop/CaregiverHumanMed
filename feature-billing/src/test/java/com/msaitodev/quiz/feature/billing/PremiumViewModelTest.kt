@@ -4,8 +4,8 @@ import android.app.Activity
 import app.cash.turbine.test
 import com.android.billingclient.api.ProductDetails
 import com.google.common.truth.Truth.assertThat
-import com.msaitodev.core.billing.PaywallEvent
-import com.msaitodev.core.billing.PremiumViewModel
+import com.msaitodev.feature.billing.PaywallEvent
+import com.msaitodev.feature.billing.PremiumViewModel
 import com.msaitodev.quiz.core.common.billing.BillingManager
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import kotlinx.coroutines.Dispatchers

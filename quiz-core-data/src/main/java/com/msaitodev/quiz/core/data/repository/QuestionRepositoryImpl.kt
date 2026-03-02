@@ -1,7 +1,7 @@
 package com.msaitodev.quiz.core.data.repository
 
 import android.content.Context
-import com.msaitodev.quiz.core.common.config.QuizAssetConfig
+import com.msaitodev.core.common.config.AppAssetConfig
 import com.msaitodev.quiz.core.data.local.dto.QuestionDto
 import com.msaitodev.quiz.core.data.mapper.toDomain
 import com.msaitodev.quiz.core.domain.model.Question
@@ -17,7 +17,7 @@ import javax.inject.Singleton
 @Singleton
 class QuestionRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val config: QuizAssetConfig
+    private val config: AppAssetConfig
 ) : QuestionRepository {
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -28,8 +28,8 @@ class QuestionRepositoryImpl @Inject constructor(
 
         val allQuestions = mutableListOf<QuestionDto>()
         
-        // 指定されたルートディレクトリ配下のファイルを再帰的にスキャン
-        loadQuestionsRecursively(config.quizDataRootDirectory, allQuestions)
+        // 指定されたディレクトリ配下のファイルをスキャン
+        loadQuestionsRecursively(config.assetDataDirectory, allQuestions)
 
         val questions = allQuestions.map { it.toDomain() }
         cachedQuestions = questions
@@ -41,7 +41,6 @@ class QuestionRepositoryImpl @Inject constructor(
         val items = assets.list(path) ?: return
 
         if (items.isEmpty()) {
-            // ファイルの可能性がある場合（ディレクトリでなければ空のリストが返ることがある）
             if (path.endsWith(".json")) {
                 assets.open(path).bufferedReader().use { reader ->
                     val text = reader.readText()
@@ -50,7 +49,6 @@ class QuestionRepositoryImpl @Inject constructor(
                 }
             }
         } else {
-            // ディレクトリの場合
             for (item in items) {
                 val fullPath = if (path.isEmpty()) item else "$path/$item"
                 loadQuestionsRecursively(fullPath, outList)
