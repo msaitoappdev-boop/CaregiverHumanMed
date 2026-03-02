@@ -34,33 +34,29 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
 
+private const val TAG = "BillingManager"
+private const val ERR_SEPARATOR = ": "
+
 /**
  * 購読（SUBS）の購買・状態同期を担う最小ユーティリティ。
- * - ProductDetails の取得
- * - 購入フロー起動
- * - ACK（3日以内必須）
- * - 所有状態の問い合わせ → プレミアム権限の保存/復元
- *
- * 将来:
- * - RTDN + SubscriptionsV2 を真実源に（TODO）
+ * ドメイン（クイズ/介護）に依存しないよう、プロダクトID等は BillingProvider 経由で取得する。
  */
 @Singleton
-open class BillingManager @Inject constructor(
-    @ApplicationContext private val appContext: Context
+class BillingManager @Inject constructor(
+    @ApplicationContext private val appContext: Context,
+    private val billingProvider: BillingProvider
 ) : PurchasesUpdatedListener {
 
     private val prefs: SharedPreferences =
         appContext.getSharedPreferences(BillingConfig.PREFS_NAME, Context.MODE_PRIVATE)
 
     private val scope = CoroutineScope(Dispatchers.IO + Job())
-    private val TAG = "BugHunt-Premium"
 
-    // ---- BillingClient -------------------------------------------------------
     private val client: BillingClient = BillingClient.newBuilder(appContext)
         .setListener(this)
         .enablePendingPurchases(
             PendingPurchasesParams.newBuilder()
-                .enableOneTimeProducts() // 一回購入を扱うならON
+                .enableOneTimeProducts()
                 .build()
         )
         .build()
@@ -68,9 +64,8 @@ open class BillingManager @Inject constructor(
     private var isConnected = false
     private var cachedProductDetails: ProductDetails? = null
 
-    // ---- 外部公開：権利（isPremium）と購入イベント ----------------------------
     private val _isPremium = MutableStateFlow(loadPremiumFromPrefs())
-    open val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
+    val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
 
     sealed interface PurchaseEvent {
         data class Success(val purchase: Purchase) : PurchaseEvent
@@ -84,9 +79,7 @@ open class BillingManager @Inject constructor(
     )
     val purchaseEvents: SharedFlow<PurchaseEvent> = _purchaseEvents.asSharedFlow()
 
-    // ---- Public API ----------------------------------------------------------
-
-    open suspend fun connect(): Boolean = suspendCancellableCoroutine { cont ->
+    suspend fun connect(): Boolean = suspendCancellableCoroutine { cont ->
         if (isConnected) {
             cont.resume(true); return@suspendCancellableCoroutine
         }
@@ -99,25 +92,21 @@ open class BillingManager @Inject constructor(
                 isConnected = result.responseCode == BillingClient.BillingResponseCode.OK
                 cont.resume(isConnected)
                 if (isConnected) {
-                    // 起動直後の整合性取り
                     scope.launch { refreshEntitlements() }
                 }
             }
         })
     }
 
-    /**
-     * 無引数版：固定 Product ID（Console と同期）で ProductDetails を取得。
-     */
-    open suspend fun getProductDetails(): ProductDetails? {
+    suspend fun getProductDetails(): ProductDetails? {
         if (!isConnected && !connect()) return null
-        cachedProductDetails?.let { return it.takeIf { d -> d.productId == BillingConfig.PRODUCT_ID_PREMIUM_MONTHLY } }
+        cachedProductDetails?.let { return it.takeIf { d -> d.productId == billingProvider.productIdPremium } }
 
         val params = QueryProductDetailsParams.newBuilder()
             .setProductList(
                 listOf(
                     QueryProductDetailsParams.Product.newBuilder()
-                        .setProductId(BillingConfig.PRODUCT_ID_PREMIUM_MONTHLY)
+                        .setProductId(billingProvider.productIdPremium)
                         .setProductType(BillingClient.ProductType.SUBS)
                         .build()
                 )
@@ -136,13 +125,12 @@ open class BillingManager @Inject constructor(
         }
     }
 
-    open fun launchPurchase(activity: Activity, productDetails: ProductDetails) {
-        // basePlanId のみで特典を選択（より安全な方法は offerId も指定すること）
+    fun launchPurchase(activity: Activity, productDetails: ProductDetails) {
         val offerToken = productDetails.subscriptionOfferDetails
-            ?.firstOrNull { it.basePlanId == BillingConfig.BASE_PLAN_ID_MONTHLY }
+            ?.firstOrNull { it.basePlanId == billingProvider.basePlanId }
             ?.offerToken
             ?: run {
-                _purchaseEvents.tryEmit(PurchaseEvent.Error("購入オファー（月額）が見つかりません"))
+                _purchaseEvents.tryEmit(PurchaseEvent.Error(billingProvider.errorOfferNotFound))
                 return
             }
 
@@ -164,34 +152,29 @@ open class BillingManager @Inject constructor(
             BillingClient.BillingResponseCode.OK -> {
                 if (purchases.isNullOrEmpty()) return
                 purchases.forEach { purchase ->
-                    when (purchase.purchaseState) {
-                        Purchase.PurchaseState.PURCHASED -> {
-                            // 3日以内の ACK は必須。
-                            if (!purchase.isAcknowledged) {
-                                val ackParams = AcknowledgePurchaseParams.newBuilder()
-                                    .setPurchaseToken(purchase.purchaseToken)
-                                    .build()
-                                client.acknowledgePurchase(ackParams) { ackResult ->
-                                    if (ackResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                                        _purchaseEvents.tryEmit(PurchaseEvent.Success(purchase))
-                                        scope.launch { refreshEntitlements() }
-                                    } else {
-                                        _purchaseEvents.tryEmit(
-                                            PurchaseEvent.Error("承認に失敗: ${ackResult.responseCode}")
-                                        )
-                                    }
+                    if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
+                        if (!purchase.isAcknowledged) {
+                            val ackParams = AcknowledgePurchaseParams.newBuilder()
+                                .setPurchaseToken(purchase.purchaseToken)
+                                .build()
+                            client.acknowledgePurchase(ackParams) { ackResult ->
+                                if (ackResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                                    _purchaseEvents.tryEmit(PurchaseEvent.Success(purchase))
+                                    scope.launch { refreshEntitlements() }
+                                } else {
+                                    _purchaseEvents.tryEmit(
+                                        PurchaseEvent.Error("${billingProvider.errorAcknowledgeFailed}$ERR_SEPARATOR${ackResult.responseCode}")
+                                    )
                                 }
-                            } else {
-                                _purchaseEvents.tryEmit(PurchaseEvent.Success(purchase))
-                                scope.launch { refreshEntitlements() }
                             }
+                        } else {
+                            _purchaseEvents.tryEmit(PurchaseEvent.Success(purchase))
+                            scope.launch { refreshEntitlements() }
                         }
-                        Purchase.PurchaseState.PENDING -> {
-                            _purchaseEvents.tryEmit(
-                                PurchaseEvent.Error("お支払い処理中です。完了後に自動で有効化されます。")
-                            )
-                        }
-                        else -> Unit // UNSPECIFIED_STATE 等
+                    } else if (purchase.purchaseState == Purchase.PurchaseState.PENDING) {
+                        _purchaseEvents.tryEmit(
+                            PurchaseEvent.Error(billingProvider.errorPending)
+                        )
                     }
                 }
             }
@@ -199,21 +182,16 @@ open class BillingManager @Inject constructor(
                 _purchaseEvents.tryEmit(PurchaseEvent.Canceled)
             }
             BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
-                // 既に所有 → 状態再同期
                 _purchaseEvents.tryEmit(PurchaseEvent.AlreadyOwned)
                 scope.launch { refreshEntitlements() }
             }
             else -> {
-                _purchaseEvents.tryEmit(PurchaseEvent.Error("購入エラー: ${result.responseCode}"))
+                _purchaseEvents.tryEmit(PurchaseEvent.Error("${billingProvider.errorGeneral}$ERR_SEPARATOR${result.responseCode}"))
             }
         }
     }
 
-    /**
-     * 端末ローカルの所有状況から isPremium を更新。
-     * 本番運用ではサーバー（SubscriptionsV2 + RTDN）を真実源にして二段チェックを推奨。
-     */
-    open suspend fun refreshEntitlements() {
+    suspend fun refreshEntitlements() {
         if (!isConnected && !connect()) return
 
         val owned = suspendCancellableCoroutine<List<Purchase>> { continuation ->
@@ -221,36 +199,29 @@ open class BillingManager @Inject constructor(
                 .setProductType(BillingClient.ProductType.SUBS)
                 .build()
             client.queryPurchasesAsync(params, PurchasesResponseListener { result, purchases ->
-                if (continuation.isCancelled) {
-                    return@PurchasesResponseListener
-                }
+                if (continuation.isCancelled) return@PurchasesResponseListener
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     continuation.resume(purchases)
                 } else {
-                    Log.e(TAG, "Failed to query purchases: ${result.debugMessage}")
                     continuation.resume(emptyList())
                 }
             })
         }
 
-        // ローカル判定：対象 Product のアクティブ所有があれば Premium とみなす
         val premium = owned.any { p ->
-            p.products.contains(BillingConfig.PRODUCT_ID_PREMIUM_MONTHLY) &&
+            p.products.contains(billingProvider.productIdPremium) &&
                     p.purchaseState == Purchase.PurchaseState.PURCHASED && p.isAutoRenewing
         }
-
-        Log.d(TAG, "BillingManager: Querying purchases finished. Result: $premium")
 
         savePremiumToPrefs(premium)
         _isPremium.value = premium
     }
 
-    open fun setPremiumForDebug(enabled: Boolean) {
+    fun setPremiumForDebug(enabled: Boolean) {
         savePremiumToPrefs(enabled)
         _isPremium.value = enabled
     }
 
-    // ---- Prefs ヘルパ -------------------------------------------------------
     private fun loadPremiumFromPrefs(): Boolean =
         prefs.getBoolean(BillingConfig.KEY_IS_PREMIUM, false)
 

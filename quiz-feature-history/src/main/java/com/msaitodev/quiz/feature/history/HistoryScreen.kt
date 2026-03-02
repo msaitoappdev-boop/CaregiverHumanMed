@@ -22,16 +22,20 @@ internal fun HistoryScreen(
     onBack: () -> Unit,
     onDeleteAll: () -> Unit
 ) {
-    val sdf = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault())
+    val dateFormatPattern = stringResource(R.string.history_date_format)
+    val sdf = SimpleDateFormat(dateFormatPattern, Locale.getDefault())
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("スコア履歴") },
+                title = { Text(stringResource(R.string.history_title)) },
                 windowInsets = TopAppBarDefaults.windowInsets,
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.history_back)
+                        )
                     }
                 },
                 actions = {
@@ -39,7 +43,7 @@ internal fun HistoryScreen(
                         IconButton(onClick = onDeleteAll) {
                             Icon(
                                 imageVector = Icons.Filled.DeleteForever,
-                                contentDescription = "履歴を全て削除"
+                                contentDescription = stringResource(R.string.history_delete_all)
                             )
                         }
                     }
@@ -54,19 +58,24 @@ internal fun HistoryScreen(
                 .padding(16.dp)
         ) {
             if (historyList.isEmpty()) {
-                Text("履歴はまだありません")
+                Text(stringResource(R.string.history_empty))
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(historyList) { rec ->
                         ElevatedCard(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(12.dp)) {
                                 Text(
-                                    "${rec.score} / ${rec.total} （${rec.percent}%）",
+                                    text = stringResource(
+                                        R.string.history_score_format,
+                                        rec.score,
+                                        rec.total,
+                                        rec.percent
+                                    ),
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Spacer(Modifier.height(4.dp))
                                 Text(
-                                    sdf.format(Date(rec.timestamp)),
+                                    text = sdf.format(Date(rec.timestamp)),
                                     style = MaterialTheme.typography.labelMedium
                                 )
                             }

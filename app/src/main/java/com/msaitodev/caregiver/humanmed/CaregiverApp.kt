@@ -10,7 +10,7 @@ import androidx.work.Configuration
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.ktx.remoteConfig
-import com.msaitodev.quiz.core.notifications.ReminderNotifier
+import com.msaitodev.core.notifications.NotificationPolicy
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -19,6 +19,9 @@ class CaregiverApp : Application(), Configuration.Provider {
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
+
+    @Inject
+    lateinit var notificationPolicy: NotificationPolicy
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -42,14 +45,12 @@ class CaregiverApp : Application(), Configuration.Provider {
 
     private fun createReminderChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // キャッシュ問題を解消するため、IDを v3 に更新
             val channel = NotificationChannel(
-                ReminderNotifier.CHANNEL_ID,
-                "学習リマインド",
+                notificationPolicy.channelId,
+                notificationPolicy.channelName,
                 NotificationManager.IMPORTANCE_HIGH
             ).apply { 
-                description = "毎日3問のリマインド通知"
-                // ロック画面などでの表示設定
+                description = notificationPolicy.defaultText
                 lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             }
             getSystemService<NotificationManager>()?.createNotificationChannel(channel)

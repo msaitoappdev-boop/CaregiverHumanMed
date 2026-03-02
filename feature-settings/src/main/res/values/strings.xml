@@ -1,0 +1,26 @@
+<resources>
+    <!-- Settings -->
+    <string name="settings_title">設定</string>
+    <string name="settings_back">戻る</string>
+    <string name="settings_reminder_title">リマインド通知</string>
+    <string name="settings_reminder_switch_label">毎日リマインドを受け取る</string>
+    <string name="settings_reminder_hour_label">時</string>
+    <string name="settings_reminder_minute_label">分</string>
+    <string name="settings_reminder_description">指定時刻に1日1回通知します。朝の通勤時間やスキマ時間の学習をサポートします。</string>
+
+    <string name="settings_premium_status_title">プランと購入管理</string>
+    <string name="settings_current_plan_label">現在のステータス</string>
+    <string name="settings_premium_status_active">プレミアム（有効）</string>
+    <string name="settings_premium_status_free">無料プラン</string>
+
+    <string name="settings_restore_title">購入の復元</string>
+    <string name="settings_restore_description">アカウント切替や機種変更後に、購入状態を手動で同期します。</string>
+    <string name="settings_restore_button">購入を復元</string>
+    <string name="settings_restore_button_done">復元済み</string>
+    <string name="settings_restore_success">購入情報を復元しました</string>
+    <string name="settings_restore_no_purchase">有効な購入情報が見つかりませんでした</string>
+    <string name="settings_restore_error">復元に失敗しました。通信環境を確認してください。</string>
+
+    <string name="settings_manage_subscription">定期購入を管理（Google Play）</string>
+    <string name="settings_privacy_policy">プライバシーポリシー</string>
+</resources>

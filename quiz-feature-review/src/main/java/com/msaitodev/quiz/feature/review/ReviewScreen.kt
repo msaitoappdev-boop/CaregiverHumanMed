@@ -83,7 +83,7 @@ private fun ReviewCard(
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(
-                text = "第 ${item.number} 問",
+                text = stringResource(R.string.review_question_number, item.number),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -121,17 +121,26 @@ private fun ReviewCard(
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "・$option", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            text = stringResource(R.string.review_option_prefix, option),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
                 }
             }
 
             Spacer(Modifier.height(8.dp))
-            val my = item.selectedIndex?.let { idx -> item.options.getOrNull(idx) } ?: "未回答"
-            val correct = item.options.getOrNull(item.correctIndex) ?: "-"
-            Text(text = "あなたの回答：$my", style = MaterialTheme.typography.labelLarge)
+            val my = item.selectedIndex?.let { idx -> item.options.getOrNull(idx) }
+                ?: stringResource(R.string.review_not_answered)
+            val correct = item.options.getOrNull(item.correctIndex)
+                ?: stringResource(R.string.review_fallback_dash)
+
             Text(
-                text = "正解：$correct",
+                text = stringResource(R.string.review_your_answer, my),
+                style = MaterialTheme.typography.labelLarge
+            )
+            Text(
+                text = stringResource(R.string.review_correct_answer, correct),
                 style = MaterialTheme.typography.labelLarge,
                 color = if (quizColors.correctBorder != Color.Unspecified) quizColors.correctBorder else MaterialTheme.colorScheme.primary
             )
@@ -140,7 +149,7 @@ private fun ReviewCard(
                 if (exp.isNotBlank()) {
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "解説：$exp",
+                        text = stringResource(R.string.review_explanation_label, exp),
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (quizColors.correctBorder != Color.Unspecified) quizColors.correctBorder else MaterialTheme.colorScheme.primary
                     )

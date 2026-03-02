@@ -42,9 +42,9 @@ android {
 dependencies {
     implementation(project(":quiz-core-common"))
     implementation(project(":quiz-core-domain"))
-    implementation(project(":quiz-core-notifications"))
+    implementation(project(":core-notifications"))
     implementation(project(":quiz-core-navigation"))
-    implementation(project(":quiz-core-ads"))
+    implementation(project(":core-ads"))
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.0")

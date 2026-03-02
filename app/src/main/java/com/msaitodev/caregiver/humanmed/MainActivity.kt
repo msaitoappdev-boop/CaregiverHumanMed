@@ -4,14 +4,13 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.msaitodev.caregiver.humanmed.ui.AppNavHost
 import com.msaitodev.caregiver.humanmed.ui.theme.CaregiverTheme
-import com.msaitodev.quiz.core.ads.InterstitialHelper
-import com.msaitodev.quiz.core.ads.RewardedHelper
+import com.msaitodev.core.ads.InterstitialHelper
+import com.msaitodev.core.ads.RewardedHelper
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import com.msaitodev.quiz.core.domain.repository.RemoteConfigRepository
 import dagger.hilt.android.AndroidEntryPoint

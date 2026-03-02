@@ -1,0 +1,11 @@
+package com.msaitodev.core.billing
+
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.composable
+import com.msaitodev.quiz.core.navigation.PaywallDestination
+
+fun NavGraphBuilder.paywallGraph() {
+    composable(PaywallDestination.route) {
+        PaywallRoute()
+    }
+}

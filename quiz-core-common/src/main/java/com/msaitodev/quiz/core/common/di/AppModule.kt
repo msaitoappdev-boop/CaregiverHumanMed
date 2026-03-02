@@ -15,14 +15,13 @@ import kotlinx.coroutines.SupervisorJob
 import javax.inject.Named
 import javax.inject.Singleton
 
-private val Context._dataStore by preferencesDataStore(name = "premium_prefs")
+private const val PREMIUM_PREFS_NAME = "premium_prefs"
+private val Context._dataStore by preferencesDataStore(name = PREMIUM_PREFS_NAME)
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-// BillingClient は BillingManager 側で一元管理するため提供しません
-// （二重生成を避ける）
     @Provides
     @Singleton
     fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
