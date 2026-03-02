@@ -4,7 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
-import com.msaitodev.quiz.core.navigation.QuizDestination
+import com.msaitodev.core.navigation.QuizDestination
 
 fun NavGraphBuilder.quizGraph(
     navController: NavController,

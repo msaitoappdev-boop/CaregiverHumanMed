@@ -27,7 +27,9 @@ data class SettingsUiState(
 )
 
 sealed interface SettingsEvent {
-    data class RestoreResult(val isSuccess: Boolean) : SettingsEvent
+    /** 復元処理の結果ステータス */
+    enum class RestoreStatus { SUCCESS, NO_PURCHASE, ERROR }
+    data class RestoreResult(val status: RestoreStatus) : SettingsEvent
 }
 
 @HiltViewModel
@@ -82,13 +84,23 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 購入情報の復元を試行します。
+     * 結果は [SettingsEvent.RestoreResult] を通じて UI へ通知されます。
+     */
     fun restorePurchases() {
         viewModelScope.launch {
             try {
-                billingManager.refreshEntitlements()
-                _events.emit(SettingsEvent.RestoreResult(true))
+                // 実際にプレミアム権限が見つかったかどうかを取得
+                val hasPremium = billingManager.refreshEntitlements()
+                val status = if (hasPremium) {
+                    SettingsEvent.RestoreStatus.SUCCESS
+                } else {
+                    SettingsEvent.RestoreStatus.NO_PURCHASE
+                }
+                _events.emit(SettingsEvent.RestoreResult(status))
             } catch (e: Exception) {
-                _events.emit(SettingsEvent.RestoreResult(false))
+                _events.emit(SettingsEvent.RestoreResult(SettingsEvent.RestoreStatus.ERROR))
             }
         }
     }

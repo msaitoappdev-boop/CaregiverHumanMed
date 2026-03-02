@@ -3,6 +3,7 @@ package com.msaitodev.core.common.billing
 import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.core.content.edit
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
@@ -190,8 +191,16 @@ class BillingManager @Inject constructor(
         }
     }
 
-    suspend fun refreshEntitlements() {
-        if (!isConnected && !connect()) return
+    /**
+     * 最新の購読状態を Google Play から取得して同期します。
+     * ネットワークエラーや接続失敗時は安全に false を返します。
+     * @return プレミアム状態が有効である場合は true、そうでない場合は false を返します。
+     */
+    suspend fun refreshEntitlements(): Boolean {
+        if (!isConnected && !connect()) {
+            Log.w(TAG, "refreshEntitlements failed: BillingClient is not connected")
+            return false
+        }
 
         val owned = suspendCancellableCoroutine<List<Purchase>> { continuation ->
             val params = QueryPurchasesParams.newBuilder()
@@ -202,6 +211,7 @@ class BillingManager @Inject constructor(
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     continuation.resume(purchases)
                 } else {
+                    Log.w(TAG, "Query purchases failed: ${result.responseCode}")
                     continuation.resume(emptyList())
                 }
             })
@@ -214,6 +224,7 @@ class BillingManager @Inject constructor(
 
         savePremiumToPrefs(premium)
         _isPremium.value = premium
+        return premium
     }
 
     fun setPremiumForDebug(enabled: Boolean) {
