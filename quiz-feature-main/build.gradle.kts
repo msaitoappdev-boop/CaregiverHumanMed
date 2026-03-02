@@ -43,7 +43,7 @@ dependencies {
     implementation(project(":core-common"))
     implementation(project(":quiz-core-domain"))
     implementation(project(":core-notifications"))
-    implementation(project(":quiz-core-navigation"))
+    implementation(project(":core-navigation"))
     implementation(project(":core-ads"))
 
     implementation("androidx.core:core-ktx:1.13.1")

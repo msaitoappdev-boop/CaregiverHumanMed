@@ -1,4 +1,4 @@
-package com.msaitodev.quiz.core.navigation
+package com.msaitodev.core.navigation
 
 object SettingsDestination {
     const val route = "settings"

@@ -7,7 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import com.msaitodev.quiz.core.domain.model.Question
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
-import com.msaitodev.quiz.core.navigation.ReviewDestination
+import com.msaitodev.core.navigation.ReviewDestination
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch

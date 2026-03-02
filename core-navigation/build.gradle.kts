@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.msaitodev.quiz.core.navigation"
+    namespace = "com.msaitodev.core.navigation"
     compileSdk = 35
 
     defaultConfig {
