@@ -28,12 +28,12 @@ fun SettingsRoute(
         viewModel.events.collect { event ->
             when (event) {
                 is SettingsEvent.RestoreResult -> {
-                    val message = if (event.isSuccess) {
-                        context.getString(R.string.settings_restore_success)
-                    } else {
-                        context.getString(R.string.settings_restore_error)
+                    val messageResId = when (event.status) {
+                        SettingsEvent.RestoreStatus.SUCCESS -> R.string.settings_restore_success
+                        SettingsEvent.RestoreStatus.NO_PURCHASE -> R.string.settings_restore_no_purchase
+                        SettingsEvent.RestoreStatus.ERROR -> R.string.settings_restore_error
                     }
-                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, context.getString(messageResId), Toast.LENGTH_LONG).show()
                 }
             }
         }

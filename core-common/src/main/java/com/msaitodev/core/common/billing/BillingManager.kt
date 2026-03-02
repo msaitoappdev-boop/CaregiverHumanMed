@@ -32,6 +32,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 private const val TAG = "BillingManager"
 private const val ERR_SEPARATOR = ": "
@@ -190,8 +191,15 @@ class BillingManager @Inject constructor(
         }
     }
 
-    suspend fun refreshEntitlements() {
-        if (!isConnected && !connect()) return
+    /**
+     * 最新の購読状態を Google Play から取得して同期します。
+     * ネットワークエラーや課金サービスの切断時は例外を投げます。
+     * @return プレミアム状態が有効である場合は true、そうでない場合は false を返します。
+     */
+    suspend fun refreshEntitlements(): Boolean {
+        if (!isConnected && !connect()) {
+            throw IllegalStateException("Could not connect to BillingClient")
+        }
 
         val owned = suspendCancellableCoroutine<List<Purchase>> { continuation ->
             val params = QueryPurchasesParams.newBuilder()
@@ -202,7 +210,10 @@ class BillingManager @Inject constructor(
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     continuation.resume(purchases)
                 } else {
-                    continuation.resume(emptyList())
+                    // 通信エラー等は例外として扱い、ViewModelで検知可能にする
+                    continuation.resumeWithException(
+                        RuntimeException("Billing query failed with code: ${result.responseCode}")
+                    )
                 }
             })
         }
@@ -214,6 +225,7 @@ class BillingManager @Inject constructor(
 
         savePremiumToPrefs(premium)
         _isPremium.value = premium
+        return premium
     }
 
     fun setPremiumForDebug(enabled: Boolean) {
