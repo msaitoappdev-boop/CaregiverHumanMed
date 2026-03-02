@@ -6,7 +6,6 @@ import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.rewarded.RewardItem
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,31 +17,24 @@ class RewardedHelper @Inject constructor(
     @Named(AdModule.NAME_REWARDED_AD_ID) private val adUnitId: String
 ) {
     /**
-     * 同意取得状況に関わらず initIfNeeded は呼んでOK（複数回でも 1 回だけ初期化）。
-     * 将来的には UMP で canRequestAds() = true になったタイミングの 1 回に寄せる想定。
-     * @param canShowToday 日次上限チェック（例：1回/日）
+     * リワード広告を表示する。
+     * 報酬獲得時に引数なしの [onEarned] を呼び出すことで、AdMob への直接依存を隠蔽する。
      */
     fun show(
         activity: Activity,
         canShowToday: () -> Boolean,
-        onEarned: (RewardItem) -> Unit,
+        onEarned: () -> Unit,
         onFail: () -> Unit
     ) {
-        // 0) 日次上限
         if (!canShowToday()) {
             onFail()
             return
         }
 
-        // 1) 広告 SDK 初期化（必要なら一度だけ）
         AdsSdk.initIfNeeded(context)
 
-        // 2) AdUnit ID はコンストラクタ経由で注入される
-
-        // 3) リクエスト作成
         val request = AdRequest.Builder().build()
 
-        // 4) ロード
         RewardedAd.load(
             activity,
             adUnitId,
@@ -57,11 +49,9 @@ class RewardedHelper @Inject constructor(
                         override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                             onFail()
                         }
-                        override fun onAdShowedFullScreenContent() {}
-                        override fun onAdDismissedFullScreenContent() {}
                     }
-                    ad.show(activity) { reward: RewardItem ->
-                        onEarned(reward)
+                    ad.show(activity) {
+                        onEarned()
                     }
                 }
             }

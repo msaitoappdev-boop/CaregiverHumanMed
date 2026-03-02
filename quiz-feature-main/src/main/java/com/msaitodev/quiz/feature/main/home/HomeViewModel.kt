@@ -2,42 +2,49 @@ package com.msaitodev.quiz.feature.main.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
 import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
 import com.msaitodev.quiz.core.domain.model.QuotaState
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import com.msaitodev.quiz.core.domain.repository.RemoteConfigRepository
 import com.msaitodev.quiz.core.domain.repository.StudyQuotaRepository
+import com.msaitodev.quiz.core.domain.usecase.StartNextQuizUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// HomeViewModelが発行する「イベント」を定義。画面遷移の指令は含まない。
+// HomeViewModelが発行する「イベント」を定義。
 sealed interface HomeEvent {
     object RequestNavigateToQuiz : HomeEvent
     object RequestShowRewardedAdOffer : HomeEvent
+    object QuotaExceeded : HomeEvent
+    object RewardLimitReached : HomeEvent
+    object RewardGranted : HomeEvent
+    object RewardGrantFailed : HomeEvent
     data class ShowMessage(val message: String) : HomeEvent
 }
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val quotaRepo: StudyQuotaRepository,
-    private val premiumRepo: PremiumRepository,
-    private val remoteConfigRepo: RemoteConfigRepository
+    premiumRepo: PremiumRepository,
+    private val remoteConfigRepo: RemoteConfigRepository,
+    private val startNextQuiz: StartNextQuizUseCase
 ) : ViewModel() {
 
     private val isPremium: StateFlow<Boolean> = premiumRepo.isPremium
 
-    private val quotaFlow: StateFlow<QuotaState?> = isPremium.flatMapLatest { isPremium ->
-        val limitKey = if (isPremium) RemoteConfigKeys.PREMIUM_DAILY_SETS else RemoteConfigKeys.FREE_DAILY_SETS
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val quotaFlow: StateFlow<QuotaState?> = isPremium.flatMapLatest { isPremiumValue ->
+        val limitKey = if (isPremiumValue) RemoteConfigKeys.PREMIUM_DAILY_SETS else RemoteConfigKeys.FREE_DAILY_SETS
         val limit = remoteConfigRepo.getLong(limitKey).toInt()
         quotaRepo.observe { limit }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
@@ -64,40 +71,31 @@ class HomeViewModel @Inject constructor(
 
     fun onStartQuizClicked() {
         viewModelScope.launch {
-            val currentQuota = quotaFlow.first() ?: return@launch
-            if (currentQuota.canStart) {
-                // 「クイズ画面へ遷移して」ではなく「クイズ開始が要求された」というイベントを発行
-                _event.emit(HomeEvent.RequestNavigateToQuiz)
-            } else {
-                handleQuotaExceeded(currentQuota)
+            when (startNextQuiz()) {
+                StartNextQuizUseCase.Result.CanStart -> {
+                    _event.emit(HomeEvent.RequestNavigateToQuiz)
+                }
+                StartNextQuizUseCase.Result.ShowRewardOffer -> {
+                    _event.emit(HomeEvent.RequestShowRewardedAdOffer)
+                }
+                StartNextQuizUseCase.Result.QuotaExceeded -> {
+                    _event.emit(HomeEvent.QuotaExceeded)
+                }
+                StartNextQuizUseCase.Result.QuotaExceededAndRewardUsed -> {
+                    _event.emit(HomeEvent.RewardLimitReached)
+                }
             }
         }
     }
 
-    private suspend fun handleQuotaExceeded(quota: QuotaState) {
-        if (isPremium.value) {
-            _event.emit(HomeEvent.ShowMessage("本日の学習上限に達しました。"))
-        } else {
-            if (quota.rewardedGranted < 1) {
-                // 「リワード広告を見せて」ではなく「リワード広告の表示を要求する」イベントを発行
-                _event.emit(HomeEvent.RequestShowRewardedAdOffer)
-            } else {
-                _event.emit(HomeEvent.ShowMessage("本日は動画視聴による付与は上限です。"))
-            }
-        }
-    }
-
-    fun onRewardedAdEarned() {
+    fun onRewardGranted() {
         viewModelScope.launch {
-            val ok = try {
+            try {
                 quotaRepo.grantByReward()
-                true
-            } catch (e: Exception) {
-                false
-            }
-            if (ok) {
-                // 報酬が付与されたので、再度「クイズ開始が要求された」イベントを発行
+                _event.emit(HomeEvent.RewardGranted)
                 _event.emit(HomeEvent.RequestNavigateToQuiz)
+            } catch (e: Exception) {
+                _event.emit(HomeEvent.RewardGrantFailed)
             }
         }
     }
