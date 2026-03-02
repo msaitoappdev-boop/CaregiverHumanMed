@@ -3,6 +3,7 @@ package com.msaitodev.core.common.billing
 import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.core.content.edit
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
@@ -32,7 +33,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 private const val TAG = "BillingManager"
 private const val ERR_SEPARATOR = ": "
@@ -193,12 +193,13 @@ class BillingManager @Inject constructor(
 
     /**
      * 最新の購読状態を Google Play から取得して同期します。
-     * ネットワークエラーや課金サービスの切断時は例外を投げます。
+     * ネットワークエラーや接続失敗時は安全に false を返します。
      * @return プレミアム状態が有効である場合は true、そうでない場合は false を返します。
      */
     suspend fun refreshEntitlements(): Boolean {
         if (!isConnected && !connect()) {
-            throw IllegalStateException("Could not connect to BillingClient")
+            Log.w(TAG, "refreshEntitlements failed: BillingClient is not connected")
+            return false
         }
 
         val owned = suspendCancellableCoroutine<List<Purchase>> { continuation ->
@@ -210,10 +211,8 @@ class BillingManager @Inject constructor(
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     continuation.resume(purchases)
                 } else {
-                    // 通信エラー等は例外として扱い、ViewModelで検知可能にする
-                    continuation.resumeWithException(
-                        RuntimeException("Billing query failed with code: ${result.responseCode}")
-                    )
+                    Log.w(TAG, "Query purchases failed: ${result.responseCode}")
+                    continuation.resume(emptyList())
                 }
             })
         }
