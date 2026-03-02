@@ -31,7 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.msaitodev.quiz.core.common.ui.LocalQuizColors
+import com.msaitodev.core.common.ui.LocalAppColors
 import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,7 +56,7 @@ fun QuizScreen(
     val progressFraction =
         if (state.total == 0) 0f else (state.currentIndex + 1f) / max(1, state.total).toFloat()
 
-    val quizColors = LocalQuizColors.current
+    val appColors = LocalAppColors.current
 
     Scaffold(
         topBar = {
@@ -92,14 +92,14 @@ fun QuizScreen(
                 val isSelected = idx == state.selectedIndex
                 val isCorrect = idx == q.correctIndex
                 val bg = when {
-                    state.isAnswered && isCorrect -> quizColors.correctBackground
-                    state.isAnswered && isSelected && !isCorrect -> quizColors.wrongBackground
-                    isSelected && !state.isAnswered -> quizColors.selectedBackground
+                    state.isAnswered && isCorrect -> appColors.correctBackground
+                    state.isAnswered && isSelected && !isCorrect -> appColors.wrongBackground
+                    isSelected && !state.isAnswered -> appColors.selectedBackground
                     else -> Color.Transparent
                 }
                 val borderColor = when {
-                    state.isAnswered && isCorrect -> quizColors.correctBorder
-                    state.isAnswered && isSelected && !isCorrect -> quizColors.wrongBorder
+                    state.isAnswered && isCorrect -> appColors.correctBorder
+                    state.isAnswered && isSelected && !isCorrect -> appColors.wrongBorder
                     else -> Color.Transparent
                 }
                 Surface(

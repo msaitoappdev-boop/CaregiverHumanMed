@@ -39,7 +39,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":quiz-core-common"))
+    implementation(project(":core-common"))
     implementation(project(":quiz-core-domain"))
     implementation(project(":core-notifications"))
     implementation(project(":quiz-core-navigation"))

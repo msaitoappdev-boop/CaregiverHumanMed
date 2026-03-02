@@ -11,7 +11,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
-import com.msaitodev.quiz.core.common.config.AdUnits
+import com.msaitodev.core.common.config.AdUnits
 import kotlin.coroutines.resume
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +22,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 @Singleton
 class InterstitialHelper @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val adUnits: AdUnits, // adUnitsを注入
+    private val adUnits: AdUnits,
     private val repository: InterstitialAdRepository
 ) {
     private val scope = CoroutineScope(Dispatchers.IO)
@@ -34,8 +34,8 @@ class InterstitialHelper @Inject constructor(
             return
         }
         val req = AdRequest.Builder().build()
-        // adUnitsプロパティから直接IDを取得
-        val unitId = adUnits.interstitialWeaktrainComplete
+        // 汎用化されたプロパティ名を参照
+        val unitId = adUnits.interstitialUnitA
         InterstitialAd.load(context, unitId, req, object : InterstitialAdLoadCallback() {
             override fun onAdLoaded(p0: InterstitialAd) {
                 ad = p0
@@ -109,7 +109,6 @@ class InterstitialHelper @Inject constructor(
             }
 
             cont.invokeOnCancellation {
-                // In case coroutine is cancelled, ensure we don't leak callback references
             }
         }
     }

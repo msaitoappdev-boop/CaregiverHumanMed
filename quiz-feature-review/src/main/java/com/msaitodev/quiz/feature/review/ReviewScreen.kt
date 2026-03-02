@@ -29,8 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.msaitodev.quiz.core.common.ui.LocalQuizColors
-import com.msaitodev.quiz.core.common.ui.QuizColors
+import com.msaitodev.core.common.ui.LocalAppColors
+import com.msaitodev.core.common.ui.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,7 +38,7 @@ fun ReviewScreen(
     uiState: ReviewUiState,
     onNavUp: () -> Unit
 ) {
-    val quizColors = LocalQuizColors.current
+    val appColors = LocalAppColors.current
 
     Scaffold(
         topBar = {
@@ -65,7 +65,7 @@ fun ReviewScreen(
                 items(uiState.items, key = { it.number }) { item ->
                     ReviewCard(
                         item = item,
-                        quizColors = quizColors
+                        appColors = appColors
                     )
                 }
             }
@@ -76,7 +76,7 @@ fun ReviewScreen(
 @Composable
 private fun ReviewCard(
     item: ReviewItem,
-    quizColors: QuizColors
+    appColors: AppColors
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth()
@@ -95,13 +95,13 @@ private fun ReviewCard(
                 val isSelected = idx == item.selectedIndex
                 val isCorrect = idx == item.correctIndex
                 val bg = when {
-                    isCorrect -> quizColors.correctBackground
-                    isSelected && !isCorrect -> quizColors.wrongBackground
+                    isCorrect -> appColors.correctBackground
+                    isSelected && !isCorrect -> appColors.wrongBackground
                     else -> Color.Transparent
                 }
                 val borderColor = when {
-                    isCorrect -> quizColors.correctBorder
-                    isSelected && !isCorrect -> quizColors.wrongBorder
+                    isCorrect -> appColors.correctBorder
+                    isSelected && !isCorrect -> appColors.wrongBorder
                     else -> Color.Transparent
                 }
                 Surface(
@@ -142,7 +142,7 @@ private fun ReviewCard(
             Text(
                 text = stringResource(R.string.review_correct_answer, correct),
                 style = MaterialTheme.typography.labelLarge,
-                color = if (quizColors.correctBorder != Color.Unspecified) quizColors.correctBorder else MaterialTheme.colorScheme.primary
+                color = if (appColors.correctBorder != Color.Unspecified) appColors.correctBorder else MaterialTheme.colorScheme.primary
             )
 
             item.explanation?.let { exp ->
@@ -151,7 +151,7 @@ private fun ReviewCard(
                     Text(
                         text = stringResource(R.string.review_explanation_label, exp),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (quizColors.correctBorder != Color.Unspecified) quizColors.correctBorder else MaterialTheme.colorScheme.primary
+                        color = if (appColors.correctBorder != Color.Unspecified) appColors.correctBorder else MaterialTheme.colorScheme.primary
                     )
                 }
             }

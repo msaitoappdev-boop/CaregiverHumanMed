@@ -7,8 +7,8 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
-import com.msaitodev.quiz.core.common.ui.LocalQuizColors
-import com.msaitodev.quiz.core.common.ui.QuizColors
+import com.msaitodev.core.common.ui.LocalAppColors
+import com.msaitodev.core.common.ui.AppColors
 
 private val LightColorScheme = lightColorScheme(
     primary = GreenPrimary,
@@ -36,8 +36,8 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = Color.White,
 )
 
-// クイズ用のセマンティックカラー定義（ライトモード用）
-private val QuizLightColors = QuizColors(
+// アプリケーション用のセマンティックカラー定義（ライトモード用）
+private val LightAppColors = AppColors(
     correctBorder = Color(0xFF2F855A),
     correctBackground = Color(0xFFDFF5E1),
     wrongBorder = Color(0xFFC53030),
@@ -45,8 +45,8 @@ private val QuizLightColors = QuizColors(
     selectedBackground = Color(0xFFE5E5E5)
 )
 
-// クイズ用のセマンティックカラー定義（ダークモード用：視認性を調整）
-private val QuizDarkColors = QuizColors(
+// アプリケーション用のセマンティックカラー定義（ダークモード用）
+private val DarkAppColors = AppColors(
     correctBorder = Color(0xFF48BB78),
     correctBackground = Color(0xFF1C4532),
     wrongBorder = Color(0xFFF56565),
@@ -60,10 +60,10 @@ fun CaregiverTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-    val quizColors = if (darkTheme) QuizDarkColors else QuizLightColors
+    val appColors = if (darkTheme) DarkAppColors else LightAppColors
 
     CompositionLocalProvider(
-        LocalQuizColors provides quizColors
+        LocalAppColors provides appColors
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

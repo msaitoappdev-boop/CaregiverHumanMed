@@ -17,7 +17,7 @@ import com.google.firebase.ktx.Firebase
 import com.msaitodev.core.ads.ConsentManager
 import com.msaitodev.core.ads.InterstitialHelper
 import com.msaitodev.core.ads.RewardedHelper
-import com.msaitodev.quiz.core.common.navigation.QuizActions
+import com.msaitodev.core.common.navigation.AppActions
 import com.msaitodev.quiz.core.navigation.HistoryDestination
 import com.msaitodev.quiz.core.navigation.HomeDestination
 import com.msaitodev.quiz.core.navigation.PaywallDestination
@@ -89,14 +89,14 @@ internal fun AppNavHost(
             navController = navController,
             rewardedHelper = rewardedHelper,
             onNextSet = {
-                navController.previousBackStackEntry?.savedStateHandle?.set(QuizActions.KEY_QUIZ_ACTION, QuizActions.ACTION_START_NEW)
+                navController.previousBackStackEntry?.savedStateHandle?.set(AppActions.KEY_ACTION, AppActions.ACTION_START_NEW)
                 navController.popBackStack()
             },
             onReview = { questionsJson, answersJson ->
                 navController.navigate(ReviewDestination.build(questionsJson, answersJson))
             },
             onReviewSameOrder = {
-                navController.previousBackStackEntry?.savedStateHandle?.set(QuizActions.KEY_QUIZ_ACTION, QuizActions.ACTION_RESTART_SAME_ORDER)
+                navController.previousBackStackEntry?.savedStateHandle?.set(AppActions.KEY_ACTION, AppActions.ACTION_RESTART_SAME_ORDER)
                 navController.popBackStack()
             },
             onShowScoreHistory = { navController.navigate(HistoryDestination.route) },

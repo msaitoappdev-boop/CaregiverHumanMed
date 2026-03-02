@@ -4,9 +4,9 @@ import android.app.Activity
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.msaitodev.quiz.core.common.billing.BillingManager
-import com.msaitodev.quiz.core.common.billing.BillingProvider
-import com.msaitodev.quiz.core.common.billing.PaywallConfig
+import com.msaitodev.core.common.billing.BillingManager
+import com.msaitodev.core.common.billing.BillingProvider
+import com.msaitodev.core.common.billing.PaywallConfig
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
