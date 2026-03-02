@@ -1,11 +1,10 @@
-package com.msaitodev.quiz.feature.billing
+package com.msaitodev.core.billing
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -15,10 +14,12 @@ fun PaywallScreen(
     uiState: PaywallUiState,
     onPurchaseClick: () -> Unit
 ) {
+    val config = uiState.config ?: return
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(stringResource(R.string.paywall_title)) }
+                title = { Text(config.title) }
             )
         }
     ) { inner ->
@@ -30,26 +31,25 @@ fun PaywallScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = stringResource(R.string.paywall_headline),
+                text = config.headline,
                 style = MaterialTheme.typography.titleLarge,
                 textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                text = stringResource(R.string.paywall_benefits),
+                text = config.benefits.joinToString("\n"),
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(Modifier.height(24.dp))
 
-            // 料金表示（固定文言）
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Column(Modifier.padding(16.dp)) {
-                    Text(stringResource(R.string.paywall_plan_title), style = MaterialTheme.typography.labelLarge)
+                    Text(config.planTitle, style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.height(4.dp))
-                    Text(stringResource(R.string.paywall_plan_price), style = MaterialTheme.typography.titleMedium)
+                    Text(config.planPrice, style = MaterialTheme.typography.titleMedium)
                 }
             }
 
@@ -61,15 +61,15 @@ fun PaywallScreen(
                 enabled = !uiState.isPremium
             ) {
                 if (uiState.isPremium) {
-                    Text(stringResource(R.string.paywall_purchase_button_purchased))
+                    Text(config.purchasedButtonText)
                 } else {
-                    Text(stringResource(R.string.paywall_purchase_button_text))
+                    Text(config.purchaseButtonText)
                 }
             }
 
             Spacer(Modifier.height(12.dp))
             Text(
-                text = stringResource(R.string.paywall_purchase_dialog_description),
+                text = config.description,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

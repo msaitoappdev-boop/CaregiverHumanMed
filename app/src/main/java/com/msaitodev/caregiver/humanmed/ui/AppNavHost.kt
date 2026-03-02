@@ -25,7 +25,7 @@ import com.msaitodev.quiz.core.navigation.QuizDestination
 import com.msaitodev.quiz.core.navigation.ResultDestination
 import com.msaitodev.quiz.core.navigation.ReviewDestination
 import com.msaitodev.quiz.core.navigation.SettingsDestination
-import com.msaitodev.quiz.feature.billing.paywallGraph
+import com.msaitodev.core.billing.paywallGraph
 import com.msaitodev.quiz.feature.history.historyGraph
 import com.msaitodev.quiz.feature.main.home.HomeRoute
 import com.msaitodev.quiz.feature.main.quiz.QuizResult

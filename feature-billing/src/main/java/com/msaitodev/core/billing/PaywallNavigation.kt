@@ -1,4 +1,4 @@
-package com.msaitodev.quiz.feature.billing
+package com.msaitodev.core.billing
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable

@@ -28,7 +28,7 @@ android {
         applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 39
+        versionCode = 40
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -84,7 +84,7 @@ dependencies {
     implementation(project(":quiz-feature-review"))
     implementation(project(":quiz-feature-result"))
     implementation(project(":quiz-core-ads"))
-    implementation(project(":quiz-feature-billing"))
+    implementation(project(":feature-billing"))
     implementation(project(":quiz-feature-settings"))
     implementation(project(":quiz-core-navigation"))
     implementation(project(":quiz-core-notifications"))

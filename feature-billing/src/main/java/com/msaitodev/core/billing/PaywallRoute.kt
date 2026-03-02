@@ -1,4 +1,4 @@
-package com.msaitodev.quiz.feature.billing
+package com.msaitodev.core.billing
 
 import android.widget.Toast
 import androidx.compose.runtime.Composable

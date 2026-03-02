@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.msaitodev.quiz.feature.billing"
+    namespace = "com.msaitodev.core.billing"
     compileSdk = 34
 
     defaultConfig {

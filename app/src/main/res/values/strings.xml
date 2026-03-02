@@ -2,6 +2,10 @@
     <string name="app_name">介護福祉士 毎日3問トレーナー</string>
     <string name="privacy_policy_url">https://msaitodev.com/privacy-policy.html</string>
 
+    <!-- Billing Config (Non-translatable) -->
+    <string name="billing_product_id_premium" translatable="false">caregiver_humanmed_premium_monthly</string>
+    <string name="billing_base_plan_id" translatable="false">monthly</string>
+
     <!-- Paywall -->
     <string name="paywall_title">プレミアム</string>
     <string name="paywall_headline">毎日の学習を、もっと快適に。</string>
@@ -11,6 +15,12 @@
     <string name="paywall_purchase_button_text">月額 ¥200 でアップグレード（トライアルなし）</string>
     <string name="paywall_purchase_button_purchased">購入済みです</string>
     <string name="paywall_purchase_dialog_description">Google Play の購入ダイアログが表示されます</string>
+
+    <!-- Billing Error Messages (Provided to Core) -->
+    <string name="billing_error_offer_not_found">購入オファーが見つかりません</string>
+    <string name="billing_error_acknowledge_failed">承認に失敗しました</string>
+    <string name="billing_error_pending">お支払い処理中です。完了後に自動で有効化されます。</string>
+    <string name="billing_error_general">購入エラーが発生しました</string>
 
     <!-- Home -->
     <string name="home_title">ホーム</string>
@@ -34,5 +44,4 @@
     <!-- Common -->
     <string name="common_error_rewarded_ad">動画を読み込めませんでした（ネットワーク/在庫/初期化）</string>
     <string name="common_back">戻る</string>
-
 </resources>
