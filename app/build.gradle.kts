@@ -83,7 +83,7 @@ dependencies {
     implementation(project(":quiz-feature-history"))
     implementation(project(":quiz-feature-review"))
     implementation(project(":quiz-feature-result"))
-    implementation(project(":quiz-core-ads"))
+    implementation(project(":core-ads"))
     implementation(project(":feature-billing"))
     implementation(project(":quiz-feature-settings"))
     implementation(project(":quiz-core-navigation"))

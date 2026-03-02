@@ -11,7 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.msaitodev.quiz.core.ads.RewardedHelper
+import com.msaitodev.core.ads.RewardedHelper
 
 @Composable
 fun ResultRoute(

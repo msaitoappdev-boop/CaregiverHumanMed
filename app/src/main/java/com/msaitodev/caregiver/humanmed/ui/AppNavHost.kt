@@ -14,9 +14,9 @@ import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.ads.MobileAds
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
-import com.msaitodev.quiz.core.ads.ConsentManager
-import com.msaitodev.quiz.core.ads.InterstitialHelper
-import com.msaitodev.quiz.core.ads.RewardedHelper
+import com.msaitodev.core.ads.ConsentManager
+import com.msaitodev.core.ads.InterstitialHelper
+import com.msaitodev.core.ads.RewardedHelper
 import com.msaitodev.quiz.core.common.navigation.QuizActions
 import com.msaitodev.quiz.core.navigation.HistoryDestination
 import com.msaitodev.quiz.core.navigation.HomeDestination

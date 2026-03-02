@@ -1,4 +1,4 @@
-package com.msaitodev.quiz.core.ads
+package com.msaitodev.core.ads
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -13,15 +13,19 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "ad_settings")
+private const val PREFS_NAME = "ad_settings"
+private const val KEY_SHOWN_COUNT = "interstitial_shown_count_this_session"
+private const val KEY_LAST_SHOWN = "interstitial_last_shown_epoch_sec"
+
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = PREFS_NAME)
 
 @Singleton
 class InterstitialAdRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private object PrefKeys {
-        val SHOWN_COUNT_THIS_SESSION = intPreferencesKey("interstitial_shown_count_this_session")
-        val LAST_SHOWN_EPOCH_SEC = longPreferencesKey("interstitial_last_shown_epoch_sec")
+        val SHOWN_COUNT_THIS_SESSION = intPreferencesKey(KEY_SHOWN_COUNT)
+        val LAST_SHOWN_EPOCH_SEC = longPreferencesKey(KEY_LAST_SHOWN)
     }
 
     val shownCountThisSession: Flow<Int> = context.dataStore.data.map {
@@ -44,8 +48,4 @@ class InterstitialAdRepository @Inject constructor(
             it[PrefKeys.LAST_SHOWN_EPOCH_SEC] = System.currentTimeMillis() / 1000
         }
     }
-
-    // Note: You might want a way to reset the session count, 
-    // for example, when the app is backgrounded for a long time.
-    // This is not implemented here for simplicity.
 }

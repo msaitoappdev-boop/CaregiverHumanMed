@@ -4,7 +4,7 @@ import android.app.Activity
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.msaitodev.quiz.core.ads.InterstitialHelper
+import com.msaitodev.core.ads.InterstitialHelper
 import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
 import com.msaitodev.quiz.core.navigation.ResultDestination
 import dagger.hilt.android.lifecycle.HiltViewModel

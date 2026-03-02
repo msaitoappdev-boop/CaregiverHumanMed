@@ -34,6 +34,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
 
+private const val TAG = "BillingManager"
+private const val ERR_SEPARATOR = ": "
+
 /**
  * 購読（SUBS）の購買・状態同期を担う最小ユーティリティ。
  * ドメイン（クイズ/介護）に依存しないよう、プロダクトID等は BillingProvider 経由で取得する。
@@ -48,7 +51,6 @@ class BillingManager @Inject constructor(
         appContext.getSharedPreferences(BillingConfig.PREFS_NAME, Context.MODE_PRIVATE)
 
     private val scope = CoroutineScope(Dispatchers.IO + Job())
-    private val TAG = "BillingManager"
 
     private val client: BillingClient = BillingClient.newBuilder(appContext)
         .setListener(this)
@@ -161,7 +163,7 @@ class BillingManager @Inject constructor(
                                     scope.launch { refreshEntitlements() }
                                 } else {
                                     _purchaseEvents.tryEmit(
-                                        PurchaseEvent.Error("${billingProvider.errorAcknowledgeFailed}: ${ackResult.responseCode}")
+                                        PurchaseEvent.Error("${billingProvider.errorAcknowledgeFailed}$ERR_SEPARATOR${ackResult.responseCode}")
                                     )
                                 }
                             }
@@ -184,7 +186,7 @@ class BillingManager @Inject constructor(
                 scope.launch { refreshEntitlements() }
             }
             else -> {
-                _purchaseEvents.tryEmit(PurchaseEvent.Error("${billingProvider.errorGeneral}: ${result.responseCode}"))
+                _purchaseEvents.tryEmit(PurchaseEvent.Error("${billingProvider.errorGeneral}$ERR_SEPARATOR${result.responseCode}"))
             }
         }
     }

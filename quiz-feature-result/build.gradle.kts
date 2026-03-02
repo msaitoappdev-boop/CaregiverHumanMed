@@ -47,7 +47,7 @@ dependencies {
     implementation(project(":quiz-core-common"))
     implementation(project(":quiz-core-domain"))
     implementation(project(":quiz-core-data"))
-    implementation(project(":quiz-core-ads"))
+    implementation(project(":core-ads"))
 
     // Compose
     val composeBom = platform("androidx.compose:compose-bom:2024.06.00")

@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.msaitodev.quiz.core.ads"
+    namespace = "com.msaitodev.core.ads"
     compileSdk = 34
 
     defaultConfig {

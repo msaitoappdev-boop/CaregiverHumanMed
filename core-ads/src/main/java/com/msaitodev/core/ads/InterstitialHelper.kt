@@ -1,4 +1,4 @@
-package com.msaitodev.quiz.core.ads
+package com.msaitodev.core.ads
 
 import android.app.Activity
 import android.content.Context

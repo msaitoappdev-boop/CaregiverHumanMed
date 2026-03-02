@@ -3,7 +3,7 @@ package com.msaitodev.quiz.feature.result
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import com.msaitodev.quiz.core.ads.RewardedHelper
+import com.msaitodev.core.ads.RewardedHelper
 import com.msaitodev.quiz.core.navigation.ResultDestination
 
 fun NavGraphBuilder.resultGraph(

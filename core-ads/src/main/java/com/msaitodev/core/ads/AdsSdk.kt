@@ -1,4 +1,4 @@
-package com.msaitodev.quiz.core.ads
+package com.msaitodev.core.ads
 
 import android.content.Context
 import android.util.Log
@@ -11,6 +11,9 @@ import com.google.android.gms.ads.MobileAds
  */
 object AdsSdk {
     private const val TAG = "AdsSdk"
+    private const val MSG_INIT_DONE = "MobileAds.initialize() done: "
+    private const val MSG_INIT_THREW = "MobileAds.initialize() threw: "
+
     @Volatile private var initialized = false
 
     /**
@@ -22,11 +25,11 @@ object AdsSdk {
                 if (!initialized) {
                     try {
                         MobileAds.initialize(context) { status ->
-                            Log.d(TAG, "MobileAds.initialize() done: ${status.adapterStatusMap.keys}")
+                            Log.d(TAG, "$MSG_INIT_DONE${status.adapterStatusMap.keys}")
                         }
                         initialized = true
                     } catch (t: Throwable) {
-                        Log.w(TAG, "MobileAds.initialize() threw: ${t.message}")
+                        Log.w(TAG, "$MSG_INIT_THREW${t.message}")
                     }
                 }
             }
