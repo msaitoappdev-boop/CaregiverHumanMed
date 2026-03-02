@@ -65,6 +65,7 @@ fun ResultScreen(
 
             Spacer(Modifier.height(32.dp))
 
+            // Primary Action: 次の学習へ（緑背景 / 高強調）
             Button(
                 onClick = onNextSet,
                 modifier = Modifier.fillMaxWidth()
@@ -72,6 +73,8 @@ fun ResultScreen(
 
             Spacer(Modifier.height(12.dp))
 
+            // Secondary Actions: 主要機能（白背景・枠あり / 中強調）
+            // ホーム画面の「スコア履歴」とスタイルを統一し、アプリ内の一貫性を確保
             OutlinedButton(
                 onClick = onReviewSameOrder,
                 modifier = Modifier.fillMaxWidth()
@@ -79,20 +82,21 @@ fun ResultScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            Button(
+            OutlinedButton(
                 onClick = onReviewList,
                 modifier = Modifier.fillMaxWidth()
             ) { Text(stringResource(id = R.string.result_review_list)) }
 
             Spacer(Modifier.height(12.dp))
 
-            Button(
+            OutlinedButton(
                 onClick = onScoreHistory,
                 modifier = Modifier.fillMaxWidth()
             ) { Text(stringResource(id = R.string.result_score_history)) }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
 
+            // Tertiary Action: ナビゲーション（テキストのみ / 低強調）
             TextButton(
                 onClick = onBackToHome,
                 modifier = Modifier.fillMaxWidth()
