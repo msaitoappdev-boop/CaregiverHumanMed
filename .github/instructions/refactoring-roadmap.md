@@ -38,7 +38,7 @@
     - `:quiz-core-data`
     - `:core-ads` (汎用化済み)
     - `:core-notifications` (汎用化済み)
-    - `:quiz-core-navigation`
+    - `:core-navigation`
 
 ## 3段階計画
 
@@ -102,6 +102,7 @@
 - [x] **Notifications のテンプレート化**: メッセージ内容および判定ロジックを NotificationPolicy へ抽出し、ドメインフリー化とリネーム (`:core-notifications`) 完了。 (完了)
 - [x] **Settings の整理**: `SettingsProvider` 導入によるドメイン知識の分離、リネーム (`:feature-settings`)、および全画面のハードコード一掃。 (完了)
 - [x] **Core Common の刷新**: `:quiz-core-common` を `:core-common` へリネーム。パッケージから `quiz` を除去し、AdUnits や AppColors 等をドメインフリー化。 (完了)
+- [ ] **Navigation の汎用化**: `:quiz-core-navigation` を `:core-navigation` へリネームし、パッケージから `quiz` を完全に除去。全画面の遷移定義をドメインフリーな基盤として整理。
 
 ### フェーズ3：共有ライブラリリポジトリへの抽出（初回リリース後の目標）
 

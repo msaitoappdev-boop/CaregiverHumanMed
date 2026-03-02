@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.msaitodev.core.billing"
+    namespace = "com.msaitodev.feature.billing"
     compileSdk = 34
 
     defaultConfig {

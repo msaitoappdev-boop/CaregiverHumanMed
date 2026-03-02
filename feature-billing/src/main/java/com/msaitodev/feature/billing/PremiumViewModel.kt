@@ -1,4 +1,4 @@
-package com.msaitodev.core.billing
+package com.msaitodev.feature.billing
 
 import android.app.Activity
 import androidx.annotation.StringRes

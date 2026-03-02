@@ -1,4 +1,4 @@
-package com.msaitodev.core.billing
+package com.msaitodev.feature.billing
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
