@@ -1,4 +1,12 @@
 <resources>
     <string name="review_title">復習</string>
     <string name="common_back">戻る</string>
+
+    <string name="review_question_number">第 %d 問</string>
+    <string name="review_option_prefix">・%s</string>
+    <string name="review_not_answered">未回答</string>
+    <string name="review_your_answer">あなたの回答：%s</string>
+    <string name="review_correct_answer">正解：%s</string>
+    <string name="review_explanation_label">解説：%s</string>
+    <string name="review_fallback_dash">-</string>
 </resources>

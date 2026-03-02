@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">介護福祉士 毎日3問トレーナー</string>
     <string name="privacy_policy_url">https://msaitodev.com/privacy-policy.html</string>
+    <string name="subscription_management_url" translatable="false">https://play.google.com/store/account/subscriptions</string>
 
     <!-- Billing Config (Non-translatable) -->
     <string name="billing_product_id_premium" translatable="false">caregiver_humanmed_premium_monthly</string>

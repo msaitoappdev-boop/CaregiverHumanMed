@@ -1,4 +1,4 @@
-package com.msaitodev.quiz.feature.settings
+package com.msaitodev.feature.settings
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable

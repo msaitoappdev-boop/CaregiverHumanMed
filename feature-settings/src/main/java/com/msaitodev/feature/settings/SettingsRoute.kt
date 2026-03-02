@@ -1,4 +1,4 @@
-package com.msaitodev.quiz.feature.settings
+package com.msaitodev.feature.settings
 
 import android.Manifest
 import android.content.Intent
@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.msaitodev.core.notifications.ReminderScheduler
+import com.msaitodev.feature.settings.R
 
 @Composable
 fun SettingsRoute(
@@ -27,7 +28,12 @@ fun SettingsRoute(
         viewModel.events.collect { event ->
             when (event) {
                 is SettingsEvent.RestoreResult -> {
-                    Toast.makeText(context, context.getString(event.messageResId), Toast.LENGTH_LONG).show()
+                    val message = if (event.isSuccess) {
+                        context.getString(R.string.settings_restore_success)
+                    } else {
+                        context.getString(R.string.settings_restore_error)
+                    }
+                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -68,11 +74,12 @@ fun SettingsRoute(
             viewModel.restorePurchases()
         },
         onManageSubscription = {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/account/subscriptions"))
+            val url = viewModel.subscriptionManagementUrl
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             context.startActivity(intent)
         },
         onOpenPrivacyPolicy = {
-            val url = context.getString(R.string.privacy_policy_url)
+            val url = viewModel.privacyPolicyUrl
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             context.startActivity(intent)
         }

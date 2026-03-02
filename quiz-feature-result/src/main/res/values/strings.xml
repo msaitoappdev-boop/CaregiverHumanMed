@@ -15,6 +15,9 @@
     <string name="result_ad_load_failed">動画を読み込めませんでした（ネットワーク等を確認してください）</string>
     <string name="result_reward_grant_failed">報酬の付与に失敗しました。</string>
 
+    <string name="result_score_format">%1$d / %2$d</string>
+    <string name="result_percent_format">%d%%</string>
+
     <!-- Dialogs -->
     <string name="dialog_rewarded_ad_title">今日は無料分が終了しました</string>
     <string name="dialog_rewarded_ad_message">動画を視聴すると +1 セット解放できます。視聴しますか？</string>

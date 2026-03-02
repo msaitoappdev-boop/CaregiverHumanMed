@@ -32,7 +32,7 @@ import com.msaitodev.quiz.feature.main.quiz.QuizResult
 import com.msaitodev.quiz.feature.main.quiz.quizGraph
 import com.msaitodev.quiz.feature.result.resultGraph
 import com.msaitodev.quiz.feature.review.reviewGraph
-import com.msaitodev.quiz.feature.settings.settingsGraph
+import com.msaitodev.feature.settings.settingsGraph
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import kotlinx.serialization.encodeToString

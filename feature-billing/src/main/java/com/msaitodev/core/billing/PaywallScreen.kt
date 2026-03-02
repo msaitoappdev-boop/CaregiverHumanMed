@@ -8,6 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+private const val BENEFIT_LINE_BREAK = "\n"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaywallScreen(
@@ -37,7 +39,7 @@ fun PaywallScreen(
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                text = config.benefits.joinToString("\n"),
+                text = config.benefits.joinToString(BENEFIT_LINE_BREAK),
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(Modifier.height(24.dp))

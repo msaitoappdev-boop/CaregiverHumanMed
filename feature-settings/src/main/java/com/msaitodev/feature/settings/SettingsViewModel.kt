@@ -1,4 +1,4 @@
-package com.msaitodev.quiz.feature.settings
+package com.msaitodev.feature.settings
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -27,13 +27,14 @@ data class SettingsUiState(
 )
 
 sealed interface SettingsEvent {
-    data class RestoreResult(val messageResId: Int) : SettingsEvent
+    data class RestoreResult(val isSuccess: Boolean) : SettingsEvent
 }
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val billingManager: BillingManager,
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    private val settingsProvider: SettingsProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -41,6 +42,12 @@ class SettingsViewModel @Inject constructor(
 
     private val _events = MutableSharedFlow<SettingsEvent>()
     val events: SharedFlow<SettingsEvent> = _events.asSharedFlow()
+
+    /** プライバシーポリシーのURLを取得 */
+    val privacyPolicyUrl: String get() = settingsProvider.privacyPolicyUrl
+
+    /** 定期購入管理のURLを取得 */
+    val subscriptionManagementUrl: String get() = settingsProvider.subscriptionManagementUrl
 
     init {
         viewModelScope.launch {
@@ -77,8 +84,12 @@ class SettingsViewModel @Inject constructor(
 
     fun restorePurchases() {
         viewModelScope.launch {
-            billingManager.refreshEntitlements()
-            _events.emit(SettingsEvent.RestoreResult(R.string.settings_title)) // 暫定
+            try {
+                billingManager.refreshEntitlements()
+                _events.emit(SettingsEvent.RestoreResult(true))
+            } catch (e: Exception) {
+                _events.emit(SettingsEvent.RestoreResult(false))
+            }
         }
     }
 }

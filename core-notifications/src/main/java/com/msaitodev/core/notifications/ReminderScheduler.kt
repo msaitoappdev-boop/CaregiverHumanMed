@@ -4,14 +4,16 @@ import android.content.Context
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.msaitodev.core.notifications.DailyReminderWorker
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
+/**
+ * 通知のスケジュール管理を行うユーティリティ。
+ */
 object ReminderScheduler {
 
-    private const val UNIQUE_NAME = "daily-quiz-reminder"
+    private const val UNIQUE_NAME = "daily-reminder"
 
     fun scheduleDaily(context: Context, hour: Int = 8, minute: Int = 0) {
         val initialDelay = computeInitialDelayMinutes(hour, minute)
@@ -21,8 +23,7 @@ object ReminderScheduler {
             .setInitialDelay(initialDelay, TimeUnit.MINUTES)
             .build()
 
-        // UPDATE ではなく CANCEL_AND_REENQUEUE を使用することで、
-        // 時刻変更時に古いスケジュールを破棄し、新しい initialDelay を即座に反映させる。
+        // 時刻変更を即座に反映させるため CANCEL_AND_REENQUEUE を使用
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             UNIQUE_NAME,
             ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,

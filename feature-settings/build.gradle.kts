@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.msaitodev.quiz.feature.settings"
+    namespace = "com.msaitodev.feature.settings"
     compileSdk = 34
 
     defaultConfig {

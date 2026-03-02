@@ -1,4 +1,4 @@
-package com.msaitodev.quiz.feature.settings
+package com.msaitodev.feature.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -113,8 +113,7 @@ internal fun SettingsScreen(
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                        verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             stringResource(R.string.settings_current_plan_label),
                             style = MaterialTheme.typography.bodyMedium

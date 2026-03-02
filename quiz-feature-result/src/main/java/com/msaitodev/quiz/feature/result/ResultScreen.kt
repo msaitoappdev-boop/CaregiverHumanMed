@@ -49,12 +49,15 @@ fun ResultScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "$score / $total",
+                text = stringResource(R.string.result_score_format, score, total),
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold
             )
             Spacer(Modifier.height(8.dp))
-            Text(text = "$pct%", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                text = stringResource(R.string.result_percent_format, pct),
+                style = MaterialTheme.typography.headlineMedium
+            )
             Spacer(Modifier.height(16.dp))
             LinearProgressIndicator(
                 progress = { (pct / 100f) },
@@ -65,7 +68,7 @@ fun ResultScreen(
 
             Spacer(Modifier.height(32.dp))
 
-            // Primary Action: 次の学習へ（緑背景 / 高強調）
+            // Primary Action: 次の学習へ
             Button(
                 onClick = onNextSet,
                 modifier = Modifier.fillMaxWidth()
@@ -73,8 +76,7 @@ fun ResultScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // Secondary Actions: 主要機能（白背景・枠あり / 中強調）
-            // ホーム画面の「スコア履歴」とスタイルを統一し、アプリ内の一貫性を確保
+            // Secondary Actions
             OutlinedButton(
                 onClick = onReviewSameOrder,
                 modifier = Modifier.fillMaxWidth()
@@ -96,7 +98,7 @@ fun ResultScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Tertiary Action: ナビゲーション（テキストのみ / 低強調）
+            // Tertiary Action
             TextButton(
                 onClick = onBackToHome,
                 modifier = Modifier.fillMaxWidth()
