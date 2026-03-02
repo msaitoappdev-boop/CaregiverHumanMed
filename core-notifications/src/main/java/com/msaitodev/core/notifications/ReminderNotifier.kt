@@ -1,4 +1,4 @@
-package com.msaitodev.quiz.core.notifications
+package com.msaitodev.core.notifications
 
 import android.Manifest
 import android.app.PendingIntent
@@ -9,12 +9,21 @@ import android.os.Build
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object ReminderNotifier {
-    // 重要度設定を確実に反映させるため、IDを v2 に更新
-    const val CHANNEL_ID = "reminder_daily_v2"
-    private const val NOTIFICATION_ID = 1001
+@Singleton
+class ReminderNotifier @Inject constructor(
+    private val policy: NotificationPolicy
+) {
+    companion object {
+        private const val NOTIFICATION_ID = 1001
+    }
 
+    /**
+     * 指定された内容で通知を表示します。
+     * 内容が指定されない場合は、ポリシーのデフォルト値を使用します。
+     */
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     fun show(
         context: Context,
@@ -22,7 +31,7 @@ object ReminderNotifier {
         text: String? = null
     ) {
         val intent = Intent(Intent.ACTION_VIEW).apply {
-            data = Uri.parse("caregiver://reminder") // DeepLink
+            data = Uri.parse(policy.deepLinkUri)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val flags = if (Build.VERSION.SDK_INT >= 23)
@@ -30,11 +39,11 @@ object ReminderNotifier {
         else PendingIntent.FLAG_UPDATE_CURRENT
         val contentPI = PendingIntent.getActivity(context, 0, intent, flags)
 
-        val finalTitle = title ?: context.getString(R.string.notification_reminder_title_start)
-        val finalText = text ?: context.getString(R.string.notification_reminder_text_start)
+        val finalTitle = title ?: policy.defaultTitle
+        val finalText = text ?: policy.defaultText
 
-        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification_daily_quiz)
+        val builder = NotificationCompat.Builder(context, policy.channelId)
+            .setSmallIcon(policy.smallIconResId)
             .setContentTitle(finalTitle)
             .setContentText(finalText)
             .setAutoCancel(true)

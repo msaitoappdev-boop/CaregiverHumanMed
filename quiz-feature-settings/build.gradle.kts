@@ -41,7 +41,7 @@ android {
 dependencies {
     implementation(project(":quiz-core-common"))
     implementation(project(":quiz-core-domain"))
-    implementation(project(":quiz-core-notifications"))
+    implementation(project(":core-notifications"))
     implementation(project(":quiz-core-navigation"))
 
     implementation("androidx.core:core-ktx:1.13.1")

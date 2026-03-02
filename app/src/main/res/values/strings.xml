@@ -22,6 +22,12 @@
     <string name="billing_error_pending">お支払い処理中です。完了後に自動で有効化されます。</string>
     <string name="billing_error_general">購入エラーが発生しました</string>
 
+    <!-- Notifications -->
+    <string name="notification_reminder_title_start">今日の3問を始めましょう</string>
+    <string name="notification_reminder_text_start">1セット3問。無理なく継続して合格を目指しましょう。</string>
+    <string name="notification_reminder_title_continue">今日の学習を継続しましょう</string>
+    <string name="notification_reminder_text_continue">あと %d セットで目標達成です。応援しています！</string>
+
     <!-- Home -->
     <string name="home_title">ホーム</string>
     <string name="home_start_quiz">クイズを開始</string>

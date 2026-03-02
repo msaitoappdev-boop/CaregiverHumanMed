@@ -13,7 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.msaitodev.quiz.core.notifications.ReminderScheduler
+import com.msaitodev.core.notifications.ReminderScheduler
 
 @Composable
 fun SettingsRoute(

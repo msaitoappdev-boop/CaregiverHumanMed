@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.msaitodev.quiz.core.notifications"
+    namespace = "com.msaitodev.core.notifications"
     compileSdk = 34
 
     defaultConfig {

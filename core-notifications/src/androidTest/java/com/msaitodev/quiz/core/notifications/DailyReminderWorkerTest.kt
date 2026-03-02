@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.ListenableWorker
 import androidx.work.testing.TestListenableWorkerBuilder
 import com.google.common.truth.Truth.assertThat
+import com.msaitodev.core.notifications.DailyReminderWorker
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test

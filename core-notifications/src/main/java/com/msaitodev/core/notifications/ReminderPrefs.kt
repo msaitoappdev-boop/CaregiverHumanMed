@@ -1,4 +1,4 @@
-package com.msaitodev.quiz.core.notifications
+package com.msaitodev.core.notifications
 
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey

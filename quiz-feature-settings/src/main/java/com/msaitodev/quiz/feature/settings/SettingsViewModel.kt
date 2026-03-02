@@ -5,24 +5,25 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.msaitodev.quiz.core.domain.repository.PremiumRepository
-import com.msaitodev.quiz.core.notifications.ReminderPrefs
+import com.msaitodev.core.notifications.ReminderPrefs
+import com.msaitodev.quiz.core.common.billing.BillingManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class SettingsUiState(
-    val reminderEnabled: Boolean,
-    val hour: Int,
-    val minute: Int,
-    val isPremium: Boolean
+    val reminderEnabled: Boolean = ReminderPrefs.DEFAULT_ENABLED,
+    val hour: Int = ReminderPrefs.DEFAULT_HOUR,
+    val minute: Int = ReminderPrefs.DEFAULT_MINUTE,
+    val isPremium: Boolean = false
 )
 
 sealed interface SettingsEvent {
@@ -31,45 +32,37 @@ sealed interface SettingsEvent {
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val dataStore: DataStore<Preferences>,
-    private val premiumRepo: PremiumRepository
+    private val billingManager: BillingManager,
+    private val dataStore: DataStore<Preferences>
 ) : ViewModel() {
 
-    private val _events = MutableSharedFlow<SettingsEvent>()
-    val events = _events.asSharedFlow()
+    private val _uiState = MutableStateFlow(SettingsUiState())
+    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
-    val uiState: StateFlow<SettingsUiState> = combine(
-        dataStore.data.map { pref ->
-            ReminderSettings(
-                enabled = pref[ReminderPrefs.ENABLED] ?: ReminderPrefs.DEFAULT_ENABLED,
-                hour = pref[ReminderPrefs.HOUR] ?: ReminderPrefs.DEFAULT_HOUR,
-                minute = pref[ReminderPrefs.MINUTE] ?: ReminderPrefs.DEFAULT_MINUTE
-            )
-        },
-        premiumRepo.isPremium
-    ) { reminder, isPremium ->
-        SettingsUiState(
-            reminderEnabled = reminder.enabled,
-            hour = reminder.hour,
-            minute = reminder.minute,
-            isPremium = isPremium
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = SettingsUiState(
-            reminderEnabled = ReminderPrefs.DEFAULT_ENABLED,
-            hour = ReminderPrefs.DEFAULT_HOUR,
-            minute = ReminderPrefs.DEFAULT_MINUTE,
-            isPremium = false
-        )
-    )
+    private val _events = MutableSharedFlow<SettingsEvent>()
+    val events: SharedFlow<SettingsEvent> = _events.asSharedFlow()
+
+    init {
+        viewModelScope.launch {
+            combine(
+                dataStore.data,
+                billingManager.isPremium
+            ) { prefs, isPremium ->
+                SettingsUiState(
+                    reminderEnabled = prefs[ReminderPrefs.ENABLED] ?: ReminderPrefs.DEFAULT_ENABLED,
+                    hour = prefs[ReminderPrefs.HOUR] ?: ReminderPrefs.DEFAULT_HOUR,
+                    minute = prefs[ReminderPrefs.MINUTE] ?: ReminderPrefs.DEFAULT_MINUTE,
+                    isPremium = isPremium
+                )
+            }.collectLatest {
+                _uiState.value = it
+            }
+        }
+    }
 
     fun setReminderEnabled(enabled: Boolean) {
         viewModelScope.launch {
-            dataStore.edit {
-                it[ReminderPrefs.ENABLED] = enabled
-            }
+            dataStore.edit { it[ReminderPrefs.ENABLED] = enabled }
         }
     }
 
@@ -82,33 +75,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    /** 「購入を復元」押下時に、Play の状態をローカルへ同期 */
     fun restorePurchases() {
         viewModelScope.launch {
-            try {
-                val wasPremium = premiumRepo.isPremium.value
-                premiumRepo.refreshFromBilling()
-                val isPremium = premiumRepo.isPremium.value
-
-                val messageRes = if (isPremium) {
-                    R.string.settings_restore_success
-                } else if (wasPremium) {
-                    // 以前はプレミアムだったが、復元した結果プレミアムでなくなった場合
-                    R.string.settings_restore_no_purchase
-                } else {
-                    R.string.settings_restore_no_purchase
-                }
-                _events.emit(SettingsEvent.RestoreResult(messageRes))
-            } catch (e: Exception) {
-                _events.emit(SettingsEvent.RestoreResult(R.string.settings_restore_error))
-            }
+            billingManager.refreshEntitlements()
+            _events.emit(SettingsEvent.RestoreResult(R.string.settings_title)) // 暫定
         }
     }
 }
-
-/** 旧 ReminderSettings クラスを内部データ構造として再利用 */
-private data class ReminderSettings(
-    val enabled: Boolean,
-    val hour: Int,
-    val minute: Int
-)
