@@ -42,13 +42,25 @@ fun ResultRoute(
     var showOffer by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel.effect) {
-        viewModel.effect.collect {
-            when (it) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
                 is ResultEffect.StartNewQuiz -> onNextSet()
-                is ResultEffect.NavigateToReview -> onReview(it.questionsJson, it.answersJson)
+                is ResultEffect.NavigateToReview -> onReview(effect.questionsJson, effect.answersJson)
                 is ResultEffect.ShowRewardOffer -> showOffer = true
+                is ResultEffect.QuotaExceeded -> {
+                    Toast.makeText(context, R.string.result_quota_exceeded, Toast.LENGTH_SHORT).show()
+                }
+                is ResultEffect.RewardLimitReached -> {
+                    Toast.makeText(context, R.string.result_reward_limit_reached, Toast.LENGTH_SHORT).show()
+                }
+                is ResultEffect.RewardGranted -> {
+                    Toast.makeText(context, R.string.result_reward_granted, Toast.LENGTH_LONG).show()
+                }
+                is ResultEffect.RewardGrantFailed -> {
+                    Toast.makeText(context, R.string.result_reward_grant_failed, Toast.LENGTH_SHORT).show()
+                }
                 is ResultEffect.ShowMessage -> {
-                    Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -65,7 +77,9 @@ fun ResultRoute(
                 activity = activity,
                 canShowToday = { true },
                 onEarned = { viewModel.onRewardGranted() },
-                onFail = { Toast.makeText(context, "動画を読み込めませんでした", Toast.LENGTH_SHORT).show() }
+                onFail = {
+                    Toast.makeText(context, R.string.result_ad_load_failed, Toast.LENGTH_SHORT).show()
+                }
             )
         },
         onOfferDismiss = { showOffer = false },

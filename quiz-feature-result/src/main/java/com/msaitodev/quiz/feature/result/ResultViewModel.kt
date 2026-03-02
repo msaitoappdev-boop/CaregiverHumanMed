@@ -30,7 +30,19 @@ sealed interface ResultEffect {
     /** リワード広告のオファーを表示する */
     object ShowRewardOffer : ResultEffect
 
-    /** トーストメッセージを表示する */
+    /** 学習上限に達したことを通知する */
+    object QuotaExceeded : ResultEffect
+
+    /** 動画視聴上限に達したことを通知する */
+    object RewardLimitReached : ResultEffect
+
+    /** 報酬が付与されたことを通知する */
+    object RewardGranted : ResultEffect
+
+    /** 報酬の付与に失敗したことを通知する */
+    object RewardGrantFailed : ResultEffect
+
+    /** 汎用メッセージを表示する */
     data class ShowMessage(val message: String) : ResultEffect
 }
 
@@ -93,10 +105,10 @@ class ResultViewModel @Inject constructor(
                     _effect.emit(ResultEffect.ShowRewardOffer)
                 }
                 StartNextQuizUseCase.Result.QuotaExceeded -> {
-                    _effect.emit(ResultEffect.ShowMessage("本日の学習上限に達しました。"))
+                    _effect.emit(ResultEffect.QuotaExceeded)
                 }
                 StartNextQuizUseCase.Result.QuotaExceededAndRewardUsed -> {
-                    _effect.emit(ResultEffect.ShowMessage("本日は動画視聴による付与は上限です。"))
+                    _effect.emit(ResultEffect.RewardLimitReached)
                 }
             }
         }
@@ -114,9 +126,10 @@ class ResultViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 studyQuotaRepository.grantByReward()
+                _effect.emit(ResultEffect.RewardGranted)
                 _effect.emit(ResultEffect.StartNewQuiz)
             } catch (e: Exception) {
-                _effect.emit(ResultEffect.ShowMessage("エラーが発生しました"))
+                _effect.emit(ResultEffect.RewardGrantFailed)
             }
         }
     }

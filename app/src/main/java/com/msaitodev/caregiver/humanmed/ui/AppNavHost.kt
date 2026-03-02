@@ -1,7 +1,6 @@
 package com.msaitodev.caregiver.humanmed.ui
 
 import android.app.Activity
-import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -9,15 +8,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.ads.MobileAds
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
-import com.msaitodev.caregiver.humanmed.R
 import com.msaitodev.quiz.core.ads.ConsentManager
 import com.msaitodev.quiz.core.ads.InterstitialHelper
 import com.msaitodev.quiz.core.ads.RewardedHelper
@@ -32,7 +28,6 @@ import com.msaitodev.quiz.core.navigation.SettingsDestination
 import com.msaitodev.quiz.feature.billing.paywallGraph
 import com.msaitodev.quiz.feature.history.historyGraph
 import com.msaitodev.quiz.feature.main.home.HomeRoute
-import com.msaitodev.quiz.feature.main.home.HomeViewModel
 import com.msaitodev.quiz.feature.main.quiz.QuizResult
 import com.msaitodev.quiz.feature.main.quiz.quizGraph
 import com.msaitodev.quiz.feature.result.resultGraph
@@ -49,7 +44,6 @@ internal fun AppNavHost(
     rewardedHelper: RewardedHelper,
 ) {
     val activity = LocalContext.current as Activity
-    val context = LocalContext.current
 
     val navController = rememberNavController()
     var quizResultForProcessing by remember { mutableStateOf<QuizResult?>(null) }
@@ -74,21 +68,9 @@ internal fun AppNavHost(
 
     NavHost(navController, startDestination = HomeDestination.route) {
         composable(HomeDestination.route) {
-            val vm: HomeViewModel = hiltViewModel()
-            val rewardedAdError = stringResource(id = R.string.common_error_rewarded_ad)
-
             HomeRoute(
+                rewardedHelper = rewardedHelper,
                 onStartQuiz = { navController.navigate(QuizDestination.route) },
-                onShowRewardedAd = {
-                    rewardedHelper.show(
-                        activity = activity,
-                        canShowToday = { true },
-                        onEarned = { vm.onRewardedAdEarned() },
-                        onFail = {
-                            Toast.makeText(context, rewardedAdError, Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                },
                 onViewHistory = { navController.navigate(HistoryDestination.route) },
                 onUpgrade = { navController.navigate(PaywallDestination.route) },
                 onOpenSettings = { navController.navigate(SettingsDestination.route) }
