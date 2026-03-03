@@ -87,6 +87,7 @@ dependencies {
     implementation(project(":feature-billing"))
     implementation(project(":feature-settings"))
     implementation(project(":core-navigation"))
+    implementation(project(":quiz-core-navigation"))
     implementation(project(":core-notifications"))
     implementation(project(":quiz-feature-main"))
 

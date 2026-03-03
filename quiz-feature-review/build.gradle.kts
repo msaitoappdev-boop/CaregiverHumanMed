@@ -43,10 +43,11 @@ android {
 
 dependencies {
 
+    implementation(project(":core-navigation"))
+    implementation(project(":quiz-core-navigation"))
     implementation(project(":core-common"))
     implementation(project(":quiz-core-domain"))
     implementation(project(":quiz-core-data"))
-    implementation(project(":core-navigation"))
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
