@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.msaitodev.core.ads.InterstitialHelper
 import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
-import com.msaitodev.core.navigation.ResultDestination
+import com.msaitodev.quiz.core.navigation.ResultDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.msaitodev.quiz.core.domain.model.ScoreEntry
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository

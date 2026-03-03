@@ -1,4 +1,4 @@
-package com.msaitodev.core.navigation
+package com.msaitodev.quiz.core.navigation
 
 object HomeDestination {
     const val route = "home"

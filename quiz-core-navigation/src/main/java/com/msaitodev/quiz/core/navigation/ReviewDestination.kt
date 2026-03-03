@@ -1,4 +1,4 @@
-package com.msaitodev.core.navigation
+package com.msaitodev.quiz.core.navigation
 
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
