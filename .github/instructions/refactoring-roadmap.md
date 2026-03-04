@@ -49,7 +49,7 @@
 
 **タスク:**
 - [x] `:data`モジュールの`DataModule.kt`をレビューし、DI設定を完成させる。 (完了)
-- [x] `:domain`モジュールに`UseCaseModule.kt`を作成し、UseCaseの実達を提供する。 (完了)
+- [x] `:domain`モジュールに`UseCaseModule.kt`を作成し、UseCaseの実装を提供する。 (完了)
 
 ### フェーズ2：プロジェクト内でのフィーチャーモジュール化（完了）
 
@@ -110,9 +110,9 @@
 **目標:** 広告表示における UMP 同意ルールの厳格適用、リワード広告の「1日1回」制限のバイパス修正、および Helper の統一による UX 向上を実現する。
 
 **タスク:**
-1. [x] **`core-ads` の Spoke 強化**: `ConsentManager` への `canRequestAds` 追加、および `RewardedHelper` / `InterstitialHelper` の `suspend`/自動ロード化（UMP対応含む）。
-2. [x] **Hub ロジックの修正 (Result/Home)**: ViewModel での UMP 同意チェックの導入、およびリワード制限フラグの UI への正確な伝達。
-3. [x] **広告表示フローの統一**: インタースティシャルとリワードで Helper の利用形態を統一し、UI 側のマジックナンバー（`canShowToday = { true }`等）を排除。
+1. [x] **`core-ads` の Spoke 強化**: `ConsentManager` への `canRequestAds` 追加、および `RewardedHelper` / `InterstitialHelper` の `suspend`/自動ロード化（UMP対応含む）。 (完了)
+2. [x] **Hub ロジックの修正 (Result/Home)**: ViewModel での UMP 同意チェックの導入、およびリワード制限フラグの UI への正確な伝達。 (完了)
+3. [x] **広告表示フローの統一**: インタースティシャルとリワードで Helper の利用形態を統一し、UI 側のマジックナンバー（`canShowToday = { true }`等）を排除。 (完了)
 
 ### フェーズ3：共有ライブラリリポジトリへの抽出（初回リリース後の目標）
 
@@ -129,14 +129,14 @@
 **タスク:**
 1. [x] Google Play Console / Firebase / AdMob (UMP含む) / Google Play Billing の再設定と接続確認。 (完了)
 
-### フェーズ 5：リリース判定と最終品質検証（進行中）
+### フェーズ 5：リリース判定と最終品質検証（完了間近）
 
 **目標:** 公開直前の最終チェックリストを遂行し、リリース後の重大なトラブルを未然に防ぐ。
 
 **タスク:**
 1. [x] **バージョニングの最終確定**: `versionName` を `1.0.0` へ引き上げ。 (完了)
 2. [x] **法的・ストア要件の最終リンクチェック**: プライバシーポリシーURLとアプリ名の整合性確認済み。 (完了)
-3. [ ] **リリース用 AAB 生成と難読化テスト**: R8 有効時の最終スモークテスト。
+3. [x] **リリース用 AAB 生成と難読化テスト**: R8 有効環境（内部テスト）での主要機能の動作確認完了。 (完了)
 
 ---
 
