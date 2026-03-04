@@ -49,7 +49,7 @@
 
 **タスク:**
 - [x] `:data`モジュールの`DataModule.kt`をレビューし、DI設定を完成させる。 (完了)
-- [x] `:domain`モジュールに`UseCaseModule.kt`を作成し、UseCaseの実装を提供する。 (完了)
+- [x] `:domain`モジュールに`UseCaseModule.kt`を作成し、UseCaseの実達を提供する。 (完了)
 
 ### フェーズ2：プロジェクト内でのフィーチャーモジュール化（完了）
 
@@ -104,6 +104,15 @@
 - [x] **Settings の整理**: `SettingsProvider` 導入によるドメイン知識の分離、リネーム (`:feature-settings`)、および全画面のハードコード一掃。 (完了)
 - [x] **Core Common の刷新**: `:quiz-core-common` を `:core-common` へリネーム。パッケージから `quiz` を除去し、AdUnits や AppColors 等をドメインフリー化。 (完了)
 - [x] **Navigation の完全分離**: 汎用画面を `:core-navigation`、クイズ固有画面を `:quiz-core-navigation` へ分離。真のハブ＆スポーク構成を確立。 (完了)
+
+### フェーズ 2.10：広告・UMP 同意管理の不具合修正と UX 改善（完了）
+
+**目標:** 広告表示における UMP 同意ルールの厳格適用、リワード広告の「1日1回」制限のバイパス修正、および Helper の統一による UX 向上を実現する。
+
+**タスク:**
+1. [x] **`core-ads` の Spoke 強化**: `ConsentManager` への `canRequestAds` 追加、および `RewardedHelper` / `InterstitialHelper` の `suspend`/自動ロード化（UMP対応含む）。
+2. [x] **Hub ロジックの修正 (Result/Home)**: ViewModel での UMP 同意チェックの導入、およびリワード制限フラグの UI への正確な伝達。
+3. [x] **広告表示フローの統一**: インタースティシャルとリワードで Helper の利用形態を統一し、UI 側のマジックナンバー（`canShowToday = { true }`等）を排除。
 
 ### フェーズ3：共有ライブラリリポジトリへの抽出（初回リリース後の目標）
 

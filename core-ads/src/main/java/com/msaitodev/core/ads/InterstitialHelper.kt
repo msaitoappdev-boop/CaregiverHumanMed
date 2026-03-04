@@ -33,6 +33,11 @@ class InterstitialHelper @Inject constructor(
         if (ad != null) {
             return
         }
+        // UMP 同意がない場合はロードをスキップ
+        if (!ConsentManager.canRequestAds(context)) {
+            return
+        }
+
         val req = AdRequest.Builder().build()
         // 汎用化されたプロパティ名を参照
         val unitId = adUnits.interstitialUnitA
@@ -53,6 +58,11 @@ class InterstitialHelper @Inject constructor(
         sessionCap: Int,
         minIntervalSec: Long
     ): Boolean {
+        // UMP 同意がない場合は即座に失敗
+        if (!ConsentManager.canRequestAds(activity)) {
+            return false
+        }
+
         val shownCount = repository.shownCountThisSession.first()
         val lastShown = repository.lastShownEpochSec.first()
 

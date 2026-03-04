@@ -7,12 +7,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.msaitodev.core.ads.ConsentManager
 import com.msaitodev.core.ads.RewardedHelper
 import com.msaitodev.quiz.feature.main.R
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeRoute(
@@ -27,6 +30,7 @@ fun HomeRoute(
     var showOfferDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val activity = context as Activity
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(viewModel.event) {
         viewModel.event.collect { event ->
@@ -55,20 +59,26 @@ fun HomeRoute(
     HomeScreen(
         uiState = uiState,
         showOfferDialog = showOfferDialog,
-        onStartQuiz = { viewModel.onStartQuizClicked() },
+        onStartQuiz = {
+            // 広告リクエストが可能か（UMP同意済みか）を判定して ViewModel に渡す
+            val canRequestAds = ConsentManager.canRequestAds(context)
+            viewModel.onStartQuizClicked(canRequestAds)
+        },
         onViewHistory = onViewHistory,
         onUpgrade = onUpgrade,
         onOpenSettings = onOpenSettings,
         onOfferConfirm = {
             showOfferDialog = false
-            rewardedHelper.show(
-                activity = activity,
-                canShowToday = { true },
-                onEarned = { viewModel.onRewardGranted() },
-                onFail = {
+            scope.launch {
+                // RewardedHelper.tryShow (suspend) を使用
+                // canShowToday は StartNextQuizUseCase で判定済みなので true を渡す
+                val success = rewardedHelper.tryShow(activity, canShowToday = true)
+                if (success) {
+                    viewModel.onRewardGranted()
+                } else {
                     Toast.makeText(context, R.string.home_ad_load_failed, Toast.LENGTH_SHORT).show()
                 }
-            )
+            }
         },
         onOfferDismiss = { showOfferDialog = false }
     )

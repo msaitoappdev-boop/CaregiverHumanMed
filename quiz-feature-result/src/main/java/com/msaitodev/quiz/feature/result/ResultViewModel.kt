@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.msaitodev.core.ads.ConsentManager
 import com.msaitodev.core.ads.InterstitialHelper
 import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
 import com.msaitodev.quiz.core.navigation.ResultDestination
@@ -86,6 +87,9 @@ class ResultViewModel @Inject constructor(
     }
 
     private suspend fun showInterstitial(activity: Activity) {
+        // UMP 同意がない場合は表示処理自体をスキップ
+        if (!ConsentManager.canRequestAds(activity)) return
+
         val isPremium = premiumRepository.isPremium.first()
         val interstitialEnabled = remoteConfigRepo.getBoolean(RemoteConfigKeys.INTERSTITIAL_ENABLED) && !isPremium
         if (interstitialEnabled) {
@@ -95,14 +99,23 @@ class ResultViewModel @Inject constructor(
         }
     }
 
-    fun onNextSetClicked() {
+    /**
+     * 「次のセットへ」がクリックされた時の処理。
+     * @param canRequestAds 広告リクエストが可能か（UMP同意済みなど）
+     */
+    fun onNextSetClicked(canRequestAds: Boolean) {
         viewModelScope.launch {
             when (startNextQuiz()) {
                 StartNextQuizUseCase.Result.CanStart -> {
                     _effect.emit(ResultEffect.StartNewQuiz)
                 }
                 StartNextQuizUseCase.Result.ShowRewardOffer -> {
-                    _effect.emit(ResultEffect.ShowRewardOffer)
+                    // 同意がある場合のみリワードオファーを出す
+                    if (canRequestAds) {
+                        _effect.emit(ResultEffect.ShowRewardOffer)
+                    } else {
+                        _effect.emit(ResultEffect.QuotaExceeded)
+                    }
                 }
                 StartNextQuizUseCase.Result.QuotaExceeded -> {
                     _effect.emit(ResultEffect.QuotaExceeded)

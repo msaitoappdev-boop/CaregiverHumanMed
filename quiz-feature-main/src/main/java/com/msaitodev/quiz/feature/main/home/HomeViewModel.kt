@@ -69,14 +69,23 @@ class HomeViewModel @Inject constructor(
     private val _event = MutableSharedFlow<HomeEvent>()
     val event: SharedFlow<HomeEvent> = _event.asSharedFlow()
 
-    fun onStartQuizClicked() {
+    /**
+     * クイズ開始ボタンがクリックされた時の処理。
+     * @param canRequestAds 広告リクエストが可能（UMP同意済みなど）かどうか
+     */
+    fun onStartQuizClicked(canRequestAds: Boolean) {
         viewModelScope.launch {
             when (startNextQuiz()) {
                 StartNextQuizUseCase.Result.CanStart -> {
                     _event.emit(HomeEvent.RequestNavigateToQuiz)
                 }
                 StartNextQuizUseCase.Result.ShowRewardOffer -> {
-                    _event.emit(HomeEvent.RequestShowRewardedAdOffer)
+                    // 広告が表示可能な場合のみオファーを出す。同意がない場合は上限エラーとして扱う。
+                    if (canRequestAds) {
+                        _event.emit(HomeEvent.RequestShowRewardedAdOffer)
+                    } else {
+                        _event.emit(HomeEvent.QuotaExceeded)
+                    }
                 }
                 StartNextQuizUseCase.Result.QuotaExceeded -> {
                     _event.emit(HomeEvent.QuotaExceeded)
