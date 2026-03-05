@@ -6,8 +6,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -20,6 +25,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.msaitodev.feature.settings.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,10 +45,13 @@ internal fun SettingsScreen(
     onBack: () -> Unit,
     onReminderEnabledChange: (Boolean) -> Unit,
     onTimeChange: (Int, Int) -> Unit,
+    onWeaknessModeChange: (Boolean) -> Unit,
     onRestorePurchases: () -> Unit,
     onManageSubscription: () -> Unit,
     onOpenPrivacyPolicy: () -> Unit
 ) {
+    val scrollState = rememberScrollState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -60,10 +70,47 @@ internal fun SettingsScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .verticalScroll(scrollState) // スクロールを有効化
+                .navigationBarsPadding() // システムナビゲーションバーの重なりを防止
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // 学習モード設定
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = state.weaknessModeTitle,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (!state.isPremium) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "Premium Only",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.outline
+                            )
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = state.weaknessModeDescription,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (state.isPremium) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.outline
+                            )
+                        }
+                        Switch(
+                            checked = state.isWeaknessMode,
+                            onCheckedChange = onWeaknessModeChange,
+                            enabled = state.isPremium
+                        )
+                    }
+                }
+            }
+
             // リマインド設定セクション
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -109,7 +156,6 @@ internal fun SettingsScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
 
-                    // 現在のステータスを表示
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -138,12 +184,11 @@ internal fun SettingsScreen(
                         style = MaterialTheme.typography.bodySmall
                     )
 
-                    // ボタン類
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = onRestorePurchases,
                             modifier = Modifier.fillMaxWidth(),
-                            enabled = !state.isPremium // プレミアムなら無効化
+                            enabled = !state.isPremium
                         ) {
                             Text(
                                 if (state.isPremium) {
@@ -163,7 +208,7 @@ internal fun SettingsScreen(
                 }
             }
 
-            // その他
+            // プライバシーポリシーへのリンク（最下部に配置）
             OutlinedButton(
                 onClick = onOpenPrivacyPolicy,
                 modifier = Modifier.fillMaxWidth()

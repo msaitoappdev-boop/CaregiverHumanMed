@@ -1,12 +1,17 @@
 package com.msaitodev.quiz.feature.main.home
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.AlertDialog
@@ -21,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -32,6 +38,7 @@ internal fun HomeScreen(
     uiState: HomeViewModel.HomeUiState,
     showOfferDialog: Boolean,
     onStartQuiz: () -> Unit,
+    onStartWeaknessTraining: () -> Unit,
     onViewHistory: () -> Unit,
     onUpgrade: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -43,7 +50,6 @@ internal fun HomeScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.home_title)) },
                 actions = {
-                    // 無料ユーザーの場合のみ、ツールバーにアップグレードへの導線（プレミアムバッジ）を表示
                     if (!uiState.canShowFullExplanation) {
                         IconButton(onClick = onUpgrade) {
                             Icon(
@@ -69,13 +75,46 @@ internal fun HomeScreen(
                 .padding(24.dp)
                 .fillMaxSize()
         ) {
-            // メインアクション（上部）
+            // メインアクション: 通常のクイズ
             Button(
                 onClick = onStartQuiz,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading
             ) {
                 Text(stringResource(R.string.home_start_quiz))
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // 弱点特訓 (Premium): プレミアムなら常に活性。データ不足時はクリック後に通知。
+            OutlinedButton(
+                onClick = onStartWeaknessTraining,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading // 常に活性化
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Psychology,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.home_weakness_training))
+                    Text(
+                        text = stringResource(R.string.home_premium_label),
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                    if (uiState.isWeaknessTrainingLocked) {
+                        Spacer(Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "Locked",
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
             }
 
             Spacer(Modifier.height(16.dp))

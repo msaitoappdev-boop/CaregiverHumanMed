@@ -2,19 +2,22 @@ package com.msaitodev.quiz.feature.main.quiz
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
 import com.msaitodev.core.common.navigation.AppActions
+import com.msaitodev.feature.settings.SettingsProvider
 import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
 import com.msaitodev.quiz.core.domain.model.Question
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import com.msaitodev.quiz.core.domain.repository.RemoteConfigRepository
 import com.msaitodev.quiz.core.domain.usecase.GetDailyQuestionsUseCase
 import com.msaitodev.quiz.core.domain.usecase.GetNextQuestionsUseCase
+import com.msaitodev.quiz.core.domain.usecase.GetWeaknessQuestionsUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -30,14 +33,15 @@ private fun calcScore(questions: List<Question>, answers: List<Int?>): Int {
 class QuizViewModel @Inject constructor(
     private val getDailyQuestions: GetDailyQuestionsUseCase,
     private val getNextQuestions: GetNextQuestionsUseCase,
+    private val getWeaknessQuestions: GetWeaknessQuestionsUseCase,
     private val remoteConfigRepo: RemoteConfigRepository,
+    private val settingsProvider: SettingsProvider,
     premiumRepository: PremiumRepository
 ) : ViewModel() {
 
     private var onQuizFinished: ((result: QuizResult) -> Unit)? = null
     private var isReviewSession: Boolean = false
 
-    // Internal, mutable states that drive the logic
     private data class InternalState(
         val isLoading: Boolean = true,
         val originalQuestions: List<Question> = emptyList(),
@@ -49,7 +53,6 @@ class QuizViewModel @Inject constructor(
     )
     private val _internalState = MutableStateFlow(InternalState())
 
-    // Combined, immutable UiState for the UI
     val uiState: StateFlow<QuizUiState> = combine(
         _internalState, premiumRepository.isPremium
     ) { internalState, isPremium ->
@@ -89,21 +92,42 @@ class QuizViewModel @Inject constructor(
     private fun loadAndPrepare(reshuffle: Boolean) {
         _internalState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
+            val isWeaknessMode = settingsProvider.isWeaknessMode.first()
             val setSize = remoteConfigRepo.getLong(RemoteConfigKeys.SET_SIZE).toInt().coerceAtLeast(1)
-            val daily = try {
-                withContext(Dispatchers.IO) { getDailyQuestions(count = setSize) }
-            } catch (_: Exception) { emptyList() }
-            processAndStart(daily, reshuffle, daily.map { it.id }.toSet())
+            
+            isReviewSession = false // 明示的に初期化
+            val questions = if (isWeaknessMode) {
+                withContext(Dispatchers.IO) { getWeaknessQuestions.execute(count = setSize) }
+            } else {
+                try {
+                    withContext(Dispatchers.IO) { getDailyQuestions(count = setSize) }
+                } catch (_: Exception) { emptyList() }
+            }
+            
+            // 重要: ここで questions.id を seenIds に追加しない（出題開始前に「既読」にしない）
+            processAndStart(questions, reshuffle, emptySet())
         }
     }
 
     private fun loadNextSet() {
         _internalState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
+            val isWeaknessMode = settingsProvider.isWeaknessMode.first()
             val setSize = remoteConfigRepo.getLong(RemoteConfigKeys.SET_SIZE).toInt().coerceAtLeast(1)
-            val nextQuestions = withContext(Dispatchers.IO) {
-                getNextQuestions(count = setSize, excludingIds = _internalState.value.seenQuestionIds)
+            
+            val nextQuestions = if (isWeaknessMode) {
+                withContext(Dispatchers.IO) { 
+                    getWeaknessQuestions.execute(
+                        count = setSize, 
+                        excludingIds = _internalState.value.seenQuestionIds
+                    ) 
+                }
+            } else {
+                withContext(Dispatchers.IO) {
+                    getNextQuestions(count = setSize, excludingIds = _internalState.value.seenQuestionIds)
+                }
             }
+
             processAndStart(nextQuestions, true, _internalState.value.seenQuestionIds + nextQuestions.map { it.id })
         }
     }
@@ -141,6 +165,12 @@ class QuizViewModel @Inject constructor(
 
     fun next() {
         val state = _internalState.value
+        // 既読リストを現在の問題 ID で更新
+        val currentQuestionId = state.questions.getOrNull(state.currentIndex)?.id
+        if (currentQuestionId != null) {
+            _internalState.update { it.copy(seenQuestionIds = it.seenQuestionIds + currentQuestionId) }
+        }
+
         if (state.currentIndex >= state.questions.size - 1) {
             val score = calcScore(state.questions, state.answers)
             val result = QuizResult(

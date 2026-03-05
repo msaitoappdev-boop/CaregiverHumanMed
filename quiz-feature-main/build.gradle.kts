@@ -46,6 +46,7 @@ dependencies {
     implementation(project(":core-navigation"))
     implementation(project(":core-ads"))
     implementation(project(":quiz-core-navigation"))
+    implementation(project(":feature-settings")) // 追加
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.0")

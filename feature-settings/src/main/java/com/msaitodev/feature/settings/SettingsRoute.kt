@@ -70,6 +70,9 @@ fun SettingsRoute(
                 ReminderScheduler.scheduleDaily(context, h, m)
             }
         },
+        onWeaknessModeChange = { enabled ->
+            viewModel.setWeaknessModeEnabled(enabled)
+        },
         onRestorePurchases = {
             viewModel.restorePurchases()
         },

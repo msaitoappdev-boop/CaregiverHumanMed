@@ -2,7 +2,8 @@ package com.msaitodev.quiz.feature.main.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.msaitodev.core.ads.RewardedAdRepository
+import com.msaitodev.core.ads.RewardedHelper
+import com.msaitodev.feature.settings.SettingsProvider
 import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
 import com.msaitodev.quiz.core.domain.model.QuotaState
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
@@ -26,6 +27,8 @@ import javax.inject.Inject
 sealed interface HomeEvent {
     object RequestNavigateToQuiz : HomeEvent
     object RequestShowRewardedAdOffer : HomeEvent
+    object RequestShowPaywall : HomeEvent
+    object RequestNavigateToSettings : HomeEvent
     object QuotaExceeded : HomeEvent
     object RewardLimitReached : HomeEvent
     object RewardGranted : HomeEvent
@@ -36,7 +39,8 @@ sealed interface HomeEvent {
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val quotaRepo: StudyQuotaRepository,
-    private val rewardedAdRepo: RewardedAdRepository,
+    private val rewardedHelper: RewardedHelper,
+    private val settingsProvider: SettingsProvider,
     premiumRepo: PremiumRepository,
     private val remoteConfigRepo: RemoteConfigRepository,
     private val startNextQuiz: StartNextQuizUseCase
@@ -54,16 +58,21 @@ class HomeViewModel @Inject constructor(
     data class HomeUiState(
         val canStart: Boolean = false,
         val isLoading: Boolean = false,
-        val canShowFullExplanation: Boolean = false
+        val canShowFullExplanation: Boolean = false,
+        val isWeaknessTrainingLocked: Boolean = true
     )
 
-    val uiState: StateFlow<HomeUiState> = combine(quotaFlow, isPremium) { quota, isPremiumValue ->
+    val uiState: StateFlow<HomeUiState> = combine(
+        quotaFlow, 
+        isPremium
+    ) { quota, isPremiumValue ->
         if (quota == null) {
             HomeUiState(isLoading = true)
         } else {
             HomeUiState(
                 canStart = quota.canStart,
-                canShowFullExplanation = isPremiumValue
+                canShowFullExplanation = isPremiumValue,
+                isWeaknessTrainingLocked = !isPremiumValue
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState(isLoading = true))
@@ -71,10 +80,6 @@ class HomeViewModel @Inject constructor(
     private val _event = MutableSharedFlow<HomeEvent>()
     val event: SharedFlow<HomeEvent> = _event.asSharedFlow()
 
-    /**
-     * クイズ開始ボタンがクリックされた時の処理。
-     * @param canRequestAds 広告リクエストが可能（UMP同意済みなど）かどうか
-     */
     fun onStartQuizClicked(canRequestAds: Boolean) {
         viewModelScope.launch {
             when (startNextQuiz()) {
@@ -82,7 +87,6 @@ class HomeViewModel @Inject constructor(
                     _event.emit(HomeEvent.RequestNavigateToQuiz)
                 }
                 StartNextQuizUseCase.Result.ShowRewardOffer -> {
-                    // 広告が表示可能な場合のみオファーを出す。同意がない場合は上限エラーとして扱う。
                     if (canRequestAds) {
                         _event.emit(HomeEvent.RequestShowRewardedAdOffer)
                     } else {
@@ -99,10 +103,26 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 弱点特訓ボタンがクリックされた時の処理。
+     */
+    fun onStartWeaknessTrainingClicked() {
+        viewModelScope.launch {
+            val state = uiState.value
+            
+            if (state.isWeaknessTrainingLocked) {
+                _event.emit(HomeEvent.RequestShowPaywall)
+                return@launch
+            }
+
+            // モードをONにして設定画面へ遷移（仕様4）
+            settingsProvider.updateWeaknessMode(true)
+            _event.emit(HomeEvent.RequestNavigateToSettings)
+        }
+    }
+
     fun onRewardGranted() {
         viewModelScope.launch {
-            // 以前はここで rewardedAdRepo.incrementCount() を呼んでいたが、
-            // RewardedHelper 内部で自動更新されるようになったため、イベント通知のみを行う。
             _event.emit(HomeEvent.RewardGranted)
             _event.emit(HomeEvent.RequestNavigateToQuiz)
         }
