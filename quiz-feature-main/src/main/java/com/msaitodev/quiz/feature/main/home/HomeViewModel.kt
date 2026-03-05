@@ -26,6 +26,7 @@ import javax.inject.Inject
 // HomeViewModelが発行する「イベント」を定義。
 sealed interface HomeEvent {
     object RequestNavigateToQuiz : HomeEvent
+    object RequestNavigateToAnalysis : HomeEvent
     object RequestShowRewardedAdOffer : HomeEvent
     object RequestShowPaywall : HomeEvent
     object RequestNavigateToSettings : HomeEvent
@@ -58,8 +59,7 @@ class HomeViewModel @Inject constructor(
     data class HomeUiState(
         val canStart: Boolean = false,
         val isLoading: Boolean = false,
-        val canShowFullExplanation: Boolean = false,
-        val isWeaknessTrainingLocked: Boolean = true
+        val isPremium: Boolean = false
     )
 
     val uiState: StateFlow<HomeUiState> = combine(
@@ -71,8 +71,7 @@ class HomeViewModel @Inject constructor(
         } else {
             HomeUiState(
                 canStart = quota.canStart,
-                canShowFullExplanation = isPremiumValue,
-                isWeaknessTrainingLocked = !isPremiumValue
+                isPremium = isPremiumValue
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState(isLoading = true))
@@ -104,18 +103,25 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * 弱点特訓ボタンがクリックされた時の処理。
+     * 学習分析ボタンがクリックされた時の処理。
      */
+    fun onAnalysisClicked() {
+        viewModelScope.launch {
+            if (uiState.value.isPremium) {
+                _event.emit(HomeEvent.RequestNavigateToAnalysis)
+            } else {
+                _event.emit(HomeEvent.RequestShowPaywall)
+            }
+        }
+    }
+
     fun onStartWeaknessTrainingClicked() {
         viewModelScope.launch {
-            val state = uiState.value
-            
-            if (state.isWeaknessTrainingLocked) {
+            if (!uiState.value.isPremium) {
                 _event.emit(HomeEvent.RequestShowPaywall)
                 return@launch
             }
 
-            // モードをONにして設定画面へ遷移（仕様4）
             settingsProvider.updateWeaknessMode(true)
             _event.emit(HomeEvent.RequestNavigateToSettings)
         }

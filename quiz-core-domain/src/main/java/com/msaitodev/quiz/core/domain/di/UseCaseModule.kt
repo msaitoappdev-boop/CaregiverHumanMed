@@ -7,8 +7,10 @@ import dagger.hilt.components.SingletonComponent
 import com.msaitodev.quiz.core.domain.repository.QuestionRepository
 import com.msaitodev.quiz.core.domain.repository.ScoreRepository
 import com.msaitodev.quiz.core.domain.repository.WrongAnswerRepository
+import com.msaitodev.quiz.core.domain.repository.CategoryNameProvider
 import com.msaitodev.quiz.core.domain.usecase.ClearScoresUseCase
 import com.msaitodev.quiz.core.domain.usecase.GetDailyQuestionsUseCase
+import com.msaitodev.quiz.core.domain.usecase.GetLearningAnalysisUseCase
 import com.msaitodev.quiz.core.domain.usecase.GetNextQuestionsUseCase
 import com.msaitodev.quiz.core.domain.usecase.GetWeaknessQuestionsUseCase
 import com.msaitodev.quiz.core.domain.usecase.ObserveScoresUseCase
@@ -50,5 +52,20 @@ object UseCaseModule {
         wrongAnswerRepository: WrongAnswerRepository
     ): GetWeaknessQuestionsUseCase {
         return GetWeaknessQuestionsUseCase(questionRepository, wrongAnswerRepository)
+    }
+
+    @Provides
+    fun provideGetLearningAnalysisUseCase(
+        questionRepository: QuestionRepository,
+        wrongAnswerRepository: WrongAnswerRepository,
+        scoreRepository: ScoreRepository,
+        categoryNameProvider: CategoryNameProvider
+    ): GetLearningAnalysisUseCase {
+        return GetLearningAnalysisUseCase(
+            questionRepository, 
+            wrongAnswerRepository, 
+            scoreRepository,
+            categoryNameProvider
+        )
     }
 }

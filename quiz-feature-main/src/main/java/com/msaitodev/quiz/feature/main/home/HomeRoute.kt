@@ -22,6 +22,7 @@ fun HomeRoute(
     rewardedHelper: RewardedHelper,
     onStartQuiz: () -> Unit,
     onViewHistory: () -> Unit,
+    onViewAnalysis: () -> Unit, // 追加
     onUpgrade: () -> Unit,
     onOpenSettings: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
@@ -36,6 +37,7 @@ fun HomeRoute(
         viewModel.event.collect { event ->
             when (event) {
                 is HomeEvent.RequestNavigateToQuiz -> onStartQuiz()
+                is HomeEvent.RequestNavigateToAnalysis -> onViewAnalysis() // 追加
                 is HomeEvent.RequestNavigateToSettings -> onOpenSettings()
                 is HomeEvent.RequestShowPaywall -> onUpgrade()
                 is HomeEvent.RequestShowRewardedAdOffer -> showOfferDialog = true
@@ -68,13 +70,16 @@ fun HomeRoute(
         onStartWeaknessTraining = {
             viewModel.onStartWeaknessTrainingClicked()
         },
+        onAnalysisClicked = {
+            viewModel.onAnalysisClicked()
+        },
         onViewHistory = onViewHistory,
         onUpgrade = onUpgrade,
         onOpenSettings = onOpenSettings,
         onOfferConfirm = {
             showOfferDialog = false
             scope.launch {
-                val success = rewardedHelper.tryShow(activity, isPremium = uiState.canShowFullExplanation)
+                val success = rewardedHelper.tryShow(activity, isPremium = uiState.isPremium)
                 if (success) {
                     viewModel.onRewardGranted()
                 } else {

@@ -20,12 +20,14 @@ import com.msaitodev.core.ads.RewardedHelper
 import com.msaitodev.core.common.navigation.AppActions
 import com.msaitodev.core.navigation.PaywallDestination
 import com.msaitodev.core.navigation.SettingsDestination
+import com.msaitodev.quiz.core.navigation.AnalysisDestination
 import com.msaitodev.quiz.core.navigation.HistoryDestination
 import com.msaitodev.quiz.core.navigation.HomeDestination
 import com.msaitodev.quiz.core.navigation.QuizDestination
 import com.msaitodev.quiz.core.navigation.ResultDestination
 import com.msaitodev.quiz.core.navigation.ReviewDestination
 import com.msaitodev.feature.billing.paywallGraph
+import com.msaitodev.quiz.feature.analysis.analysisGraph
 import com.msaitodev.quiz.feature.history.historyGraph
 import com.msaitodev.quiz.feature.main.home.HomeRoute
 import com.msaitodev.quiz.feature.main.quiz.QuizResult
@@ -71,9 +73,10 @@ internal fun AppNavHost(
             HomeRoute(
                 rewardedHelper = rewardedHelper,
                 onStartQuiz = { 
-                    navController.navigate(QuizDestination.route)
+                    navController.navigate(QuizDestination.route) 
                 },
                 onViewHistory = { navController.navigate(HistoryDestination.route) },
+                onViewAnalysis = { navController.navigate(AnalysisDestination.route) }, // 追加
                 onUpgrade = { navController.navigate(PaywallDestination.route) },
                 onOpenSettings = { navController.navigate(SettingsDestination.route) }
             )
@@ -107,6 +110,7 @@ internal fun AppNavHost(
 
         reviewGraph(navController)
         historyGraph(navController)
+        analysisGraph(navController) // 登録
         paywallGraph()
         settingsGraph(onBack = { navController.popBackStack() })
     }
