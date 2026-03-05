@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.msaitodev.core.ads.ConsentManager
 import com.msaitodev.core.ads.RewardedHelper
 import kotlinx.coroutines.launch
@@ -38,6 +39,7 @@ fun ResultRoute(
 
     val activity = LocalContext.current as Activity
     val scope = rememberCoroutineScope()
+    val isPremium by viewModel.isPremium.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.onScreenShown(activity, score, total, pct)
@@ -79,9 +81,8 @@ fun ResultRoute(
         onOfferConfirm = {
             showOffer = false
             scope.launch {
-                // RewardedHelper.tryShow (suspend) を使用
-                // canShowToday は StartNextQuizUseCase で判定済みなので true を渡す
-                val success = rewardedHelper.tryShow(activity, canShowToday = true)
+                // RewardedHelper.tryShow に購読状態を渡す
+                val success = rewardedHelper.tryShow(activity, isPremium = isPremium)
                 if (success) {
                     viewModel.onRewardGranted()
                 } else {
@@ -91,7 +92,6 @@ fun ResultRoute(
         },
         onOfferDismiss = { showOffer = false },
         onNextSet = {
-            // 広告リクエストが可能か（UMP同意済みか）を判定して ViewModel に渡す
             val canRequestAds = ConsentManager.canRequestAds(context)
             viewModel.onNextSetClicked(canRequestAds)
         },

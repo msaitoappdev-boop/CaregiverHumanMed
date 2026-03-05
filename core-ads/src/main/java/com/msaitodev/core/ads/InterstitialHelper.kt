@@ -8,16 +8,18 @@ import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 import com.msaitodev.core.common.config.AdUnits
-import kotlin.coroutines.resume
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.coroutines.resume
 
 @Singleton
 class InterstitialHelper @Inject constructor(
@@ -26,87 +28,91 @@ class InterstitialHelper @Inject constructor(
     private val repository: InterstitialAdRepository
 ) {
     private val scope = CoroutineScope(Dispatchers.IO)
-
     private var ad: InterstitialAd? = null
+    private var isSideloading = false
+
+    companion object {
+        /** インタースティシャル広告の1日あたりの表示上限数 */
+        const val MAX_DAILY_QUOTA = 1
+    }
+
+    /**
+     * 本日さらにインタースティシャル広告を表示できるかどうか（カウントベース）。
+     */
+    val canShowToday: Flow<Boolean> = repository.countDaily.map { it < MAX_DAILY_QUOTA }
 
     fun preload() {
-        if (ad != null) {
-            return
-        }
-        // UMP 同意がない場合はロードをスキップ
-        if (!ConsentManager.canRequestAds(context)) {
-            return
-        }
+        if (ad != null || isSideloading) return
+        if (!ConsentManager.canRequestAds(context)) return
 
+        // SDK 初期化を確認
+        AdsSdk.initIfNeeded(context)
+
+        isSideloading = true
         val req = AdRequest.Builder().build()
-        // 汎用化されたプロパティ名を参照
         val unitId = adUnits.interstitialUnitA
         InterstitialAd.load(context, unitId, req, object : InterstitialAdLoadCallback() {
             override fun onAdLoaded(p0: InterstitialAd) {
                 ad = p0
+                isSideloading = false
             }
 
             override fun onAdFailedToLoad(p0: LoadAdError) {
                 ad = null
+                isSideloading = false
             }
         })
     }
 
+    /**
+     * インタースティシャル広告の表示を試みる。
+     * 表示制限のチェックとカウント更新を内部で行う。
+     * @param isPremium プレミアムユーザーかどうか。true の場合は表示しない。
+     */
     suspend fun tryShow(
         activity: Activity,
-        enabled: Boolean,
-        sessionCap: Int,
-        minIntervalSec: Long
+        isPremium: Boolean,
+        enabled: Boolean = true
     ): Boolean {
-        // UMP 同意がない場合は即座に失敗
-        if (!ConsentManager.canRequestAds(activity)) {
-            return false
-        }
+        if (isPremium) return false
+        if (!ConsentManager.canRequestAds(activity)) return false
+        if (!enabled) return false
 
-        val shownCount = repository.shownCountThisSession.first()
-        val lastShown = repository.lastShownEpochSec.first()
+        // SDK 初期化を確認
+        AdsSdk.initIfNeeded(activity)
 
-        if (!enabled) {
-            return false
-        }
-        if (ad == null) {
+        // 本日の表示回数をチェック
+        val shownCount = repository.countDaily.first()
+        if (shownCount >= MAX_DAILY_QUOTA) return false
+
+        val currentAd = ad
+        if (currentAd == null) {
             preload()
-            return false
-        }
-        if (sessionCap > 0 && shownCount >= sessionCap) {
-            return false
-        }
-        val now = System.currentTimeMillis() / 1000
-        if (minIntervalSec > 0 && (now - lastShown) < minIntervalSec) {
             return false
         }
 
         return suspendCancellableCoroutine { cont ->
-            val currentAd = ad
-            if (currentAd == null) {
-                cont.resume(false)
-                return@suspendCancellableCoroutine
-            }
-
             currentAd.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
                     scope.launch {
                         repository.updateLastShownTimestamp()
                     }
-                    ad = null // 使い捨て
+                    ad = null
+                    isSideloading = false
                     preload()
                     if (cont.isActive) cont.resume(true)
                 }
 
                 override fun onAdFailedToShowFullScreenContent(p0: AdError) {
                     ad = null
+                    isSideloading = false
                     preload()
                     if (cont.isActive) cont.resume(false)
                 }
 
                 override fun onAdShowedFullScreenContent() {
                     scope.launch {
-                        repository.incrementShownCount()
+                        repository.incrementCount()
                     }
                 }
             }
@@ -114,11 +120,9 @@ class InterstitialHelper @Inject constructor(
                 currentAd.show(activity)
             } catch (t: Throwable) {
                 ad = null
+                isSideloading = false
                 preload()
                 if (cont.isActive) cont.resume(false)
-            }
-
-            cont.invokeOnCancellation {
             }
         }
     }

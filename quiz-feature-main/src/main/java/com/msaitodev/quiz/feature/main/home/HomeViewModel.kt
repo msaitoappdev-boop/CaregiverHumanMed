@@ -2,6 +2,7 @@ package com.msaitodev.quiz.feature.main.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.msaitodev.core.ads.RewardedAdRepository
 import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
 import com.msaitodev.quiz.core.domain.model.QuotaState
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
@@ -35,6 +36,7 @@ sealed interface HomeEvent {
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val quotaRepo: StudyQuotaRepository,
+    private val rewardedAdRepo: RewardedAdRepository,
     premiumRepo: PremiumRepository,
     private val remoteConfigRepo: RemoteConfigRepository,
     private val startNextQuiz: StartNextQuizUseCase
@@ -99,13 +101,10 @@ class HomeViewModel @Inject constructor(
 
     fun onRewardGranted() {
         viewModelScope.launch {
-            try {
-                quotaRepo.grantByReward()
-                _event.emit(HomeEvent.RewardGranted)
-                _event.emit(HomeEvent.RequestNavigateToQuiz)
-            } catch (e: Exception) {
-                _event.emit(HomeEvent.RewardGrantFailed)
-            }
+            // 以前はここで rewardedAdRepo.incrementCount() を呼んでいたが、
+            // RewardedHelper 内部で自動更新されるようになったため、イベント通知のみを行う。
+            _event.emit(HomeEvent.RewardGranted)
+            _event.emit(HomeEvent.RequestNavigateToQuiz)
         }
     }
 }

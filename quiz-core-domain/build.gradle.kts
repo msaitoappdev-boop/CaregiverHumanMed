@@ -18,6 +18,8 @@ android {
 }
 
 dependencies {
+    implementation(project(":core-ads"))
+
     // Hilt
     implementation("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-compiler:2.51.1")

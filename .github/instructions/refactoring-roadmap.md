@@ -114,7 +114,7 @@
 **タスク:**
 1. [x] **`core-ads` の Spoke 強化**: `ConsentManager` への `canRequestAds` 追加、および `RewardedHelper` / `InterstitialHelper` の `suspend`/自動ロード化（UMP対応含む）。 (完了)
 2. [x] **Hub ロジックの修正 (Result/Home)**: ViewModel での UMP 同意チェックの導入、およびリワード制限フラグの UI への正確な伝達。 (完了)
-3. [x] **広告表示フローの統一**: インタースティシャルとリワードで Helper の利用形態を統一し、UI 側のマジックナンバー（`canShowToday = { true }`等）を排除。 (完了)
+3. [x] **広告表示フローの統一と堅牢化**: Helper 内部でのプレミアムチェック (`isPremium` 引数) と 1日1回制限、日次リセットロジックを完結させ、UI/ドメイン層をクリーンアップ。 (完了)
 
 ### フェーズ 6：Premium 価値の最大化（弱点特訓 & 学習分析の実装）
 

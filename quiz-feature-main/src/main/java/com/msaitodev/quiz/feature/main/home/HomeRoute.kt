@@ -70,9 +70,9 @@ fun HomeRoute(
         onOfferConfirm = {
             showOfferDialog = false
             scope.launch {
-                // RewardedHelper.tryShow (suspend) を使用
-                // canShowToday は StartNextQuizUseCase で判定済みなので true を渡す
-                val success = rewardedHelper.tryShow(activity, canShowToday = true)
+                // RewardedHelper.tryShow に購読状態を渡す
+                // uiState.canShowFullExplanation は isPremium と同等
+                val success = rewardedHelper.tryShow(activity, isPremium = uiState.canShowFullExplanation)
                 if (success) {
                     viewModel.onRewardGranted()
                 } else {

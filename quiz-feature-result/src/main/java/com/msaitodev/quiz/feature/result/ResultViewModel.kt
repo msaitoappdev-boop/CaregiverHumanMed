@@ -6,16 +6,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.msaitodev.core.ads.ConsentManager
 import com.msaitodev.core.ads.InterstitialHelper
-import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
+import com.msaitodev.core.ads.RewardedHelper
 import com.msaitodev.quiz.core.navigation.ResultDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.msaitodev.quiz.core.domain.model.ScoreEntry
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
-import com.msaitodev.quiz.core.domain.repository.RemoteConfigRepository
 import com.msaitodev.quiz.core.domain.repository.ScoreRepository
 import com.msaitodev.quiz.core.domain.repository.StudyQuotaRepository
 import com.msaitodev.quiz.core.domain.usecase.StartNextQuizUseCase
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -53,13 +53,16 @@ class ResultViewModel @Inject constructor(
     private val studyQuotaRepository: StudyQuotaRepository,
     private val scoreRepo: ScoreRepository,
     private val interstitialHelper: InterstitialHelper,
-    private val remoteConfigRepo: RemoteConfigRepository,
+    private val rewardedHelper: RewardedHelper,
     private val premiumRepository: PremiumRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _effect = MutableSharedFlow<ResultEffect>()
     val effect = _effect.asSharedFlow()
+
+    /** 購読状態を UI 側に公開 */
+    val isPremium: StateFlow<Boolean> = premiumRepository.isPremium
 
     private val questionsJson: String? = savedStateHandle[ResultDestination.ARG_QUESTIONS_JSON]
     private val answersJson: String? = savedStateHandle[ResultDestination.ARG_ANSWERS_JSON]
@@ -87,21 +90,20 @@ class ResultViewModel @Inject constructor(
     }
 
     private suspend fun showInterstitial(activity: Activity) {
-        // UMP 同意がない場合は表示処理自体をスキップ
         if (!ConsentManager.canRequestAds(activity)) return
 
-        val isPremium = premiumRepository.isPremium.first()
-        val interstitialEnabled = remoteConfigRepo.getBoolean(RemoteConfigKeys.INTERSTITIAL_ENABLED) && !isPremium
-        if (interstitialEnabled) {
-            val cap = remoteConfigRepo.getLong(RemoteConfigKeys.INTERSTITIAL_CAP_PER_SESSION).toInt()
-            val intervalSec = remoteConfigRepo.getLong(RemoteConfigKeys.INTER_SESSION_INTERVAL_SEC)
-            interstitialHelper.tryShow(activity, true, cap, intervalSec)
-        }
+        val isPremiumValue = premiumRepository.isPremium.first()
+
+        // リワード広告を既に視聴済みの場合は、広告の連続表示を避けるためインタースティシャルをスキップする
+        val canShowReward = rewardedHelper.canShowToday.first()
+        if (!canShowReward) return
+        
+        // プレミアムチェックや表示制限（1日1回）は Helper 内部で自動判定される
+        interstitialHelper.tryShow(activity, isPremium = isPremiumValue)
     }
 
     /**
      * 「次のセットへ」がクリックされた時の処理。
-     * @param canRequestAds 広告リクエストが可能か（UMP同意済みなど）
      */
     fun onNextSetClicked(canRequestAds: Boolean) {
         viewModelScope.launch {
@@ -110,7 +112,6 @@ class ResultViewModel @Inject constructor(
                     _effect.emit(ResultEffect.StartNewQuiz)
                 }
                 StartNextQuizUseCase.Result.ShowRewardOffer -> {
-                    // 同意がある場合のみリワードオファーを出す
                     if (canRequestAds) {
                         _effect.emit(ResultEffect.ShowRewardOffer)
                     } else {
@@ -137,13 +138,8 @@ class ResultViewModel @Inject constructor(
 
     fun onRewardGranted() {
         viewModelScope.launch {
-            try {
-                studyQuotaRepository.grantByReward()
-                _effect.emit(ResultEffect.RewardGranted)
-                _effect.emit(ResultEffect.StartNewQuiz)
-            } catch (e: Exception) {
-                _effect.emit(ResultEffect.RewardGrantFailed)
-            }
+            _effect.emit(ResultEffect.RewardGranted)
+            _effect.emit(ResultEffect.StartNewQuiz)
         }
     }
 }
