@@ -2,6 +2,7 @@ package com.msaitodev.quiz.core.data.repository
 
 import android.content.Context
 import com.msaitodev.core.common.config.AppAssetConfig
+import com.msaitodev.core.common.util.CryptoUtils
 import com.msaitodev.quiz.core.data.local.dto.QuestionDto
 import com.msaitodev.quiz.core.data.mapper.toDomain
 import com.msaitodev.quiz.core.domain.model.Question
@@ -28,7 +29,7 @@ class QuestionRepositoryImpl @Inject constructor(
 
         val allQuestions = mutableListOf<QuestionDto>()
         
-        // 指定されたディレクトリ配下のファイルをスキャン
+        // 指定されたディレクトリ配下のファイルをスキャン (.bin ファイルを対象とする)
         loadQuestionsRecursively(config.assetDataDirectory, allQuestions)
 
         val questions = allQuestions.map { it.toDomain() }
@@ -41,11 +42,16 @@ class QuestionRepositoryImpl @Inject constructor(
         val items = assets.list(path) ?: return
 
         if (items.isEmpty()) {
-            if (path.endsWith(".json")) {
-                assets.open(path).bufferedReader().use { reader ->
-                    val text = reader.readText()
-                    val dtos = json.decodeFromString(ListSerializer(QuestionDto.serializer()), text)
-                    outList.addAll(dtos)
+            // 暗号化されたバイナリファイル (.bin) を読み込む
+            if (path.endsWith(".bin")) {
+                assets.open(path).use { encryptedStream ->
+                    // 復号されたストリームを取得
+                    val decryptedStream = CryptoUtils.decryptStream(encryptedStream)
+                    decryptedStream.bufferedReader().use { reader ->
+                        val text = reader.readText()
+                        val dtos = json.decodeFromString(ListSerializer(QuestionDto.serializer()), text)
+                        outList.addAll(dtos)
+                    }
                 }
             }
         } else {

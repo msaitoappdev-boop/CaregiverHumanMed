@@ -2,7 +2,7 @@ package com.msaitodev.quiz.core.data.repository
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import com.msaitodev.quiz.core.common.billing.BillingManager
+import com.msaitodev.core.common.billing.BillingManager
 import com.msaitodev.quiz.core.data.repository.PremiumRepositoryImpl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
