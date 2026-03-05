@@ -29,8 +29,8 @@ class QuestionRepositoryImpl @Inject constructor(
 
         val allQuestions = mutableListOf<Question>()
         
-        // 指定されたディレクトリ配下のファイルをスキャン
-        loadQuestionsRecursively(config.assetDataDirectory, "", allQuestions)
+        // 指定されたルートディレクトリ配下をスキャン
+        loadQuestionsRecursively(config.assetDataDirectory, "unclassified", allQuestions)
 
         val questions = allQuestions
         cachedQuestions = questions
@@ -39,15 +39,15 @@ class QuestionRepositoryImpl @Inject constructor(
 
     /**
      * @param path 現在スキャン中のアセットパス
-     * @param currentCategory 現在のディレクトリ名（カテゴリとして使用）
+     * @param parentCategory 現在のパスの親ディレクトリ名（カテゴリとして使用）
      * @param outList 変換後の Domain モデルを格納するリスト
      */
-    private fun loadQuestionsRecursively(path: String, currentCategory: String, outList: MutableList<Question>) {
+    private fun loadQuestionsRecursively(path: String, parentCategory: String, outList: MutableList<Question>) {
         val assets = context.assets
         val items = assets.list(path) ?: return
 
         if (items.isEmpty()) {
-            // 暗号化されたバイナリファイル (.bin) を読み込む
+            // ファイルに到達。parentCategory には直近のディレクトリ名が入っている。
             if (path.endsWith(".bin")) {
                 assets.open(path).use { encryptedStream ->
                     val decryptedStream = CryptoUtils.decryptStream(encryptedStream)
@@ -55,19 +55,25 @@ class QuestionRepositoryImpl @Inject constructor(
                         val text = reader.readText()
                         val dtos = json.decodeFromString(ListSerializer(QuestionDto.serializer()), text)
                         
-                        // ディレクトリ名をカテゴリ名として付与して変換
-                        // currentCategory が空の場合は "general" などのデフォルト値を検討
-                        val category = currentCategory.ifEmpty { "unclassified" }
-                        outList.addAll(dtos.map { it.toDomain(category) })
+                        // 正しいカテゴリ名を付与して変換
+                        outList.addAll(dtos.map { it.toDomain(parentCategory) })
                     }
                 }
             }
         } else {
+            // ディレクトリの場合
             for (item in items) {
                 val fullPath = if (path.isEmpty()) item else "$path/$item"
-                // ディレクトリ名を次の階層のカテゴリ候補として渡す
-                // (quiz_data/01_human_social/ の場合、"01_human_social" がカテゴリになる)
-                loadQuestionsRecursively(fullPath, item, outList)
+                
+                // item がファイルかディレクトリか判断するために assets.list(fullPath) を確認
+                val subItems = assets.list(fullPath)
+                if (subItems != null && subItems.isNotEmpty()) {
+                    // サブディレクトリがある場合は、このディレクトリ名を新しいカテゴリとして再帰
+                    loadQuestionsRecursively(fullPath, item, outList)
+                } else {
+                    // ファイル、あるいは空ディレクトリの場合は、現在の parentCategory を維持して再帰
+                    loadQuestionsRecursively(fullPath, parentCategory, outList)
+                }
             }
         }
     }

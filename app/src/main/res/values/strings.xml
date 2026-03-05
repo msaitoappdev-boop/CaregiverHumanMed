@@ -40,6 +40,13 @@
     <string name="settings_weakness_mode_title">弱点特訓モード</string>
     <string name="settings_weakness_mode_desc">ONにすると、過去に間違えた問題を優先的に出題します。</string>
 
+    <!-- Category Names (Used for Analysis) -->
+    <string name="cat_01_human_social">人間と社会</string>
+    <string name="cat_02_care_basic">介護の基本</string>
+    <string name="cat_03_mind_body">こころとからだのしくみ</string>
+    <string name="cat_04_medical_care">医療的ケア</string>
+    <string name="cat_unclassified">未分類</string>
+
     <!-- Dialogs -->
     <string name="dialog_rewarded_ad_title">今日は無料分が終了しました</string>
     <string name="dialog_rewarded_ad_message">動画を視聴すると +1 セット解放できます。視聴しますか？</string>

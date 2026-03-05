@@ -1,5 +1,3 @@
-include(":quiz-feature-history")
-
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -28,5 +26,7 @@ include(":feature-billing")
 include(":feature-settings")
 include(":core-notifications")
 include(":quiz-feature-main")
+include(":quiz-feature-history")
+include(":quiz-feature-analysis")
 include(":core-navigation")
 include(":quiz-core-navigation")

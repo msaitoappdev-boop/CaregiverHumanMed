@@ -10,12 +10,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +41,7 @@ internal fun HomeScreen(
     showOfferDialog: Boolean,
     onStartQuiz: () -> Unit,
     onStartWeaknessTraining: () -> Unit,
+    onAnalysisClicked: () -> Unit,
     onViewHistory: () -> Unit,
     onUpgrade: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -50,7 +53,7 @@ internal fun HomeScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.home_title)) },
                 actions = {
-                    if (!uiState.canShowFullExplanation) {
+                    if (!uiState.isPremium) {
                         IconButton(onClick = onUpgrade) {
                             Icon(
                                 imageVector = Icons.Filled.WorkspacePremium,
@@ -86,18 +89,14 @@ internal fun HomeScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // 弱点特訓 (Premium): プレミアムなら常に活性。データ不足時はクリック後に通知。
+            // 弱点特訓
             OutlinedButton(
                 onClick = onStartWeaknessTraining,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading // 常に活性化
+                enabled = !uiState.isLoading
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Psychology,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Icon(Icons.Default.Psychology, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.home_weakness_training))
                     Text(
@@ -105,14 +104,33 @@ internal fun HomeScreen(
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(start = 4.dp)
                     )
-                    if (uiState.isWeaknessTrainingLocked) {
+                    if (!uiState.isPremium) {
                         Spacer(Modifier.width(8.dp))
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = "Locked",
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.outline
-                        )
+                        Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(14.dp))
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // 学習分析
+            OutlinedButton(
+                onClick = onAnalysisClicked,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Analytics, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("学習分析")
+                    Text(
+                        text = stringResource(R.string.home_premium_label),
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                    if (!uiState.isPremium) {
+                        Spacer(Modifier.width(8.dp))
+                        Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(14.dp))
                     }
                 }
             }
