@@ -38,8 +38,8 @@ android {
 }
 
 dependencies {
-
     implementation(project(":core-common"))
+
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-ktx:1.9.0")
     implementation("com.google.android.gms:play-services-ads:22.6.0")

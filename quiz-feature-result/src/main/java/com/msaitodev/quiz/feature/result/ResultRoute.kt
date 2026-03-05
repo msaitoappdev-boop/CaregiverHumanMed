@@ -7,11 +7,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.msaitodev.core.ads.ConsentManager
 import com.msaitodev.core.ads.RewardedHelper
+import kotlinx.coroutines.launch
 
 @Composable
 fun ResultRoute(
@@ -34,6 +38,9 @@ fun ResultRoute(
     }
 
     val activity = LocalContext.current as Activity
+    val scope = rememberCoroutineScope()
+    val isPremium by viewModel.isPremium.collectAsStateWithLifecycle()
+
     LaunchedEffect(Unit) {
         viewModel.onScreenShown(activity, score, total, pct)
     }
@@ -73,17 +80,21 @@ fun ResultRoute(
         showOfferDialog = showOffer,
         onOfferConfirm = {
             showOffer = false
-            rewardedHelper.show(
-                activity = activity,
-                canShowToday = { true },
-                onEarned = { viewModel.onRewardGranted() },
-                onFail = {
+            scope.launch {
+                // RewardedHelper.tryShow に購読状態を渡す
+                val success = rewardedHelper.tryShow(activity, isPremium = isPremium)
+                if (success) {
+                    viewModel.onRewardGranted()
+                } else {
                     Toast.makeText(context, R.string.result_ad_load_failed, Toast.LENGTH_SHORT).show()
                 }
-            )
+            }
         },
         onOfferDismiss = { showOffer = false },
-        onNextSet = { viewModel.onNextSetClicked() },
+        onNextSet = {
+            val canRequestAds = ConsentManager.canRequestAds(context)
+            viewModel.onNextSetClicked(canRequestAds)
+        },
         onReviewSameOrder = onReviewSameOrder,
         onReviewList = { viewModel.onReviewClicked() },
         onScoreHistory = onShowScoreHistory,

@@ -1,6 +1,7 @@
 package com.msaitodev.core.ads
 
 import android.app.Activity
+import android.content.Context
 import com.google.android.ump.ConsentDebugSettings
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
@@ -41,5 +42,14 @@ object ConsentManager {
                 onReady()
             }
         )
+    }
+
+    /**
+     * 広告リクエストが可能かどうかを判定します。
+     * UMP SDK 2.1.0 以降の canRequestAds() を使用します。
+     */
+    fun canRequestAds(context: Context): Boolean {
+        val ci = UserMessagingPlatform.getConsentInformation(context)
+        return ci.canRequestAds()
     }
 }
