@@ -10,12 +10,12 @@ import com.msaitodev.quiz.core.navigation.AnalysisDestination
  */
 fun NavGraphBuilder.analysisGraph(
     navController: NavController,
-    onNavigateToQuiz: () -> Unit // 追加
+    onNavigateToSettings: () -> Unit
 ) {
     composable(route = AnalysisDestination.route) {
         AnalysisRoute(
             onBack = { navController.popBackStack() },
-            onNavigateToQuiz = onNavigateToQuiz // 追加
+            onNavigateToSettings = onNavigateToSettings
         )
     }
 }

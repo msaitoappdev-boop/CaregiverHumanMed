@@ -9,7 +9,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @Composable
 fun AnalysisRoute(
     onBack: () -> Unit,
-    onNavigateToQuiz: () -> Unit, // 追加
+    onNavigateToSettings: () -> Unit,
     viewModel: AnalysisViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -17,7 +17,7 @@ fun AnalysisRoute(
     LaunchedEffect(viewModel.event) {
         viewModel.event.collect { event ->
             when (event) {
-                is AnalysisEvent.NavigateToQuiz -> onNavigateToQuiz()
+                is AnalysisEvent.NavigateToSettings -> onNavigateToSettings()
             }
         }
     }

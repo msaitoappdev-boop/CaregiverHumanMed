@@ -1,5 +1,6 @@
 package com.msaitodev.quiz.feature.analysis
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,13 +17,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.msaitodev.quiz.core.domain.model.LearningAnalysis
 import com.msaitodev.quiz.core.domain.model.TrendPeriod
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,15 +40,18 @@ internal fun AnalysisScreen(
     uiState: AnalysisUiState,
     onBack: () -> Unit,
     onPeriodChange: (TrendPeriod) -> Unit,
-    onCategoryClick: (String) -> Unit // 追加
+    onCategoryClick: (String) -> Unit
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("学習分析") },
+                title = { Text(stringResource(R.string.analysis_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.analysis_back)
+                        )
                     }
                 }
             )
@@ -59,7 +72,7 @@ internal fun AnalysisScreen(
                 AnalysisContent(
                     modifier = Modifier.weight(1f),
                     analysis = uiState.analysis,
-                    onCategoryClick = onCategoryClick // 追加
+                    onCategoryClick = onCategoryClick
                 )
             }
         }
@@ -78,9 +91,9 @@ private fun PeriodSelector(
     ) {
         TrendPeriod.entries.forEachIndexed { index, period ->
             val label = when (period) {
-                TrendPeriod.DAILY -> "日"
-                TrendPeriod.WEEKLY -> "週"
-                TrendPeriod.MONTHLY -> "月"
+                TrendPeriod.DAILY -> stringResource(R.string.analysis_period_day)
+                TrendPeriod.WEEKLY -> stringResource(R.string.analysis_period_week)
+                TrendPeriod.MONTHLY -> stringResource(R.string.analysis_period_month)
             }
             SegmentedButton(
                 shape = SegmentedButtonDefaults.itemShape(index = index, count = TrendPeriod.entries.size),
@@ -97,7 +110,7 @@ private fun PeriodSelector(
 private fun AnalysisContent(
     modifier: Modifier = Modifier,
     analysis: LearningAnalysis,
-    onCategoryClick: (String) -> Unit // 追加
+    onCategoryClick: (String) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -106,23 +119,29 @@ private fun AnalysisContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
+        // アドバイス欄の背景色を設定画面のカードと統一 (surfaceVariant)
         Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Info, contentDescription = null)
+                Icon(
+                    Icons.Default.Info, 
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
                 Spacer(Modifier.width(12.dp))
                 Text(
                     text = analysis.overallComment,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
-        AnalysisSection(title = "総合進捗", icon = Icons.Default.Timeline) {
+        AnalysisSection(title = stringResource(R.string.analysis_section_overall), icon = Icons.Default.Timeline) {
             Column {
                 LinearProgressIndicator(
                     progress = { analysis.totalProgress },
@@ -130,25 +149,34 @@ private fun AnalysisContent(
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "全問題の ${(analysis.totalProgress * 100).toInt()}% を学習済み",
+                    text = stringResource(R.string.analysis_total_progress_format, (analysis.totalProgress * 100).toInt()),
                     style = MaterialTheme.typography.labelMedium
                 )
             }
         }
 
-        AnalysisSection(title = "分野別正解率", icon = Icons.Default.BarChart) {
+        AnalysisSection(title = stringResource(R.string.analysis_section_balance), icon = Icons.Default.BarChart) {
+            RadarChart(
+                summaries = analysis.categorySummaries,
+                modifier = Modifier
+                    .padding(vertical = 16.dp)
+                    .fillMaxWidth()
+            )
+        }
+
+        AnalysisSection(title = stringResource(R.string.analysis_section_details), icon = Icons.Default.BarChart) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 analysis.categorySummaries.forEach { summary ->
                     CategoryItem(
                         summary = summary,
-                        onClick = { onCategoryClick(summary.categoryId) } // 追加
+                        onClick = { onCategoryClick(summary.categoryId) }
                     )
                 }
             }
         }
 
         if (analysis.dailyTrend.isNotEmpty()) {
-            AnalysisSection(title = "正解率の推移", icon = Icons.Default.Timeline) {
+            AnalysisSection(title = stringResource(R.string.analysis_section_trend), icon = Icons.Default.Timeline) {
                 DailyTrendChart(analysis.dailyTrend)
             }
         }
@@ -174,9 +202,105 @@ private fun AnalysisSection(
 }
 
 @Composable
+private fun RadarChart(
+    summaries: List<LearningAnalysis.CategorySummary>,
+    modifier: Modifier = Modifier
+) {
+    val count = summaries.size
+    if (count < 3) return
+
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val outlineColor = MaterialTheme.colorScheme.outlineVariant
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+    
+    val density = LocalDensity.current
+    val labelFontSize = with(density) { 10.sp.toPx() }
+
+    Box(modifier = modifier.aspectRatio(1.2f), contentAlignment = Alignment.Center) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val center = Offset(size.width / 2, size.height / 2)
+            val maxRadius = size.minDimension / 2 * 0.75f
+            val angleStep = (2 * PI / count).toFloat()
+
+            // 1. ガイドライン（同心円状の多角形）の描画
+            for (i in 1..5) {
+                val r = maxRadius * (i / 5f)
+                val path = Path()
+                for (j in 0 until count) {
+                    val angle = j * angleStep - PI.toFloat() / 2
+                    val x = center.x + r * cos(angle)
+                    val y = center.y + r * sin(angle)
+                    if (j == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                }
+                path.close()
+                drawPath(path, outlineColor, style = Stroke(width = 1.dp.toPx()))
+            }
+
+            // 2. 軸線の描画
+            for (j in 0 until count) {
+                val angle = j * angleStep - PI.toFloat() / 2
+                val x = center.x + maxRadius * cos(angle)
+                val y = center.y + maxRadius * sin(angle)
+                drawLine(outlineColor, center, Offset(x, y), strokeWidth = 1.dp.toPx())
+            }
+
+            // 3. データの描画
+            val dataPath = Path()
+            for (j in 0 until count) {
+                val angle = j * angleStep - PI.toFloat() / 2
+                val r = maxRadius * summaries[j].accuracyRate.coerceIn(0f, 1f)
+                val x = center.x + r * cos(angle)
+                val y = center.y + r * sin(angle)
+                if (j == 0) dataPath.moveTo(x, y) else dataPath.lineTo(x, y)
+            }
+            dataPath.close()
+            drawPath(dataPath, primaryColor.copy(alpha = 0.3f))
+            drawPath(dataPath, primaryColor, style = Stroke(width = 2.dp.toPx()))
+
+            // 4. ラベルの描画
+            for (j in 0 until count) {
+                val angle = j * angleStep - PI.toFloat() / 2
+                val labelRadius = maxRadius + 20.dp.toPx()
+                val x = center.x + labelRadius * cos(angle)
+                val y = center.y + labelRadius * sin(angle)
+                
+                val categoryName = summaries[j].categoryName
+                drawContext.canvas.nativeCanvas.apply {
+                    val paint = android.graphics.Paint().apply {
+                        textSize = labelFontSize
+                        textAlign = when {
+                            cos(angle) > 0.1 -> android.graphics.Paint.Align.LEFT
+                            cos(angle) < -0.1 -> android.graphics.Paint.Align.RIGHT
+                            else -> android.graphics.Paint.Align.CENTER
+                        }
+                        isAntiAlias = true
+                        typeface = android.graphics.Typeface.DEFAULT_BOLD
+                    }
+                    
+                    // アプリ共通の色を使用 (Color -> ARGB)
+                    paint.color = android.graphics.Color.argb(
+                        (labelColor.alpha * 255).toInt(),
+                        (labelColor.red * 255).toInt(),
+                        (labelColor.green * 255).toInt(),
+                        (labelColor.blue * 255).toInt()
+                    )
+                    
+                    drawText(
+                        if (categoryName.length > 6) categoryName.take(5) + ".." else categoryName,
+                        x,
+                        y + labelFontSize / 2,
+                        paint
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun CategoryItem(
     summary: LearningAnalysis.CategorySummary,
-    onClick: () -> Unit // 追加
+    onClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -196,7 +320,7 @@ private fun CategoryItem(
             color = if (summary.accuracyRate > 0.7f) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
         )
         Text(
-            text = "この分野を特訓する >",
+            text = stringResource(R.string.analysis_train_category_action),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.align(Alignment.End).padding(top = 4.dp)
