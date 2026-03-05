@@ -37,6 +37,8 @@
 
     <!-- Settings -->
     <string name="settings_title">設定</string>
+    <string name="settings_weakness_mode_title">弱点特訓モード</string>
+    <string name="settings_weakness_mode_desc">ONにすると、過去に間違えた問題を優先的に出題します。</string>
 
     <!-- Dialogs -->
     <string name="dialog_rewarded_ad_title">今日は無料分が終了しました</string>

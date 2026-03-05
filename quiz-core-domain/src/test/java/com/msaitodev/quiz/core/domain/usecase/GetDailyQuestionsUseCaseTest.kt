@@ -5,54 +5,41 @@ import com.msaitodev.quiz.core.domain.model.Question
 import com.msaitodev.quiz.core.domain.repository.QuestionRepository
 import com.msaitodev.quiz.core.domain.ui.DailyQuestionSelector
 import kotlinx.coroutines.test.runTest
+import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 class GetDailyQuestionsUseCaseTest {
 
-    // テスト用の偽Repository
-    private class FakeQuestionRepository(private val questions: List<Question>) : QuestionRepository {
-        override suspend fun loadAll(): List<Question> {
-            return questions
-        }
+    private lateinit var questionRepository: QuestionRepository
+    private lateinit var selector: DailyQuestionSelector
+    private lateinit var useCase: GetDailyQuestionsUseCase
 
-        override suspend fun getRandomUnseenQuestions(count: Int, excludingIds: Set<String>): List<Question> {
-            // このテストでは使わない
-            return emptyList()
-        }
-    }
-
-    // テスト用の偽Selector
-    private class FakeDailyQuestionSelector : DailyQuestionSelector() {
-        var select_was_called = false
-        // selectが呼ばれたら、渡されたリストをそのまま返す
-        override fun select(all: List<Question>, count: Int): List<Question> {
-            select_was_called = true
-            return all.take(count)
-        }
+    @Before
+    fun setup() {
+        questionRepository = mock()
+        selector = mock()
+        useCase = GetDailyQuestionsUseCase(questionRepository, selector)
     }
 
     @Test
-    fun `invoke calls dependencies and returns correctly`() = runTest {
-        // GIVEN: 3つの質問を持つ偽Repositoryと、透過的な偽Selector、そしてUseCaseを準備
+    fun `invoke - loads all questions and selects from them`() = runTest {
+        // GIVEN
         val allQuestions = listOf(
-            Question("q1", "text1", emptyList(), 0, ""),
-            Question("q2", "text2", emptyList(), 0, ""),
-            Question("q3", "text3", emptyList(), 0, "")
+            Question("1", "cat", "Q1", emptyList(), 0, null),
+            Question("2", "cat", "Q2", emptyList(), 0, null)
         )
-        val fakeRepository = FakeQuestionRepository(allQuestions)
-        val fakeSelector = FakeDailyQuestionSelector()
-        val getDailyQuestionsUseCase = GetDailyQuestionsUseCase(fakeRepository, fakeSelector)
-
-        // WHEN: UseCaseを実行する (2つの質問を要求)
-        val result = getDailyQuestionsUseCase(count = 2)
-
-        // THEN: Selectorのselectメソッドが呼ばれたことを確認
-        assertThat(fakeSelector.select_was_called).isTrue()
-
-        // THEN: 結果のリストサイズが2であることを確認
-        assertThat(result).hasSize(2)
+        val selected = listOf(allQuestions[0])
         
-        // THEN: 結果が期待通りであることを確認
-        assertThat(result.map { it.id }).containsExactly("q1", "q2").inOrder()
+        whenever(questionRepository.loadAll()) doReturn allQuestions
+        whenever(selector.select(allQuestions, 1)) doReturn selected
+
+        // WHEN
+        val result = useCase(1)
+
+        // THEN
+        assertThat(result).isEqualTo(selected)
     }
 }

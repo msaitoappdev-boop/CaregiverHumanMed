@@ -23,7 +23,10 @@ data class SettingsUiState(
     val reminderEnabled: Boolean = ReminderPrefs.DEFAULT_ENABLED,
     val hour: Int = ReminderPrefs.DEFAULT_HOUR,
     val minute: Int = ReminderPrefs.DEFAULT_MINUTE,
-    val isPremium: Boolean = false
+    val isPremium: Boolean = false,
+    val isWeaknessMode: Boolean = false,
+    val weaknessModeTitle: String = "",
+    val weaknessModeDescription: String = ""
 )
 
 sealed interface SettingsEvent {
@@ -39,7 +42,12 @@ class SettingsViewModel @Inject constructor(
     private val settingsProvider: SettingsProvider
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SettingsUiState())
+    private val _uiState = MutableStateFlow(
+        SettingsUiState(
+            weaknessModeTitle = settingsProvider.weaknessModeTitle,
+            weaknessModeDescription = settingsProvider.weaknessModeDescription
+        )
+    )
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     private val _events = MutableSharedFlow<SettingsEvent>()
@@ -55,13 +63,17 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 dataStore.data,
-                billingManager.isPremium
-            ) { prefs, isPremium ->
+                billingManager.isPremium,
+                settingsProvider.isWeaknessMode
+            ) { prefs, isPremium, isWeaknessMode ->
                 SettingsUiState(
                     reminderEnabled = prefs[ReminderPrefs.ENABLED] ?: ReminderPrefs.DEFAULT_ENABLED,
                     hour = prefs[ReminderPrefs.HOUR] ?: ReminderPrefs.DEFAULT_HOUR,
                     minute = prefs[ReminderPrefs.MINUTE] ?: ReminderPrefs.DEFAULT_MINUTE,
-                    isPremium = isPremium
+                    isPremium = isPremium,
+                    isWeaknessMode = isWeaknessMode,
+                    weaknessModeTitle = settingsProvider.weaknessModeTitle,
+                    weaknessModeDescription = settingsProvider.weaknessModeDescription
                 )
             }.collectLatest {
                 _uiState.value = it
@@ -84,14 +96,19 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /** 弱点特訓モードの設定を更新 */
+    fun setWeaknessModeEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsProvider.updateWeaknessMode(enabled)
+        }
+    }
+
     /**
      * 購入情報の復元を試行します。
-     * 結果は [SettingsEvent.RestoreResult] を通じて UI へ通知されます。
      */
     fun restorePurchases() {
         viewModelScope.launch {
             try {
-                // 実際にプレミアム権限が見つかったかどうかを取得
                 val hasPremium = billingManager.refreshEntitlements()
                 val status = if (hasPremium) {
                     SettingsEvent.RestoreStatus.SUCCESS

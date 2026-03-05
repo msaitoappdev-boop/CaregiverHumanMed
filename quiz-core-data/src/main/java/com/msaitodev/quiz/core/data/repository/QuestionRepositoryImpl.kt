@@ -27,17 +27,22 @@ class QuestionRepositoryImpl @Inject constructor(
     override suspend fun loadAll(): List<Question> = withContext(Dispatchers.IO) {
         cachedQuestions?.let { return@withContext it }
 
-        val allQuestions = mutableListOf<QuestionDto>()
+        val allQuestions = mutableListOf<Question>()
         
-        // 指定されたディレクトリ配下のファイルをスキャン (.bin ファイルを対象とする)
-        loadQuestionsRecursively(config.assetDataDirectory, allQuestions)
+        // 指定されたディレクトリ配下のファイルをスキャン
+        loadQuestionsRecursively(config.assetDataDirectory, "", allQuestions)
 
-        val questions = allQuestions.map { it.toDomain() }
+        val questions = allQuestions
         cachedQuestions = questions
         questions
     }
 
-    private fun loadQuestionsRecursively(path: String, outList: MutableList<QuestionDto>) {
+    /**
+     * @param path 現在スキャン中のアセットパス
+     * @param currentCategory 現在のディレクトリ名（カテゴリとして使用）
+     * @param outList 変換後の Domain モデルを格納するリスト
+     */
+    private fun loadQuestionsRecursively(path: String, currentCategory: String, outList: MutableList<Question>) {
         val assets = context.assets
         val items = assets.list(path) ?: return
 
@@ -45,19 +50,24 @@ class QuestionRepositoryImpl @Inject constructor(
             // 暗号化されたバイナリファイル (.bin) を読み込む
             if (path.endsWith(".bin")) {
                 assets.open(path).use { encryptedStream ->
-                    // 復号されたストリームを取得
                     val decryptedStream = CryptoUtils.decryptStream(encryptedStream)
                     decryptedStream.bufferedReader().use { reader ->
                         val text = reader.readText()
                         val dtos = json.decodeFromString(ListSerializer(QuestionDto.serializer()), text)
-                        outList.addAll(dtos)
+                        
+                        // ディレクトリ名をカテゴリ名として付与して変換
+                        // currentCategory が空の場合は "general" などのデフォルト値を検討
+                        val category = currentCategory.ifEmpty { "unclassified" }
+                        outList.addAll(dtos.map { it.toDomain(category) })
                     }
                 }
             }
         } else {
             for (item in items) {
                 val fullPath = if (path.isEmpty()) item else "$path/$item"
-                loadQuestionsRecursively(fullPath, outList)
+                // ディレクトリ名を次の階層のカテゴリ候補として渡す
+                // (quiz_data/01_human_social/ の場合、"01_human_social" がカテゴリになる)
+                loadQuestionsRecursively(fullPath, item, outList)
             }
         }
     }

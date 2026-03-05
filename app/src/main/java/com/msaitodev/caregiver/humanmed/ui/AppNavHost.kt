@@ -70,7 +70,9 @@ internal fun AppNavHost(
         composable(HomeDestination.route) {
             HomeRoute(
                 rewardedHelper = rewardedHelper,
-                onStartQuiz = { navController.navigate(QuizDestination.route) },
+                onStartQuiz = { 
+                    navController.navigate(QuizDestination.route)
+                },
                 onViewHistory = { navController.navigate(HistoryDestination.route) },
                 onUpgrade = { navController.navigate(PaywallDestination.route) },
                 onOpenSettings = { navController.navigate(SettingsDestination.route) }

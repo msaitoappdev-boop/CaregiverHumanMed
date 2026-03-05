@@ -36,5 +36,6 @@ dependencies {
     testImplementation("com.google.truth:truth:1.1.5")
     testImplementation("app.cash.turbine:turbine:1.0.0")
     testImplementation("org.mockito:mockito-core:4.11.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }

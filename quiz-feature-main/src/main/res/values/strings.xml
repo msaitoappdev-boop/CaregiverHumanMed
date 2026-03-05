@@ -4,6 +4,8 @@
     <string name="home_start_quiz">クイズを開始</string>
     <string name="home_view_history">スコア履歴を見る</string>
     <string name="home_upgrade_to_premium">プレミアムへアップグレード</string>
+    <string name="home_weakness_training">弱点特訓</string>
+    <string name="home_premium_label">(Premium)</string>
 
     <!-- リワード・上限関連メッセージ -->
     <string name="home_reward_granted">報酬を獲得しました！あと 1 セット追加で学習できます。</string>

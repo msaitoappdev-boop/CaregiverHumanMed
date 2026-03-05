@@ -9,16 +9,19 @@ import com.msaitodev.core.ads.InterstitialHelper
 import com.msaitodev.core.ads.RewardedHelper
 import com.msaitodev.quiz.core.navigation.ResultDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.msaitodev.quiz.core.domain.model.Question
 import com.msaitodev.quiz.core.domain.model.ScoreEntry
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import com.msaitodev.quiz.core.domain.repository.ScoreRepository
 import com.msaitodev.quiz.core.domain.repository.StudyQuotaRepository
+import com.msaitodev.quiz.core.domain.repository.WrongAnswerRepository
 import com.msaitodev.quiz.core.domain.usecase.StartNextQuizUseCase
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 sealed interface ResultEffect {
@@ -52,6 +55,7 @@ class ResultViewModel @Inject constructor(
     private val startNextQuiz: StartNextQuizUseCase,
     private val studyQuotaRepository: StudyQuotaRepository,
     private val scoreRepo: ScoreRepository,
+    private val wrongAnswerRepo: WrongAnswerRepository, // 追加
     private val interstitialHelper: InterstitialHelper,
     private val rewardedHelper: RewardedHelper,
     private val premiumRepository: PremiumRepository,
@@ -69,9 +73,12 @@ class ResultViewModel @Inject constructor(
     private val isReview: Boolean = savedStateHandle[ResultDestination.ARG_IS_REVIEW] ?: false
     private var hasProcessedResult = false
 
+    private val json = Json { ignoreUnknownKeys = true }
+
     fun onScreenShown(activity: Activity, score: Int, total: Int, pct: Int) {
         if (hasProcessedResult) return
         viewModelScope.launch {
+            // 1. スコア履歴の保存
             scoreRepo.add(ScoreEntry(
                 timestamp = System.currentTimeMillis(),
                 score = score,
@@ -79,13 +86,42 @@ class ResultViewModel @Inject constructor(
                 percent = pct
             ))
 
+            // 2. 復習でない場合のみ学習上限カウントを進め、各問題の正誤を記録
             if (!isReview) {
                 studyQuotaRepository.markSetFinished()
+                recordQuestionStats()
             }
 
             hasProcessedResult = true
 
+            // 3. インタースティシャル広告の試行
             showInterstitial(activity)
+        }
+    }
+
+    /**
+     * 各問題の正解・不正解を WrongAnswerRepository に記録する
+     */
+    private suspend fun recordQuestionStats() {
+        if (questionsJson == null || answersJson == null) return
+        
+        try {
+            val questions = json.decodeFromString<List<Question>>(questionsJson)
+            val answers = json.decodeFromString<List<Int>>(answersJson)
+
+            questions.forEachIndexed { index, question ->
+                val userAnswer = answers.getOrNull(index)
+                if (userAnswer != null) {
+                    if (userAnswer == question.correctIndex) {
+                        wrongAnswerRepo.recordCorrect(question.id)
+                    } else {
+                        wrongAnswerRepo.recordIncorrect(question.id)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // 解析エラー時はログを出力して続行（致命的なエラーにはしない）
+            android.util.Log.e("ResultViewModel", "Failed to record question stats", e)
         }
     }
 
@@ -98,7 +134,6 @@ class ResultViewModel @Inject constructor(
         val canShowReward = rewardedHelper.canShowToday.first()
         if (!canShowReward) return
         
-        // プレミアムチェックや表示制限（1日1回）は Helper 内部で自動判定される
         interstitialHelper.tryShow(activity, isPremium = isPremiumValue)
     }
 

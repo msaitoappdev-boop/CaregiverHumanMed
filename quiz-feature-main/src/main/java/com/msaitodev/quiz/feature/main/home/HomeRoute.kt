@@ -36,6 +36,8 @@ fun HomeRoute(
         viewModel.event.collect { event ->
             when (event) {
                 is HomeEvent.RequestNavigateToQuiz -> onStartQuiz()
+                is HomeEvent.RequestNavigateToSettings -> onOpenSettings()
+                is HomeEvent.RequestShowPaywall -> onUpgrade()
                 is HomeEvent.RequestShowRewardedAdOffer -> showOfferDialog = true
                 is HomeEvent.QuotaExceeded -> {
                     Toast.makeText(context, R.string.home_quota_exceeded, Toast.LENGTH_SHORT).show()
@@ -60,9 +62,11 @@ fun HomeRoute(
         uiState = uiState,
         showOfferDialog = showOfferDialog,
         onStartQuiz = {
-            // 広告リクエストが可能か（UMP同意済みか）を判定して ViewModel に渡す
             val canRequestAds = ConsentManager.canRequestAds(context)
             viewModel.onStartQuizClicked(canRequestAds)
+        },
+        onStartWeaknessTraining = {
+            viewModel.onStartWeaknessTrainingClicked()
         },
         onViewHistory = onViewHistory,
         onUpgrade = onUpgrade,
@@ -70,8 +74,6 @@ fun HomeRoute(
         onOfferConfirm = {
             showOfferDialog = false
             scope.launch {
-                // RewardedHelper.tryShow に購読状態を渡す
-                // uiState.canShowFullExplanation は isPremium と同等
                 val success = rewardedHelper.tryShow(activity, isPremium = uiState.canShowFullExplanation)
                 if (success) {
                     viewModel.onRewardGranted()
