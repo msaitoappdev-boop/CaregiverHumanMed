@@ -1,6 +1,7 @@
 package com.msaitodev.quiz.feature.analysis
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,7 +29,8 @@ import com.msaitodev.quiz.core.domain.model.TrendPeriod
 internal fun AnalysisScreen(
     uiState: AnalysisUiState,
     onBack: () -> Unit,
-    onPeriodChange: (TrendPeriod) -> Unit // 追加
+    onPeriodChange: (TrendPeriod) -> Unit,
+    onCategoryClick: (String) -> Unit // 追加
 ) {
     Scaffold(
         topBar = {
@@ -48,7 +50,6 @@ internal fun AnalysisScreen(
             }
         } else if (uiState.analysis != null) {
             Column(modifier = Modifier.padding(padding)) {
-                // 期間切り替えセレクターを上部に配置
                 PeriodSelector(
                     selectedPeriod = uiState.currentPeriod,
                     onPeriodChange = onPeriodChange,
@@ -57,7 +58,8 @@ internal fun AnalysisScreen(
                 
                 AnalysisContent(
                     modifier = Modifier.weight(1f),
-                    analysis = uiState.analysis
+                    analysis = uiState.analysis,
+                    onCategoryClick = onCategoryClick // 追加
                 )
             }
         }
@@ -94,7 +96,8 @@ private fun PeriodSelector(
 @Composable
 private fun AnalysisContent(
     modifier: Modifier = Modifier,
-    analysis: LearningAnalysis
+    analysis: LearningAnalysis,
+    onCategoryClick: (String) -> Unit // 追加
 ) {
     Column(
         modifier = modifier
@@ -103,7 +106,6 @@ private fun AnalysisContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        // 1. 総評カード
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
         ) {
@@ -120,7 +122,6 @@ private fun AnalysisContent(
             }
         }
 
-        // 2. 総合進捗
         AnalysisSection(title = "総合進捗", icon = Icons.Default.Timeline) {
             Column {
                 LinearProgressIndicator(
@@ -135,16 +136,17 @@ private fun AnalysisContent(
             }
         }
 
-        // 3. 分野別正解率
         AnalysisSection(title = "分野別正解率", icon = Icons.Default.BarChart) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 analysis.categorySummaries.forEach { summary ->
-                    CategoryItem(summary)
+                    CategoryItem(
+                        summary = summary,
+                        onClick = { onCategoryClick(summary.categoryId) } // 追加
+                    )
                 }
             }
         }
 
-        // 4. 学習トレンド
         if (analysis.dailyTrend.isNotEmpty()) {
             AnalysisSection(title = "正解率の推移", icon = Icons.Default.Timeline) {
                 DailyTrendChart(analysis.dailyTrend)
@@ -172,8 +174,17 @@ private fun AnalysisSection(
 }
 
 @Composable
-private fun CategoryItem(summary: LearningAnalysis.CategorySummary) {
-    Column {
+private fun CategoryItem(
+    summary: LearningAnalysis.CategorySummary,
+    onClick: () -> Unit // 追加
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp)
+    ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(summary.categoryName, style = MaterialTheme.typography.bodyMedium)
             Text("${(summary.accuracyRate * 100).toInt()}%", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
@@ -183,6 +194,12 @@ private fun CategoryItem(summary: LearningAnalysis.CategorySummary) {
             progress = { summary.accuracyRate },
             modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
             color = if (summary.accuracyRate > 0.7f) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = "この分野を特訓する >",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.align(Alignment.End).padding(top = 4.dp)
         )
     }
 }

@@ -76,7 +76,7 @@ internal fun AppNavHost(
                     navController.navigate(QuizDestination.route) 
                 },
                 onViewHistory = { navController.navigate(HistoryDestination.route) },
-                onViewAnalysis = { navController.navigate(AnalysisDestination.route) }, // 追加
+                onViewAnalysis = { navController.navigate(AnalysisDestination.route) },
                 onUpgrade = { navController.navigate(PaywallDestination.route) },
                 onOpenSettings = { navController.navigate(SettingsDestination.route) }
             )
@@ -110,7 +110,12 @@ internal fun AppNavHost(
 
         reviewGraph(navController)
         historyGraph(navController)
-        analysisGraph(navController) // 登録
+        analysisGraph(
+            navController = navController,
+            onNavigateToQuiz = {
+                navController.navigate(QuizDestination.route)
+            }
+        )
         paywallGraph()
         settingsGraph(onBack = { navController.popBackStack() })
     }

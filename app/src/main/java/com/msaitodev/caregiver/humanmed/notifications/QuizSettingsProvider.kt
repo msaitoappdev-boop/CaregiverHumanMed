@@ -5,8 +5,10 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import com.msaitodev.caregiver.humanmed.R
 import com.msaitodev.feature.settings.SettingsProvider
+import com.msaitodev.quiz.core.domain.repository.CategoryNameProvider
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -26,13 +28,15 @@ import javax.inject.Singleton
 class QuizSettingsProvider @Inject constructor(
     @ApplicationContext private val context: Context,
     private val dataStore: DataStore<Preferences>,
-    private val premiumRepository: PremiumRepository // 購読状態を監視するために追加
+    private val premiumRepository: PremiumRepository,
+    private val categoryNameProvider: CategoryNameProvider
 ) : SettingsProvider {
 
     private val scope = CoroutineScope(Dispatchers.IO)
 
     private object Keys {
         val IS_WEAKNESS_MODE = booleanPreferencesKey("is_weakness_mode")
+        val WEAKNESS_CATEGORY_ID = stringPreferencesKey("weakness_category_id")
     }
 
     init {
@@ -56,9 +60,23 @@ class QuizSettingsProvider @Inject constructor(
         it[Keys.IS_WEAKNESS_MODE] ?: false 
     }
 
-    override suspend fun updateWeaknessMode(enabled: Boolean) {
+    override val weaknessCategoryId: Flow<String?> = dataStore.data.map {
+        it[Keys.WEAKNESS_CATEGORY_ID]
+    }
+
+    override val weaknessCategoryName: Flow<String?> = dataStore.data.map { prefs ->
+        prefs[Keys.WEAKNESS_CATEGORY_ID]?.let { categoryNameProvider.getDisplayName(it) }
+    }
+
+    override suspend fun updateWeaknessMode(enabled: Boolean, categoryId: String?) {
         dataStore.edit { 
-            it[Keys.IS_WEAKNESS_MODE] = enabled 
+            it[Keys.IS_WEAKNESS_MODE] = enabled
+            if (categoryId != null) {
+                it[Keys.WEAKNESS_CATEGORY_ID] = categoryId
+            } else if (!enabled || categoryId == null) {
+                // 明示的な null 指定、または無効化時はカテゴリをクリアする
+                it.remove(Keys.WEAKNESS_CATEGORY_ID)
+            }
         }
     }
 }

@@ -34,6 +34,7 @@ dependencies {
     implementation(project(":core-common"))
     implementation(project(":quiz-core-domain"))
     implementation(project(":quiz-core-navigation"))
+    implementation(project(":feature-settings"))
 
     // AndroidX / Compose
     implementation("androidx.core:core-ktx:1.13.1")

@@ -21,6 +21,12 @@ interface SettingsProvider {
     /** 弱点特訓モードが有効かどうか */
     val isWeaknessMode: Flow<Boolean>
 
+    /** 弱点特訓モードのカテゴリー制限（null の場合は全カテゴリー） */
+    val weaknessCategoryId: Flow<String?>
+
+    /** 弱点特訓モードのカテゴリー名（null の場合は全カテゴリー） */
+    val weaknessCategoryName: Flow<String?>
+
     /** 弱点特訓モードの有効・無効を更新する */
-    suspend fun updateWeaknessMode(enabled: Boolean)
+    suspend fun updateWeaknessMode(enabled: Boolean, categoryId: String? = null)
 }

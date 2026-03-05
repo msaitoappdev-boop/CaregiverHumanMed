@@ -4,8 +4,23 @@
     <string name="home_start_quiz">クイズを開始</string>
     <string name="home_view_history">スコア履歴を見る</string>
     <string name="home_upgrade_to_premium">プレミアムへアップグレード</string>
-    <string name="home_weakness_training">弱点特訓</string>
+    <string name="home_weakness_training">弱点特訓 (全分野)</string>
     <string name="home_premium_label">(Premium)</string>
+
+    <!-- Quiz -->
+    <string name="quiz_question_format">第 %1$d 問 / 全 %2$d 問</string>
+    <string name="quiz_mode_daily">デイリー学習</string>
+    <string name="quiz_mode_weakness_all">弱点特訓 (全分野)</string>
+    <string name="quiz_mode_weakness_category">弱点特訓 (%1$s)</string>
+    <string name="quiz_mode_review">復習モード</string>
+    <string name="quiz_back">戻る</string>
+    <string name="quiz_tap_option">選択肢をタップしてください</string>
+    <string name="quiz_explanation_premium">解説の全文はプレミアムで解放されます。</string>
+    <string name="quiz_explanation_label">解説：%1$s</string>
+    <string name="quiz_upgrade_button">月額 ¥200 で解説を解放</string>
+    <string name="quiz_prev">前の問題へ</string>
+    <string name="quiz_next">次へ</string>
+    <string name="quiz_show_result">結果を見る</string>
 
     <!-- リワード・上限関連メッセージ -->
     <string name="home_reward_granted">報酬を獲得しました！あと 1 セット追加で学習できます。</string>

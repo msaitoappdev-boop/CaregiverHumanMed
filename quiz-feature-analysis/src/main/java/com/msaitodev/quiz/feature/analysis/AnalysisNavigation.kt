@@ -9,11 +9,13 @@ import com.msaitodev.quiz.core.navigation.AnalysisDestination
  * 学習分析画面のナビゲーション・グラフを構築する拡張関数。
  */
 fun NavGraphBuilder.analysisGraph(
-    navController: NavController
+    navController: NavController,
+    onNavigateToQuiz: () -> Unit // 追加
 ) {
     composable(route = AnalysisDestination.route) {
         AnalysisRoute(
-            onBack = { navController.popBackStack() }
+            onBack = { navController.popBackStack() },
+            onNavigateToQuiz = onNavigateToQuiz // 追加
         )
     }
 }
