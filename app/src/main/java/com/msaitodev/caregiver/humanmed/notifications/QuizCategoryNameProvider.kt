@@ -21,6 +21,7 @@ class QuizCategoryNameProvider @Inject constructor(
             "02_care_basic" -> R.string.cat_02_care_basic
             "03_mind_body" -> R.string.cat_03_mind_body
             "04_medical_care" -> R.string.cat_04_medical_care
+            "05_comprehensive" -> R.string.cat_05_comprehensive
             "unclassified" -> R.string.cat_unclassified
             else -> null
         }

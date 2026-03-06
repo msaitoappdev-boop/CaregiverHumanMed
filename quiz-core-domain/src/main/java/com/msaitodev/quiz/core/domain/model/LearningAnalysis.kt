@@ -32,6 +32,7 @@ data class LearningAnalysis(
 
     data class DailyScore(
         val dateLabel: String,
+        val dateKey: String, // 追加: yyyyMMdd 形式の日付キー
         val averageAccuracy: Float
     )
 

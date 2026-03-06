@@ -23,7 +23,6 @@ fun ResultScreen(
     onNextSet: () -> Unit,
     onReviewSameOrder: () -> Unit,
     onReviewList: () -> Unit,
-    onScoreHistory: () -> Unit,
     onBackToHome: () -> Unit,
     onNavUp: () -> Unit
 ) {
@@ -76,7 +75,7 @@ fun ResultScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // Secondary Actions
+            // Secondary Actions: 復習
             OutlinedButton(
                 onClick = onReviewSameOrder,
                 modifier = Modifier.fillMaxWidth()
@@ -89,16 +88,9 @@ fun ResultScreen(
                 modifier = Modifier.fillMaxWidth()
             ) { Text(stringResource(id = R.string.result_review_list)) }
 
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedButton(
-                onClick = onScoreHistory,
-                modifier = Modifier.fillMaxWidth()
-            ) { Text(stringResource(id = R.string.result_score_history)) }
-
             Spacer(Modifier.height(16.dp))
 
-            // Tertiary Action
+            // Tertiary Action: ホームへ
             TextButton(
                 onClick = onBackToHome,
                 modifier = Modifier.fillMaxWidth()

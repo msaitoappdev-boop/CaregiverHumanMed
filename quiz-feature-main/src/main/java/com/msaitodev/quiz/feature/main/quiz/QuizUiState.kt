@@ -14,6 +14,7 @@ data class QuizUiState(
     val questions: List<Question> = emptyList(),
     val total: Int = 0,
     val currentIndex: Int = 0,
+    val currentCategoryName: String = "",
     val selectedIndex: Int? = null,
     val isAnswered: Boolean = false,
     val correctCount: Int = 0,

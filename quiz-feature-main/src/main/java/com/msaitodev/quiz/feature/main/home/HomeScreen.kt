@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Psychology
@@ -141,25 +142,31 @@ internal fun HomeScreen(
                     Icon(Icons.Default.Analytics, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text("学習分析")
-                    Text(
-                        text = stringResource(R.string.home_premium_label),
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(start = 4.dp)
-                    )
                     if (!uiState.isPremium) {
+                        Text(
+                            text = stringResource(R.string.home_premium_label),
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
                         Spacer(Modifier.width(8.dp))
                         Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(14.dp))
                     }
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
-
-            OutlinedButton(
-                onClick = onViewHistory,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.home_view_history))
+            // スコア履歴 (無料ユーザーのみ表示)
+            if (!uiState.isPremium) {
+                Spacer(Modifier.height(16.dp))
+                OutlinedButton(
+                    onClick = onViewHistory,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.home_view_history))
+                    }
+                }
             }
         }
     }

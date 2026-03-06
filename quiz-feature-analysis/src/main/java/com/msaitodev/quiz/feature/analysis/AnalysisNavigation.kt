@@ -10,12 +10,14 @@ import com.msaitodev.quiz.core.navigation.AnalysisDestination
  */
 fun NavGraphBuilder.analysisGraph(
     navController: NavController,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onNavigateToHistory: (String) -> Unit
 ) {
     composable(route = AnalysisDestination.route) {
         AnalysisRoute(
             onBack = { navController.popBackStack() },
-            onNavigateToSettings = onNavigateToSettings
+            onNavigateToSettings = onNavigateToSettings,
+            onNavigateToHistory = onNavigateToHistory
         )
     }
 }

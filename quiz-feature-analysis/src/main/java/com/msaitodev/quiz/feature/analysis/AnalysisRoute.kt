@@ -10,6 +10,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun AnalysisRoute(
     onBack: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToHistory: (String) -> Unit,
     viewModel: AnalysisViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -18,6 +19,7 @@ fun AnalysisRoute(
         viewModel.event.collect { event ->
             when (event) {
                 is AnalysisEvent.NavigateToSettings -> onNavigateToSettings()
+                is AnalysisEvent.NavigateToHistory -> onNavigateToHistory(event.dateKey)
             }
         }
     }
@@ -30,6 +32,9 @@ fun AnalysisRoute(
         },
         onCategoryClick = { categoryId ->
             viewModel.onCategoryClicked(categoryId)
+        },
+        onDateClick = { dateKey ->
+            viewModel.onDateClicked(dateKey)
         }
     )
 }

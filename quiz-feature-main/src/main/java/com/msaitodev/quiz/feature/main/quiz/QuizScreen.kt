@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -31,7 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.msaitodev.core.common.ui.LocalAppColors
 import com.msaitodev.quiz.feature.main.R
 import kotlin.math.max
@@ -66,30 +71,52 @@ fun QuizScreen(
                 CenterAlignedTopAppBar(
                     title = {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            // メイン：進捗表示
                             Text(
                                 text = stringResource(
                                     id = R.string.quiz_question_format,
                                     state.currentIndex + 1,
                                     state.total
                                 ),
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                             )
                             
-                            val modeText = when (val mode = state.mode) {
-                                QuizMode.Daily -> stringResource(R.string.quiz_mode_daily)
-                                QuizMode.Review -> stringResource(R.string.quiz_mode_review)
-                                QuizMode.WeaknessAll -> stringResource(R.string.quiz_mode_weakness_all)
-                                is QuizMode.WeaknessCategory -> stringResource(
-                                    R.string.quiz_mode_weakness_category,
-                                    mode.categoryName
+                            // サブ：モード名 ｜ カテゴリ名
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                val modeText = when (val mode = state.mode) {
+                                    QuizMode.Daily -> stringResource(R.string.quiz_mode_daily)
+                                    QuizMode.Review -> stringResource(R.string.quiz_mode_review)
+                                    QuizMode.WeaknessAll -> stringResource(R.string.quiz_mode_weakness_all)
+                                    is QuizMode.WeaknessCategory -> stringResource(
+                                        R.string.quiz_mode_weakness_category,
+                                        mode.categoryName
+                                    )
+                                }
+                                
+                                Text(
+                                    text = modeText,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
                                 )
+
+                                if (state.currentCategoryName.isNotBlank()) {
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = "|",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.outlineVariant
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = state.currentCategoryName,
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                        color = MaterialTheme.colorScheme.secondary
+                                    )
+                                }
                             }
-                            
-                            Text(
-                                text = modeText,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
                         }
                     },
                     navigationIcon = {
@@ -113,83 +140,94 @@ fun QuizScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp)
         ) {
-            // 問題文
-            Text(text = q.text, style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(16.dp))
+            // --- スクロール可能なコンテンツエリア --- 
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                // 問題文
+                Text(
+                    text = q.text, 
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(top = 16.dp) // 上パディングを内側に移動
+                )
+                Spacer(Modifier.height(16.dp))
 
-            // 選択肢
-            q.options.forEachIndexed { idx, option ->
-                val isSelected = idx == state.selectedIndex
-                val isCorrect = idx == q.correctIndex
-                val bg = when {
-                    state.isAnswered && isCorrect -> appColors.correctBackground
-                    state.isAnswered && isSelected && !isCorrect -> appColors.wrongBackground
-                    isSelected && !state.isAnswered -> appColors.selectedBackground
-                    else -> Color.Transparent
-                }
-                val borderColor = when {
-                    state.isAnswered && isCorrect -> appColors.correctBorder
-                    state.isAnswered && isSelected && !isCorrect -> appColors.wrongBorder
-                    else -> Color.Transparent
-                }
-                Surface(
-                    tonalElevation = if (isSelected) 1.dp else 0.dp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp)
-                        .background(bg)
-                        .border(
-                            width = if (borderColor == Color.Transparent) 0.dp else 1.dp,
-                            color = borderColor
+                // 選択肢
+                q.options.forEachIndexed { idx, option ->
+                    val isSelected = idx == state.selectedIndex
+                    val isCorrect = idx == q.correctIndex
+                    val bg = when {
+                        state.isAnswered && isCorrect -> appColors.correctBackground
+                        state.isAnswered && isSelected && !isCorrect -> appColors.wrongBackground
+                        isSelected && !state.isAnswered -> appColors.selectedBackground
+                        else -> Color.Transparent
+                    }
+                    val borderColor = when {
+                        state.isAnswered && isCorrect -> appColors.correctBorder
+                        state.isAnswered && isSelected && !isCorrect -> appColors.wrongBorder
+                        else -> Color.Transparent
+                    }
+                    Surface(
+                        tonalElevation = if (isSelected) 1.dp else 0.dp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp)
+                            .background(bg)
+                            .border(
+                                width = if (borderColor == Color.Transparent) 0.dp else 1.dp,
+                                color = borderColor
+                            )
+                            .clickable { onSelect(idx) }
+                    ) {
+                        Text(
+                            text = "・$option",
+                            modifier = Modifier.padding(14.dp),
+                            style = MaterialTheme.typography.bodyLarge
                         )
-                        .clickable { onSelect(idx) }
-                ) {
+                    }
+                }
+
+                // 解説
+                if (state.isAnswered) {
+                    Spacer(Modifier.height(12.dp))
+                    val hasExplanation = q.explanation?.isNotBlank() == true
+                    if (hasExplanation) {
+                        if (canShowFullExplanation) {
+                            Text(
+                                text = stringResource(R.string.quiz_explanation_label, q.explanation ?: ""),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(R.string.quiz_explanation_premium),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            OutlinedButton(onClick = onUpgrade) {
+                                Text(stringResource(R.string.quiz_upgrade_button))
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
+                    }
+                } else {
+                    Spacer(Modifier.height(12.dp))
                     Text(
-                        text = "・$option",
-                        modifier = Modifier.padding(14.dp),
-                        style = MaterialTheme.typography.bodyLarge
+                        text = stringResource(R.string.quiz_tap_option),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                Spacer(Modifier.height(16.dp)) // 下部の余白
             }
 
-            // 解説
-            if (state.isAnswered) {
-                Spacer(Modifier.height(12.dp))
-                val hasExplanation = q.explanation?.isNotBlank() == true
-                if (hasExplanation) {
-                    if (canShowFullExplanation) {
-                        Text(
-                            text = stringResource(R.string.quiz_explanation_label, q.explanation ?: ""),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    } else {
-                        Text(
-                            text = stringResource(R.string.quiz_explanation_premium),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        OutlinedButton(onClick = onUpgrade) {
-                            Text(stringResource(R.string.quiz_upgrade_button))
-                        }
-                    }
-                    Spacer(Modifier.height(12.dp))
-                }
-            } else {
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = stringResource(R.string.quiz_tap_option),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Spacer(Modifier.weight(1f))
-
-            // 下部ナビゲーション
+            // --- 下部ナビゲーション（固定） ---
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)

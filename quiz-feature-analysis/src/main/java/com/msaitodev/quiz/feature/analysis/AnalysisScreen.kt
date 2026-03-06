@@ -32,7 +32,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.msaitodev.quiz.core.domain.model.LearningAnalysis
 import com.msaitodev.quiz.core.domain.model.TrendPeriod
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -47,7 +50,8 @@ internal fun AnalysisScreen(
     uiState: AnalysisUiState,
     onBack: () -> Unit,
     onPeriodChange: (TrendPeriod) -> Unit,
-    onCategoryClick: (String) -> Unit
+    onCategoryClick: (String) -> Unit,
+    onDateClick: (String) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -74,7 +78,8 @@ internal fun AnalysisScreen(
                 analysis = uiState.analysis,
                 currentPeriod = uiState.currentPeriod,
                 onPeriodChange = onPeriodChange,
-                onCategoryClick = onCategoryClick
+                onCategoryClick = onCategoryClick,
+                onDateClick = onDateClick
             )
         }
     }
@@ -86,7 +91,8 @@ private fun AnalysisContent(
     analysis: LearningAnalysis,
     currentPeriod: TrendPeriod,
     onPeriodChange: (TrendPeriod) -> Unit,
-    onCategoryClick: (String) -> Unit
+    onCategoryClick: (String) -> Unit,
+    onDateClick: (String) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -149,6 +155,7 @@ private fun AnalysisContent(
                 }
                 StudyCalendar(
                     studiedDays = analysis.studiedDays,
+                    onDateClick = onDateClick,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
                 )
             }
@@ -187,7 +194,10 @@ private fun AnalysisContent(
                     onPeriodChange = onPeriodChange
                 )
                 if (analysis.dailyTrend.isNotEmpty()) {
-                    DailyTrendChart(analysis.dailyTrend)
+                    DailyTrendChart(
+                        trends = analysis.dailyTrend,
+                        onDateClick = onDateClick
+                    )
                 }
             }
         }
@@ -303,6 +313,7 @@ private fun AnalysisSection(
 @Composable
 private fun StudyCalendar(
     studiedDays: List<Long>,
+    onDateClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -310,6 +321,7 @@ private fun StudyCalendar(
     val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val todayColor = MaterialTheme.colorScheme.primary
+    val dateKeySdf = remember { SimpleDateFormat("yyyyMMdd", Locale.getDefault()) }
     
     val dayLabels = listOf(
         stringResource(R.string.analysis_day_sun),
@@ -394,6 +406,9 @@ private fun StudyCalendar(
                                     .background(
                                         if (day.isStudied) primaryColor else Color.Transparent
                                     )
+                                    .clickable(enabled = day.isStudied) {
+                                        onDateClick(dateKeySdf.format(Date(day.millis)))
+                                    }
                                     .then(
                                         if (day.isToday && !day.isStudied) {
                                             Modifier.background(surfaceVariantColor, RoundedCornerShape(8.dp))
@@ -575,7 +590,10 @@ private fun CategoryItem(
 }
 
 @Composable
-private fun DailyTrendChart(trends: List<LearningAnalysis.DailyScore>) {
+private fun DailyTrendChart(
+    trends: List<LearningAnalysis.DailyScore>,
+    onDateClick: (String) -> Unit
+) {
     val percentageFormat = stringResource(R.string.analysis_percentage_format)
     val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
@@ -632,7 +650,8 @@ private fun DailyTrendChart(trends: List<LearningAnalysis.DailyScore>) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxHeight()
-                                    .width(20.dp),
+                                    .width(20.dp)
+                                    .clickable { onDateClick(score.dateKey) },
                                 contentAlignment = Alignment.BottomCenter
                             ) {
                                 Box(
@@ -663,7 +682,9 @@ private fun DailyTrendChart(trends: List<LearningAnalysis.DailyScore>) {
                 trends.forEach { score ->
                     Text(
                         text = score.dateLabel,
-                        modifier = Modifier.width(20.dp),
+                        modifier = Modifier
+                            .width(20.dp)
+                            .clickable { onDateClick(score.dateKey) },
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 9.sp,

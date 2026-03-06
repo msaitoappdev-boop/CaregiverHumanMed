@@ -5,7 +5,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -19,8 +18,8 @@ import java.util.*
 @Composable
 internal fun HistoryScreen(
     historyList: List<ScoreEntry>,
-    onBack: () -> Unit,
-    onDeleteAll: () -> Unit
+    displayTitle: String,
+    onBack: () -> Unit
 ) {
     val dateFormatPattern = stringResource(R.string.history_date_format)
     val sdf = SimpleDateFormat(dateFormatPattern, Locale.getDefault())
@@ -28,7 +27,7 @@ internal fun HistoryScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(stringResource(R.string.history_title)) },
+                title = { Text(displayTitle) },
                 windowInsets = TopAppBarDefaults.windowInsets,
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -36,16 +35,6 @@ internal fun HistoryScreen(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.history_back)
                         )
-                    }
-                },
-                actions = {
-                    if (historyList.isNotEmpty()) {
-                        IconButton(onClick = onDeleteAll) {
-                            Icon(
-                                imageVector = Icons.Filled.DeleteForever,
-                                contentDescription = stringResource(R.string.history_delete_all)
-                            )
-                        }
                     }
                 }
             )

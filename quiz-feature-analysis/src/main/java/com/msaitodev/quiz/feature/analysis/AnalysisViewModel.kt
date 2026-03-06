@@ -28,6 +28,7 @@ data class AnalysisUiState(
 
 sealed interface AnalysisEvent {
     data object NavigateToSettings : AnalysisEvent
+    data class NavigateToHistory(val dateKey: String) : AnalysisEvent
 }
 
 @HiltViewModel
@@ -62,11 +63,14 @@ class AnalysisViewModel @Inject constructor(
 
     fun onCategoryClicked(categoryId: String) {
         viewModelScope.launch {
-            // 弱点特訓モードを有効にし、カテゴリーを指定する。
-            // ユーザー体験の一貫性と上限チェックの安全性を考慮し、
-            // 直接クイズへは遷移せず、設定画面へ遷移して状態を反映させる。
             settingsProvider.updateWeaknessMode(enabled = true, categoryId = categoryId)
             _event.emit(AnalysisEvent.NavigateToSettings)
+        }
+    }
+
+    fun onDateClicked(dateKey: String) {
+        viewModelScope.launch {
+            _event.emit(AnalysisEvent.NavigateToHistory(dateKey))
         }
     }
 }
