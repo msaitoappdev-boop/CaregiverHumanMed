@@ -219,7 +219,7 @@ class BillingManager @Inject constructor(
 
         val premium = owned.any { p ->
             p.products.contains(billingProvider.productIdPremium) &&
-                    p.purchaseState == Purchase.PurchaseState.PURCHASED && p.isAutoRenewing
+                    p.purchaseState == Purchase.PurchaseState.PURCHASED
         }
 
         savePremiumToPrefs(premium)

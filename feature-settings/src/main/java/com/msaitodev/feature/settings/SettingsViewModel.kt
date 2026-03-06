@@ -25,6 +25,7 @@ data class SettingsUiState(
     val minute: Int = ReminderPrefs.DEFAULT_MINUTE,
     val isPremium: Boolean = false,
     val isWeaknessMode: Boolean = false,
+    val weaknessCategoryName: String? = null,
     val weaknessModeTitle: String = "",
     val weaknessModeDescription: String = ""
 )
@@ -64,14 +65,16 @@ class SettingsViewModel @Inject constructor(
             combine(
                 dataStore.data,
                 billingManager.isPremium,
-                settingsProvider.isWeaknessMode
-            ) { prefs, isPremium, isWeaknessMode ->
+                settingsProvider.isWeaknessMode,
+                settingsProvider.weaknessCategoryName
+            ) { prefs, isPremium, isWeaknessMode, weaknessCategoryName ->
                 SettingsUiState(
                     reminderEnabled = prefs[ReminderPrefs.ENABLED] ?: ReminderPrefs.DEFAULT_ENABLED,
                     hour = prefs[ReminderPrefs.HOUR] ?: ReminderPrefs.DEFAULT_HOUR,
                     minute = prefs[ReminderPrefs.MINUTE] ?: ReminderPrefs.DEFAULT_MINUTE,
                     isPremium = isPremium,
                     isWeaknessMode = isWeaknessMode,
+                    weaknessCategoryName = weaknessCategoryName,
                     weaknessModeTitle = settingsProvider.weaknessModeTitle,
                     weaknessModeDescription = settingsProvider.weaknessModeDescription
                 )
@@ -97,9 +100,9 @@ class SettingsViewModel @Inject constructor(
     }
 
     /** 弱点特訓モードの設定を更新 */
-    fun setWeaknessModeEnabled(enabled: Boolean) {
+    fun setWeaknessModeEnabled(enabled: Boolean, categoryId: String? = null) {
         viewModelScope.launch {
-            settingsProvider.updateWeaknessMode(enabled)
+            settingsProvider.updateWeaknessMode(enabled, categoryId)
         }
     }
 

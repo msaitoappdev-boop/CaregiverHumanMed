@@ -15,8 +15,12 @@ enum class TrendPeriod {
 data class LearningAnalysis(
     val totalProgress: Float,
     val categorySummaries: List<CategorySummary>,
-    val dailyTrend: List<DailyScore>, // ここは「トレンドデータ」全般を指す
-    val overallComment: String
+    val dailyTrend: List<DailyScore>,
+    val overallComment: String,
+    val studiedDays: List<Long>, // 学習した日の 00:00:00 Unix タイムスタンプ
+    val currentStreak: Int,      // 現在の連続学習日数
+    val predictedScore: Int,     // 本試験推定スコア (0-125)
+    val totalExamQuestions: Int = 125 // 本試験の総設問数
 ) {
     data class CategorySummary(
         val categoryId: String,
@@ -30,4 +34,9 @@ data class LearningAnalysis(
         val dateLabel: String,
         val averageAccuracy: Float
     )
+
+    /**
+     * 推定正解率を計算する (0.0 - 1.0)
+     */
+    val predictedAccuracyRate: Float = if (totalExamQuestions > 0) predictedScore.toFloat() / totalExamQuestions else 0f
 }

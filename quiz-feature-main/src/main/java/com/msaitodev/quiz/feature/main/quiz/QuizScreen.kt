@@ -30,8 +30,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.msaitodev.core.common.ui.LocalAppColors
+import com.msaitodev.quiz.feature.main.R
 import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,10 +64,40 @@ fun QuizScreen(
         topBar = {
             Column {
                 CenterAlignedTopAppBar(
-                    title = { Text(text = "第 ${state.currentIndex + 1} 問 / 全 ${state.total} 問") },
+                    title = {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = stringResource(
+                                    id = R.string.quiz_question_format,
+                                    state.currentIndex + 1,
+                                    state.total
+                                ),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            
+                            val modeText = when (val mode = state.mode) {
+                                QuizMode.Daily -> stringResource(R.string.quiz_mode_daily)
+                                QuizMode.Review -> stringResource(R.string.quiz_mode_review)
+                                QuizMode.WeaknessAll -> stringResource(R.string.quiz_mode_weakness_all)
+                                is QuizMode.WeaknessCategory -> stringResource(
+                                    R.string.quiz_mode_weakness_category,
+                                    mode.categoryName
+                                )
+                            }
+                            
+                            Text(
+                                text = modeText,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    },
                     navigationIcon = {
                         IconButton(onClick = onNavUp) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る")
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.quiz_back)
+                            )
                         }
                     }
                 )
@@ -87,7 +119,7 @@ fun QuizScreen(
             Text(text = q.text, style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(16.dp))
 
-            // 選択肢（確定後も変更可）
+            // 選択肢
             q.options.forEachIndexed { idx, option ->
                 val isSelected = idx == state.selectedIndex
                 val isCorrect = idx == q.correctIndex
@@ -112,7 +144,7 @@ fun QuizScreen(
                             width = if (borderColor == Color.Transparent) 0.dp else 1.dp,
                             color = borderColor
                         )
-                        .clickable { onSelect(idx) } // 選択変更を許可
+                        .clickable { onSelect(idx) }
                 ) {
                     Text(
                         text = "・$option",
@@ -122,26 +154,26 @@ fun QuizScreen(
                 }
             }
 
-            // 解説（回答後）
+            // 解説
             if (state.isAnswered) {
                 Spacer(Modifier.height(12.dp))
                 val hasExplanation = q.explanation?.isNotBlank() == true
                 if (hasExplanation) {
                     if (canShowFullExplanation) {
                         Text(
-                            text = "解説：${q.explanation}",
+                            text = stringResource(R.string.quiz_explanation_label, q.explanation ?: ""),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
                     } else {
                         Text(
-                            text = "解説の全文はプレミアムで解放されます。",
+                            text = stringResource(R.string.quiz_explanation_premium),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
                         Spacer(Modifier.height(8.dp))
                         OutlinedButton(onClick = onUpgrade) {
-                            Text("月額 ¥200 で解説を解放")
+                            Text(stringResource(R.string.quiz_upgrade_button))
                         }
                     }
                     Spacer(Modifier.height(12.dp))
@@ -149,7 +181,7 @@ fun QuizScreen(
             } else {
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    text = "選択肢をタップしてください",
+                    text = stringResource(R.string.quiz_tap_option),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -166,14 +198,19 @@ fun QuizScreen(
                     onClick = onPrev,
                     enabled = state.currentIndex > 0,
                     modifier = Modifier.weight(1f)
-                ) { Text("前の問題へ") }
+                ) { Text(stringResource(R.string.quiz_prev)) }
 
                 Button(
                     onClick = onNext,
                     enabled = state.isAnswered,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(if (state.currentIndex + 1 >= state.total) "結果を見る" else "次へ")
+                    val labelRes = if (state.currentIndex + 1 >= state.total) {
+                        R.string.quiz_show_result
+                    } else {
+                        R.string.quiz_next
+                    }
+                    Text(stringResource(labelRes))
                 }
             }
         }

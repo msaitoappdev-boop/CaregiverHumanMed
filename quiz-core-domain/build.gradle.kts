@@ -19,6 +19,7 @@ android {
 
 dependencies {
     implementation(project(":core-ads"))
+    implementation(project(":core-common"))
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.51.1")

@@ -45,7 +45,7 @@ internal fun SettingsScreen(
     onBack: () -> Unit,
     onReminderEnabledChange: (Boolean) -> Unit,
     onTimeChange: (Int, Int) -> Unit,
-    onWeaknessModeChange: (Boolean) -> Unit,
+    onWeaknessModeChange: (Boolean, String?) -> Unit,
     onRestorePurchases: () -> Unit,
     onManageSubscription: () -> Unit,
     onOpenPrivacyPolicy: () -> Unit
@@ -71,8 +71,8 @@ internal fun SettingsScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .verticalScroll(scrollState) // スクロールを有効化
-                .navigationBarsPadding() // システムナビゲーションバーの重なりを防止
+                .verticalScroll(scrollState)
+                .navigationBarsPadding()
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -104,9 +104,27 @@ internal fun SettingsScreen(
                         }
                         Switch(
                             checked = state.isWeaknessMode,
-                            onCheckedChange = onWeaknessModeChange,
+                            onCheckedChange = { onWeaknessModeChange(it, null) },
                             enabled = state.isPremium
                         )
+                    }
+
+                    // 分野指定が有効な場合の解除ボタン
+                    if (state.isWeaknessMode && state.weaknessCategoryName != null) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "特訓中: ${state.weaknessCategoryName}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            TextButton(onClick = { onWeaknessModeChange(true, null) }) {
+                                Text("全分野へ戻す")
+                            }
+                        }
                     }
                 }
             }

@@ -54,8 +54,18 @@ class QuizViewModel @Inject constructor(
     private val _internalState = MutableStateFlow(InternalState())
 
     val uiState: StateFlow<QuizUiState> = combine(
-        _internalState, premiumRepository.isPremium
-    ) { internalState, isPremium ->
+        _internalState, 
+        premiumRepository.isPremium,
+        settingsProvider.isWeaknessMode,
+        settingsProvider.weaknessCategoryName
+    ) { internalState, isPremium, isWeaknessMode, categoryName ->
+        val mode = when {
+            isReviewSession -> QuizMode.Review
+            isWeaknessMode -> {
+                if (categoryName != null) QuizMode.WeaknessCategory(categoryName) else QuizMode.WeaknessAll
+            }
+            else -> QuizMode.Daily
+        }
         QuizUiState(
             isLoading = internalState.isLoading,
             questions = internalState.questions,
@@ -64,7 +74,8 @@ class QuizViewModel @Inject constructor(
             selectedIndex = internalState.answers.getOrNull(internalState.currentIndex),
             isAnswered = internalState.answers.getOrNull(internalState.currentIndex) != null,
             correctCount = calcScore(internalState.questions, internalState.answers),
-            canShowFullExplanation = isPremium
+            canShowFullExplanation = isPremium,
+            mode = mode
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), QuizUiState())
 
@@ -93,18 +104,23 @@ class QuizViewModel @Inject constructor(
         _internalState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             val isWeaknessMode = settingsProvider.isWeaknessMode.first()
+            val weaknessCategoryId = settingsProvider.weaknessCategoryId.first()
             val setSize = remoteConfigRepo.getLong(RemoteConfigKeys.SET_SIZE).toInt().coerceAtLeast(1)
             
-            isReviewSession = false // 明示的に初期化
+            isReviewSession = false
             val questions = if (isWeaknessMode) {
-                withContext(Dispatchers.IO) { getWeaknessQuestions.execute(count = setSize) }
+                withContext(Dispatchers.IO) { 
+                    getWeaknessQuestions.execute(
+                        count = setSize,
+                        categoryFilter = weaknessCategoryId
+                    ) 
+                }
             } else {
                 try {
                     withContext(Dispatchers.IO) { getDailyQuestions(count = setSize) }
                 } catch (_: Exception) { emptyList() }
             }
             
-            // 重要: ここで questions.id を seenIds に追加しない（出題開始前に「既読」にしない）
             processAndStart(questions, reshuffle, emptySet())
         }
     }
@@ -113,12 +129,14 @@ class QuizViewModel @Inject constructor(
         _internalState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             val isWeaknessMode = settingsProvider.isWeaknessMode.first()
+            val weaknessCategoryId = settingsProvider.weaknessCategoryId.first()
             val setSize = remoteConfigRepo.getLong(RemoteConfigKeys.SET_SIZE).toInt().coerceAtLeast(1)
             
             val nextQuestions = if (isWeaknessMode) {
                 withContext(Dispatchers.IO) { 
                     getWeaknessQuestions.execute(
                         count = setSize, 
+                        categoryFilter = weaknessCategoryId,
                         excludingIds = _internalState.value.seenQuestionIds
                     ) 
                 }
@@ -165,7 +183,6 @@ class QuizViewModel @Inject constructor(
 
     fun next() {
         val state = _internalState.value
-        // 既読リストを現在の問題 ID で更新
         val currentQuestionId = state.questions.getOrNull(state.currentIndex)?.id
         if (currentQuestionId != null) {
             _internalState.update { it.copy(seenQuestionIds = it.seenQuestionIds + currentQuestionId) }

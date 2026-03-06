@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.ads.MobileAds
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
+import com.google.android.ump.UserMessagingPlatform
 import com.msaitodev.core.ads.ConsentManager
 import com.msaitodev.core.ads.InterstitialHelper
 import com.msaitodev.core.ads.RewardedHelper
@@ -76,7 +77,7 @@ internal fun AppNavHost(
                     navController.navigate(QuizDestination.route) 
                 },
                 onViewHistory = { navController.navigate(HistoryDestination.route) },
-                onViewAnalysis = { navController.navigate(AnalysisDestination.route) }, // 追加
+                onViewAnalysis = { navController.navigate(AnalysisDestination.route) },
                 onUpgrade = { navController.navigate(PaywallDestination.route) },
                 onOpenSettings = { navController.navigate(SettingsDestination.route) }
             )
@@ -110,7 +111,15 @@ internal fun AppNavHost(
 
         reviewGraph(navController)
         historyGraph(navController)
-        analysisGraph(navController) // 登録
+        analysisGraph(
+            navController = navController,
+            onNavigateToSettings = {
+                navController.navigate(SettingsDestination.route) {
+                    // 分析画面をバックスタックから削除し、設定から戻る際にホームへ直接戻るようにする
+                    popUpTo(AnalysisDestination.route) { inclusive = true }
+                }
+            }
+        )
         paywallGraph()
         settingsGraph(onBack = { navController.popBackStack() })
     }

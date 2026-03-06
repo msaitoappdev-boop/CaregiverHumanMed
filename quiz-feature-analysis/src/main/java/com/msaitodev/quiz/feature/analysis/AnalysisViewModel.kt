@@ -2,17 +2,22 @@ package com.msaitodev.quiz.feature.analysis
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.msaitodev.feature.settings.SettingsProvider
 import com.msaitodev.quiz.core.domain.model.LearningAnalysis
 import com.msaitodev.quiz.core.domain.model.TrendPeriod
 import com.msaitodev.quiz.core.domain.usecase.GetLearningAnalysisUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class AnalysisUiState(
@@ -21,12 +26,20 @@ data class AnalysisUiState(
     val currentPeriod: TrendPeriod = TrendPeriod.DAILY
 )
 
+sealed interface AnalysisEvent {
+    data object NavigateToSettings : AnalysisEvent
+}
+
 @HiltViewModel
 class AnalysisViewModel @Inject constructor(
-    private val getLearningAnalysis: GetLearningAnalysisUseCase
+    private val getLearningAnalysis: GetLearningAnalysisUseCase,
+    private val settingsProvider: SettingsProvider
 ) : ViewModel() {
 
     private val _currentPeriod = MutableStateFlow(TrendPeriod.DAILY)
+
+    private val _event = MutableSharedFlow<AnalysisEvent>()
+    val event: SharedFlow<AnalysisEvent> = _event.asSharedFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<AnalysisUiState> = _currentPeriod.flatMapLatest { period ->
@@ -45,5 +58,15 @@ class AnalysisViewModel @Inject constructor(
 
     fun onPeriodSelected(period: TrendPeriod) {
         _currentPeriod.value = period
+    }
+
+    fun onCategoryClicked(categoryId: String) {
+        viewModelScope.launch {
+            // 弱点特訓モードを有効にし、カテゴリーを指定する。
+            // ユーザー体験の一貫性と上限チェックの安全性を考慮し、
+            // 直接クイズへは遷移せず、設定画面へ遷移して状態を反映させる。
+            settingsProvider.updateWeaknessMode(enabled = true, categoryId = categoryId)
+            _event.emit(AnalysisEvent.NavigateToSettings)
+        }
     }
 }
