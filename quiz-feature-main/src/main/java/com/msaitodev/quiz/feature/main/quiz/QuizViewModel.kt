@@ -6,6 +6,7 @@ import com.msaitodev.core.common.navigation.AppActions
 import com.msaitodev.feature.settings.SettingsProvider
 import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
 import com.msaitodev.quiz.core.domain.model.Question
+import com.msaitodev.quiz.core.domain.repository.CategoryNameProvider
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import com.msaitodev.quiz.core.domain.repository.RemoteConfigRepository
 import com.msaitodev.quiz.core.domain.usecase.GetDailyQuestionsUseCase
@@ -36,6 +37,7 @@ class QuizViewModel @Inject constructor(
     private val getWeaknessQuestions: GetWeaknessQuestionsUseCase,
     private val remoteConfigRepo: RemoteConfigRepository,
     private val settingsProvider: SettingsProvider,
+    private val categoryNameProvider: CategoryNameProvider,
     premiumRepository: PremiumRepository
 ) : ViewModel() {
 
@@ -66,11 +68,21 @@ class QuizViewModel @Inject constructor(
             }
             else -> QuizMode.Daily
         }
+        
+        val currentQuestion = internalState.questions.getOrNull(internalState.currentIndex)
+        val currentCategoryDisplayName = currentQuestion?.let { 
+            categoryNameProvider.getDisplayName(it.category)
+        } ?: ""
+
+        // モード自体にカテゴリ名が含まれている場合は、詳細表示用のカテゴリ名を空にする（冗長回避）
+        val displayCategoryName = if (mode is QuizMode.WeaknessCategory) "" else currentCategoryDisplayName
+
         QuizUiState(
             isLoading = internalState.isLoading,
             questions = internalState.questions,
             total = internalState.questions.size,
             currentIndex = internalState.currentIndex,
+            currentCategoryName = displayCategoryName,
             selectedIndex = internalState.answers.getOrNull(internalState.currentIndex),
             isAnswered = internalState.answers.getOrNull(internalState.currentIndex) != null,
             correctCount = calcScore(internalState.questions, internalState.answers),
@@ -160,6 +172,8 @@ class QuizViewModel @Inject constructor(
         seenIds: Set<String>
     ) {
         val seed = if (reshuffle) System.currentTimeMillis() else _internalState.value.shuffleSeed
+        
+        // カテゴリの偏りをさらに抑えるため、抽選されたリスト内でも再度シャッフル
         val ordered = if (reshuffle) source.shuffled(Random(seed)) else source
         val questions = ordered.map { it.shuffleOptions(seed) }
 

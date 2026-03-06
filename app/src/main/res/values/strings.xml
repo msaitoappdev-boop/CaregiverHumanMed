@@ -45,6 +45,7 @@
     <string name="cat_02_care_basic">介護の基本</string>
     <string name="cat_03_mind_body">こころとからだのしくみ</string>
     <string name="cat_04_medical_care">医療的ケア</string>
+    <string name="cat_05_comprehensive">総合問題</string>
     <string name="cat_unclassified">未分類</string>
 
     <!-- Dialogs -->

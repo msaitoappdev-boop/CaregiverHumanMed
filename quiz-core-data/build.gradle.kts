@@ -31,8 +31,8 @@ dependencies {
     implementation(project(":quiz-core-domain"))
     implementation(project(":core-cloud-sync"))
 
-    // Billing
-    implementation("com.android.billingclient:billing-ktx:6.2.1")
+    // Billing (core-common とバージョンを 7.1.1 に統一)
+    implementation("com.android.billingclient:billing-ktx:7.1.1")
 
     val room = "2.6.1"
     implementation("androidx.room:room-runtime:${room}")
