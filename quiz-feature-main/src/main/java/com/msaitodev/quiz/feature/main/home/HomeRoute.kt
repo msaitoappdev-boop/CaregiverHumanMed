@@ -22,7 +22,7 @@ fun HomeRoute(
     rewardedHelper: RewardedHelper,
     onStartQuiz: () -> Unit,
     onViewHistory: () -> Unit,
-    onViewAnalysis: () -> Unit, // 追加
+    onViewAnalysis: () -> Unit,
     onUpgrade: () -> Unit,
     onOpenSettings: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
@@ -37,7 +37,7 @@ fun HomeRoute(
         viewModel.event.collect { event ->
             when (event) {
                 is HomeEvent.RequestNavigateToQuiz -> onStartQuiz()
-                is HomeEvent.RequestNavigateToAnalysis -> onViewAnalysis() // 追加
+                is HomeEvent.RequestNavigateToAnalysis -> onViewAnalysis()
                 is HomeEvent.RequestNavigateToSettings -> onOpenSettings()
                 is HomeEvent.RequestShowPaywall -> onUpgrade()
                 is HomeEvent.RequestShowRewardedAdOffer -> showOfferDialog = true
@@ -87,6 +87,12 @@ fun HomeRoute(
                 }
             }
         },
-        onOfferDismiss = { showOfferDialog = false }
+        onOfferDismiss = { showOfferDialog = false },
+        onReminderInvitationDismiss = {
+            viewModel.onReminderInvitationDismissed()
+        },
+        onReminderInvitationClick = {
+            viewModel.onReminderInvitationClicked()
+        }
     )
 }

@@ -37,4 +37,10 @@
 
     <!-- Settings (used in Home) -->
     <string name="settings_title">設定</string>
+
+    <!-- リマインド誘導 -->
+    <string name="home_reminder_invitation_title">学習を習慣化しませんか？</string>
+    <string name="home_reminder_invitation_message">通知を設定すると、毎日の学習を忘れずに続けられます。合格率アップへの近道です！</string>
+    <string name="home_reminder_invitation_action">通知を設定する</string>
+    <string name="home_reminder_invitation_dismiss">今はしない</string>
 </resources>
