@@ -13,6 +13,7 @@ import com.msaitodev.core.ads.InterstitialHelper
 import com.msaitodev.core.ads.RewardedHelper
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import com.msaitodev.quiz.core.domain.repository.RemoteConfigRepository
+import com.msaitodev.quiz.core.domain.repository.SyncRepository
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -31,6 +32,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var remoteConfigRepo: RemoteConfigRepository
 
+    @Inject
+    lateinit var syncRepo: SyncRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -43,6 +47,10 @@ class MainActivity : ComponentActivity() {
             override fun onResume(owner: LifecycleOwner) {
                 lifecycleScope.launch {
                     premiumRepo.refreshFromBilling()
+                    
+                    // 起動時にクラウドからデータをダウンロードして統合
+                    // ※プレミアムユーザー判定は内部で行われる
+                    syncRepo.downloadFromCloud()
                 }
             }
         })

@@ -6,23 +6,32 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import com.msaitodev.quiz.core.domain.model.QuestionStats
+import com.msaitodev.quiz.core.domain.repository.SyncRepository
 import com.msaitodev.quiz.core.domain.repository.WrongAnswerRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 @Singleton
 class WrongAnswerRepositoryImpl @Inject constructor(
-    private val store: DataStore<Preferences>
+    private val store: DataStore<Preferences>,
+    private val syncRepositoryProvider: Provider<SyncRepository>
 ) : WrongAnswerRepository {
+
+    private val scope = CoroutineScope(Dispatchers.IO + Job())
 
     private fun correctKey(id: String) = intPreferencesKey("q_correct_$id")
     private fun incorrectKey(id: String) = intPreferencesKey("q_incorrect_$id")
     private fun lastTimeKey(id: String) = longPreferencesKey("q_last_time_$id")
 
     override val allStats: Flow<List<QuestionStats>> = store.data.map { pref ->
-        // 全てのキーをスキャンして、問題統計情報を抽出
         val statsMap = mutableMapOf<String, MutableStats>()
         pref.asMap().forEach { (key, value) ->
             val name = key.name
@@ -58,6 +67,7 @@ class WrongAnswerRepositoryImpl @Inject constructor(
             p[correctKey(questionId)] = current + 1
             p[lastTimeKey(questionId)] = System.currentTimeMillis()
         }
+        triggerSync()
     }
 
     override suspend fun recordIncorrect(questionId: String) {
@@ -66,6 +76,7 @@ class WrongAnswerRepositoryImpl @Inject constructor(
             p[incorrectKey(questionId)] = current + 1
             p[lastTimeKey(questionId)] = System.currentTimeMillis()
         }
+        triggerSync()
     }
 
     override suspend fun clearAllStats() {
@@ -74,6 +85,29 @@ class WrongAnswerRepositoryImpl @Inject constructor(
                 it.name.startsWith("q_") 
             }
             keysToRemove.forEach { p.remove(it) }
+        }
+        triggerSync()
+    }
+
+    override suspend fun syncStats(stats: List<QuestionStats>) {
+        store.edit { p ->
+            stats.forEach { cloud ->
+                val id = cloud.questionId
+                val localLastTime = p[lastTimeKey(id)] ?: 0L
+                
+                // クラウドの方が新しい場合のみ上書き
+                if (cloud.lastTime > localLastTime) {
+                    p[correctKey(id)] = cloud.correctCount
+                    p[incorrectKey(id)] = cloud.incorrectCount
+                    p[lastTimeKey(id)] = cloud.lastTime
+                }
+            }
+        }
+    }
+
+    private fun triggerSync() {
+        scope.launch {
+            syncRepositoryProvider.get().uploadToCloud()
         }
     }
 

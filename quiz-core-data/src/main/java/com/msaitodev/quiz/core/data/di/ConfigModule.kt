@@ -1,21 +1,15 @@
 package com.msaitodev.quiz.core.data.di
 
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
-import com.google.firebase.remoteconfig.ktx.remoteConfig
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
 
+/**
+ * 以前は FirebaseRemoteConfig を提供していましたが、
+ * 責務を :core-cloud-sync へ移譲したため現在は空です。
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 object ConfigModule {
-
-    @Provides
-    @Singleton
-    fun provideFirebaseRemoteConfig(): FirebaseRemoteConfig {
-        return Firebase.remoteConfig
-    }
+    // 空のモジュール。将来的な設定拡張のために残置。
 }
