@@ -1,11 +1,9 @@
 package com.msaitodev.feature.settings
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.msaitodev.core.notifications.ReminderPrefs
+import com.msaitodev.core.notifications.ReminderRepository
 import com.msaitodev.core.common.billing.BillingManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -39,7 +37,7 @@ sealed interface SettingsEvent {
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val billingManager: BillingManager,
-    private val dataStore: DataStore<Preferences>,
+    private val reminderRepository: ReminderRepository,
     private val settingsProvider: SettingsProvider
 ) : ViewModel() {
 
@@ -63,15 +61,15 @@ class SettingsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             combine(
-                dataStore.data,
+                reminderRepository.reminderConfig,
                 billingManager.isPremium,
                 settingsProvider.isWeaknessMode,
                 settingsProvider.weaknessCategoryName
-            ) { prefs, isPremium, isWeaknessMode, weaknessCategoryName ->
+            ) { config, isPremium, isWeaknessMode, weaknessCategoryName ->
                 SettingsUiState(
-                    reminderEnabled = prefs[ReminderPrefs.ENABLED] ?: ReminderPrefs.DEFAULT_ENABLED,
-                    hour = prefs[ReminderPrefs.HOUR] ?: ReminderPrefs.DEFAULT_HOUR,
-                    minute = prefs[ReminderPrefs.MINUTE] ?: ReminderPrefs.DEFAULT_MINUTE,
+                    reminderEnabled = config.enabled,
+                    hour = config.hour,
+                    minute = config.minute,
                     isPremium = isPremium,
                     isWeaknessMode = isWeaknessMode,
                     weaknessCategoryName = weaknessCategoryName,
@@ -86,16 +84,21 @@ class SettingsViewModel @Inject constructor(
 
     fun setReminderEnabled(enabled: Boolean) {
         viewModelScope.launch {
-            dataStore.edit { it[ReminderPrefs.ENABLED] = enabled }
+            reminderRepository.updateReminder(
+                enabled = enabled,
+                hour = uiState.value.hour,
+                minute = uiState.value.minute
+            )
         }
     }
 
     fun setReminderTime(hour: Int, minute: Int) {
         viewModelScope.launch {
-            dataStore.edit {
-                it[ReminderPrefs.HOUR] = hour
-                it[ReminderPrefs.MINUTE] = minute
-            }
+            reminderRepository.updateReminder(
+                enabled = uiState.value.reminderEnabled,
+                hour = hour,
+                minute = minute
+            )
         }
     }
 

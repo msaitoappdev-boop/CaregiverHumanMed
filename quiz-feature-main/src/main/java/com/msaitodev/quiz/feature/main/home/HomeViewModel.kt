@@ -3,6 +3,7 @@ package com.msaitodev.quiz.feature.main.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.msaitodev.core.ads.RewardedHelper
+import com.msaitodev.core.notifications.ReminderRepository
 import com.msaitodev.feature.settings.SettingsProvider
 import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
 import com.msaitodev.quiz.core.domain.model.QuotaState
@@ -13,6 +14,7 @@ import com.msaitodev.quiz.core.domain.usecase.StartNextQuizUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -44,10 +46,14 @@ class HomeViewModel @Inject constructor(
     private val settingsProvider: SettingsProvider,
     premiumRepo: PremiumRepository,
     private val remoteConfigRepo: RemoteConfigRepository,
-    private val startNextQuiz: StartNextQuizUseCase
+    private val startNextQuiz: StartNextQuizUseCase,
+    private val reminderRepo: ReminderRepository
 ) : ViewModel() {
 
     private val isPremium: StateFlow<Boolean> = premiumRepo.isPremium
+
+    // ユーザーがそのセッションで誘導を閉じたかどうかを管理
+    private val _isReminderInvitationDismissed = MutableStateFlow(false)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val quotaFlow: StateFlow<QuotaState?> = isPremium.flatMapLatest { isPremiumValue ->
@@ -59,19 +65,24 @@ class HomeViewModel @Inject constructor(
     data class HomeUiState(
         val canStart: Boolean = false,
         val isLoading: Boolean = false,
-        val isPremium: Boolean = false
+        val isPremium: Boolean = false,
+        val showReminderInvitation: Boolean = false
     )
 
     val uiState: StateFlow<HomeUiState> = combine(
         quotaFlow, 
-        isPremium
-    ) { quota, isPremiumValue ->
+        isPremium,
+        reminderRepo.isReminderEnabled,
+        _isReminderInvitationDismissed
+    ) { quota, isPremiumValue, isReminderEnabled, isDismissed ->
         if (quota == null) {
             HomeUiState(isLoading = true)
         } else {
             HomeUiState(
                 canStart = quota.canStart,
-                isPremium = isPremiumValue
+                isPremium = isPremiumValue,
+                // リマインド未設定かつ、まだ閉じていない場合に表示
+                showReminderInvitation = !isReminderEnabled && !isDismissed
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState(isLoading = true))
@@ -131,6 +142,16 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _event.emit(HomeEvent.RewardGranted)
             _event.emit(HomeEvent.RequestNavigateToQuiz)
+        }
+    }
+
+    fun onReminderInvitationDismissed() {
+        _isReminderInvitationDismissed.value = true
+    }
+
+    fun onReminderInvitationClicked() {
+        viewModelScope.launch {
+            _event.emit(HomeEvent.RequestNavigateToSettings)
         }
     }
 }
