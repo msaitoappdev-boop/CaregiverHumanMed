@@ -1,13 +1,16 @@
 package com.msaitodev.quiz.core.domain.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * 個々の問題に対する学習統計データ。
  */
+@Serializable
 data class QuestionStats(
     val questionId: String,
     val correctCount: Int = 0,
     val incorrectCount: Int = 0,
-    val lastAnsweredTimestamp: Long = 0L
+    val lastTime: Long = 0L // 旧名 lastAnsweredTimestamp と統合
 ) {
     /** 誤答率（0.0 〜 1.0） */
     val errorRate: Float

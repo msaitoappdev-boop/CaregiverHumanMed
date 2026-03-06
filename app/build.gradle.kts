@@ -28,7 +28,7 @@ android {
         applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 70
+        versionCode = 71
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -90,7 +90,7 @@ dependencies {
     implementation(project(":quiz-core-navigation"))
     implementation(project(":core-notifications"))
     implementation(project(":quiz-feature-main"))
-    implementation(project(":quiz-feature-analysis")) // 追加
+    implementation(project(":quiz-feature-analysis"))
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
@@ -141,6 +141,7 @@ dependencies {
 
     implementation("com.google.firebase:firebase-config-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx")
 
     // AdMob / UMP
     implementation("com.google.android.gms:play-services-ads:22.6.0")

@@ -36,9 +36,9 @@ class GetWeaknessQuestionsUseCaseTest {
     fun `execute returns questions sorted by error rate descending`() = runTest {
         // GIVEN
         val stats = listOf(
-            QuestionStats("q1", correctCount = 1, incorrectCount = 1, lastAnsweredTimestamp = 100L), // 50%
-            QuestionStats("q2", correctCount = 0, incorrectCount = 2, lastAnsweredTimestamp = 100L), // 100%
-            QuestionStats("q3", correctCount = 2, incorrectCount = 1, lastAnsweredTimestamp = 100L)  // 33%
+            QuestionStats("q1", correctCount = 1, incorrectCount = 1, lastTime = 100L), // 50%
+            QuestionStats("q2", correctCount = 0, incorrectCount = 2, lastTime = 100L), // 100%
+            QuestionStats("q3", correctCount = 2, incorrectCount = 1, lastTime = 100L)  // 33%
         )
         whenever(questionRepo.loadAll()).thenReturn(questions)
         whenever(wrongAnswerRepo.allStats).thenReturn(flowOf(stats))
@@ -57,8 +57,8 @@ class GetWeaknessQuestionsUseCaseTest {
     fun `execute tie-breaks with timestamp descending`() = runTest {
         // GIVEN
         val stats = listOf(
-            QuestionStats("q1", correctCount = 0, incorrectCount = 1, lastAnsweredTimestamp = 100L),
-            QuestionStats("q2", correctCount = 0, incorrectCount = 1, lastAnsweredTimestamp = 200L) // newer
+            QuestionStats("q1", correctCount = 0, incorrectCount = 1, lastTime = 100L),
+            QuestionStats("q2", correctCount = 0, incorrectCount = 1, lastTime = 200L) // newer
         )
         whenever(questionRepo.loadAll()).thenReturn(questions)
         whenever(wrongAnswerRepo.allStats).thenReturn(flowOf(stats))

@@ -42,7 +42,7 @@ class GetWeaknessQuestionsUseCase @Inject constructor(
             .sortedWith(compareByDescending<Question> { question ->
                 statsMap[question.id]?.errorRate ?: 0f
             }.thenByDescending { question ->
-                statsMap[question.id]?.lastAnsweredTimestamp ?: 0L
+                statsMap[question.id]?.lastTime ?: 0L
             })
             .take(count)
             .toList()

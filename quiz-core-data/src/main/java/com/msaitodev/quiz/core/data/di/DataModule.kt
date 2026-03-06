@@ -6,6 +6,7 @@ import com.msaitodev.quiz.core.data.repository.RemoteConfigRepositoryImpl
 import com.msaitodev.quiz.core.data.repository.RewardQuotaRepositoryImpl
 import com.msaitodev.quiz.core.data.repository.ScoreRepositoryImpl
 import com.msaitodev.quiz.core.data.repository.StudyQuotaRepositoryImpl
+import com.msaitodev.quiz.core.data.repository.SyncRepositoryImpl
 import com.msaitodev.quiz.core.data.repository.WrongAnswerRepositoryImpl
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import com.msaitodev.quiz.core.domain.repository.QuestionRepository
@@ -13,11 +14,13 @@ import com.msaitodev.quiz.core.domain.repository.RemoteConfigRepository
 import com.msaitodev.quiz.core.domain.repository.RewardQuotaRepository
 import com.msaitodev.quiz.core.domain.repository.ScoreRepository
 import com.msaitodev.quiz.core.domain.repository.StudyQuotaRepository
+import com.msaitodev.quiz.core.domain.repository.SyncRepository
 import com.msaitodev.quiz.core.domain.repository.WrongAnswerRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -43,4 +46,8 @@ interface DataModule {
 
     @Binds
     fun bindWrongAnswerRepository(impl: WrongAnswerRepositoryImpl): WrongAnswerRepository
+
+    @Binds
+    @Singleton
+    fun bindSyncRepository(impl: SyncRepositoryImpl): SyncRepository
 }
