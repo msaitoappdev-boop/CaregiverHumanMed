@@ -78,7 +78,6 @@ class GetLearningAnalysisUseCase @Inject constructor(
             val currentStreak = calculateStreak(studiedDays)
 
             // 6. 本試験推定スコアの計算 (本試験形式の定数を使用)
-            // 設定がない場合は現在の問題数を分母とする
             val targetExamQuestions = if (appAssetConfig.totalExamQuestions > 0) {
                 appAssetConfig.totalExamQuestions
             } else {
@@ -113,8 +112,6 @@ class GetLearningAnalysisUseCase @Inject constructor(
         if (solvedSummaries.isEmpty()) return 0
         
         val avgAccuracy = solvedSummaries.map { it.accuracyRate }.average().toFloat()
-        
-        // 保守的見積もりロジック: 未学習分野は現在の実力の70%程度と仮定
         val scoreWeight = (avgAccuracy * progress) + (avgAccuracy * 0.7f * (1f - progress))
         
         return (scoreWeight * totalQuestions).roundToInt().coerceIn(0, totalQuestions)
@@ -155,6 +152,7 @@ class GetLearningAnalysisUseCase @Inject constructor(
             TrendPeriod.WEEKLY -> SimpleDateFormat("W'週目'", Locale.US)
             TrendPeriod.MONTHLY -> SimpleDateFormat("M'月'", Locale.US)
         }
+        val keyFormat = SimpleDateFormat("yyyyMMdd", Locale.US)
 
         val grouped = history.groupBy { entry ->
             val cal = Calendar.getInstance().apply { timeInMillis = entry.timestamp }
@@ -166,6 +164,7 @@ class GetLearningAnalysisUseCase @Inject constructor(
         }
 
         return grouped.map { (key, entries) ->
+            val firstEntry = entries.first()
             val label = when (period) {
                 TrendPeriod.DAILY -> key
                 TrendPeriod.WEEKLY -> {
@@ -179,6 +178,7 @@ class GetLearningAnalysisUseCase @Inject constructor(
             }
             LearningAnalysis.DailyScore(
                 dateLabel = label,
+                dateKey = keyFormat.format(Date(firstEntry.timestamp)),
                 averageAccuracy = entries.map { it.percent / 100f }.average().toFloat()
             )
         }.let {

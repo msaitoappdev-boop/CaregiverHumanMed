@@ -14,7 +14,6 @@ import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.ads.MobileAds
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
-import com.google.android.ump.UserMessagingPlatform
 import com.msaitodev.core.ads.ConsentManager
 import com.msaitodev.core.ads.InterstitialHelper
 import com.msaitodev.core.ads.RewardedHelper
@@ -76,7 +75,7 @@ internal fun AppNavHost(
                 onStartQuiz = { 
                     navController.navigate(QuizDestination.route) 
                 },
-                onViewHistory = { navController.navigate(HistoryDestination.route) },
+                onViewHistory = { navController.navigate(HistoryDestination.buildRoute()) },
                 onViewAnalysis = { navController.navigate(AnalysisDestination.route) },
                 onUpgrade = { navController.navigate(PaywallDestination.route) },
                 onOpenSettings = { navController.navigate(SettingsDestination.route) }
@@ -105,21 +104,25 @@ internal fun AppNavHost(
                 navController.previousBackStackEntry?.savedStateHandle?.set(AppActions.KEY_ACTION, AppActions.ACTION_RESTART_SAME_ORDER)
                 navController.popBackStack()
             },
-            onShowScoreHistory = { navController.navigate(HistoryDestination.route) },
             onBackToHome = { navController.popBackStack(HomeDestination.route, inclusive = false) }
         )
 
         reviewGraph(navController)
+        
         historyGraph(navController)
+
         analysisGraph(
             navController = navController,
             onNavigateToSettings = {
                 navController.navigate(SettingsDestination.route) {
-                    // 分析画面をバックスタックから削除し、設定から戻る際にホームへ直接戻るようにする
                     popUpTo(AnalysisDestination.route) { inclusive = true }
                 }
+            },
+            onNavigateToHistory = { dateKey ->
+                navController.navigate(HistoryDestination.buildRoute(dateKey))
             }
         )
+
         paywallGraph()
         settingsGraph(onBack = { navController.popBackStack() })
     }

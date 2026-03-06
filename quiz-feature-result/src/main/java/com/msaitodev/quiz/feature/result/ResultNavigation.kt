@@ -6,13 +6,15 @@ import androidx.navigation.compose.composable
 import com.msaitodev.core.ads.RewardedHelper
 import com.msaitodev.quiz.core.navigation.ResultDestination
 
+/**
+ * 結果画面のナビゲーション・グラフ。
+ */
 fun NavGraphBuilder.resultGraph(
     navController: NavController,
     rewardedHelper: RewardedHelper,
     onNextSet: () -> Unit,
     onReview: (questionsJson: String, answersJson: String) -> Unit,
     onReviewSameOrder: () -> Unit,
-    onShowScoreHistory: () -> Unit,
     onBackToHome: () -> Unit
 ) {
     composable(
@@ -21,6 +23,7 @@ fun NavGraphBuilder.resultGraph(
     ) { backStackEntry ->
         val score = backStackEntry.arguments?.getInt(ResultDestination.ARG_SCORE) ?: 0
         val total = backStackEntry.arguments?.getInt(ResultDestination.ARG_TOTAL) ?: 0
+
         ResultRoute(
             score = score,
             total = total,
@@ -28,7 +31,6 @@ fun NavGraphBuilder.resultGraph(
             onNextSet = onNextSet,
             onReview = onReview,
             onReviewSameOrder = onReviewSameOrder,
-            onShowScoreHistory = onShowScoreHistory,
             onBackToHome = onBackToHome
         )
     }

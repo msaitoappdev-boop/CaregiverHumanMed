@@ -25,7 +25,6 @@ fun ResultRoute(
     onNextSet: () -> Unit,
     onReview: (questionsJson: String, answersJson: String) -> Unit,
     onReviewSameOrder: () -> Unit,
-    onShowScoreHistory: () -> Unit,
     onBackToHome: () -> Unit,
     viewModel: ResultViewModel = hiltViewModel()
 ) {
@@ -81,7 +80,6 @@ fun ResultRoute(
         onOfferConfirm = {
             showOffer = false
             scope.launch {
-                // RewardedHelper.tryShow に購読状態を渡す
                 val success = rewardedHelper.tryShow(activity, isPremium = isPremium)
                 if (success) {
                     viewModel.onRewardGranted()
@@ -97,7 +95,6 @@ fun ResultRoute(
         },
         onReviewSameOrder = onReviewSameOrder,
         onReviewList = { viewModel.onReviewClicked() },
-        onScoreHistory = onShowScoreHistory,
         onBackToHome = onBackToHome,
         onNavUp = onBackToHome
     )
