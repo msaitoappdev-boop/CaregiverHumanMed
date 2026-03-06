@@ -1,9 +1,10 @@
 package com.msaitodev.core.common.config
 
 /**
- * アプリケーションデータのロードに必要なアセット設定。
- * 指定された [assetDataDirectory] 配下のファイルをロードするために使用します。
+ * アプリケーションデータのロードおよび試験仕様に必要な設定。
  */
 data class AppAssetConfig(
-    val assetDataDirectory: String
+    val assetDataDirectory: String,
+    val totalExamQuestions: Int = 120,
+    val passingScoreThreshold: Float = 0.6f
 )

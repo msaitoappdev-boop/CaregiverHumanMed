@@ -95,6 +95,9 @@ private fun AnalysisContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
+        // 合格可能性パネル (推定スコア)
+        ScorePredictionPanel(analysis)
+
         // AIアドバイス（総評）
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -117,6 +120,7 @@ private fun AnalysisContent(
             }
         }
 
+        // 総合進捗
         AnalysisSection(title = stringResource(R.string.analysis_section_overall), icon = Icons.Default.Timeline) {
             Column {
                 LinearProgressIndicator(
@@ -192,6 +196,67 @@ private fun AnalysisContent(
     }
 }
 
+@Composable
+private fun ScorePredictionPanel(analysis: LearningAnalysis) {
+    val scoreFormat = stringResource(R.string.analysis_predicted_score_format)
+    val totalFormat = stringResource(R.string.analysis_total_exam_questions_format)
+    val primaryColor = MaterialTheme.colorScheme.primary
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(R.string.analysis_predicted_score_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            Spacer(Modifier.height(16.dp))
+            
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = String.format(scoreFormat, analysis.predictedScore),
+                    style = MaterialTheme.typography.displayLarge,
+                    fontWeight = FontWeight.Black,
+                    color = primaryColor
+                )
+                Text(
+                    text = String.format(totalFormat, analysis.totalExamQuestions),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
+                )
+            }
+            
+            Spacer(Modifier.height(8.dp))
+            
+            // 合格目標ゲージ
+            Box(modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(analysis.predictedAccuracyRate)
+                        .fillMaxHeight()
+                        .background(primaryColor)
+                )
+            }
+            
+            Spacer(Modifier.height(8.dp))
+            
+            Text(
+                text = stringResource(R.string.analysis_predicted_score_caption),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PeriodSelector(
@@ -246,7 +311,6 @@ private fun StudyCalendar(
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val todayColor = MaterialTheme.colorScheme.primary
     
-    // 曜日ヘッダー
     val dayLabels = listOf(
         stringResource(R.string.analysis_day_sun),
         stringResource(R.string.analysis_day_mon),
@@ -267,12 +331,10 @@ private fun StudyCalendar(
     }
     val todayMillis = today.timeInMillis
 
-    // 表示する日付のリストを作成 (今週を含む直近5週間)
     val calendarDays = remember(studiedDays) {
         val days = mutableListOf<CalendarDay>()
         val cal = today.clone() as Calendar
         
-        // 開始日（4週間前の日曜日）を特定
         cal.add(Calendar.WEEK_OF_YEAR, -4)
         while (cal.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
             cal.add(Calendar.DAY_OF_YEAR, -1)
@@ -280,7 +342,7 @@ private fun StudyCalendar(
         
         val studiedSet = studiedDays.toSet()
         
-        repeat(35) { // 5週間分
+        repeat(35) {
             days.add(
                 CalendarDay(
                     millis = cal.timeInMillis,
@@ -301,7 +363,6 @@ private fun StudyCalendar(
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            // 曜日ラベル
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 dayLabels.forEach { label ->
                     Text(
@@ -316,7 +377,6 @@ private fun StudyCalendar(
             
             Spacer(Modifier.height(8.dp))
             
-            // カレンダー本体
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 for (week in 0 until 5) {
                     Row(

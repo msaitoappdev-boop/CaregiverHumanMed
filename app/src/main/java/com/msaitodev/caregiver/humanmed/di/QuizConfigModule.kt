@@ -15,7 +15,9 @@ object QuizConfigModule {
     @Singleton
     fun provideAppAssetConfig(): AppAssetConfig {
         return AppAssetConfig(
-            assetDataDirectory = "quiz_data"
+            assetDataDirectory = "quiz_data",
+            totalExamQuestions = 125, // 介護福祉士国家試験の最新の設問数（125問）
+            passingScoreThreshold = 0.6f // 概ね60%が合格ライン
         )
     }
 }

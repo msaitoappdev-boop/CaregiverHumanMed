@@ -1,5 +1,6 @@
 package com.msaitodev.quiz.core.domain.di
 
+import com.msaitodev.core.common.config.AppAssetConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -59,13 +60,15 @@ object UseCaseModule {
         questionRepository: QuestionRepository,
         wrongAnswerRepository: WrongAnswerRepository,
         scoreRepository: ScoreRepository,
-        categoryNameProvider: CategoryNameProvider
+        categoryNameProvider: CategoryNameProvider,
+        appAssetConfig: AppAssetConfig
     ): GetLearningAnalysisUseCase {
         return GetLearningAnalysisUseCase(
             questionRepository, 
             wrongAnswerRepository, 
             scoreRepository,
-            categoryNameProvider
+            categoryNameProvider,
+            appAssetConfig
         )
     }
 }

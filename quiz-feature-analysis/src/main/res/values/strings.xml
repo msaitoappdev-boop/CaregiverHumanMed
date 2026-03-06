@@ -24,4 +24,9 @@
     <string name="analysis_month_format">%1$d月</string>
     <string name="analysis_percentage_format">%1$d%%</string>
     <string name="analysis_ellipsis_format">%1$s..</string>
+
+    <string name="analysis_predicted_score_title">本試験 推定スコア</string>
+    <string name="analysis_predicted_score_format">%1$d</string>
+    <string name="analysis_total_exam_questions_format">/ %1$d 点</string>
+    <string name="analysis_predicted_score_caption">※現在の正解率と学習進捗に基づく試算値です</string>
 </resources>
