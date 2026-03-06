@@ -4,10 +4,24 @@
     <string name="analysis_period_week">週</string>
     <string name="analysis_period_month">月</string>
     <string name="analysis_section_overall">総合進捗</string>
+    <string name="analysis_section_heatmap">学習継続カレンダー</string>
     <string name="analysis_section_balance">分野別バランス</string>
     <string name="analysis_section_details">分野別詳細</string>
     <string name="analysis_section_trend">正解率の推移</string>
     <string name="analysis_total_progress_format">全問題の %1$d%% を学習済み</string>
     <string name="analysis_train_category_action">この分野を特訓する ></string>
     <string name="analysis_back">戻る</string>
+    <string name="analysis_heatmap_legend_less">少</string>
+    <string name="analysis_heatmap_legend_more">多</string>
+    <string name="analysis_streak_format">現在 %1$d 日連続学習中！ 🔥</string>
+    <string name="analysis_day_sun">日</string>
+    <string name="analysis_day_mon">月</string>
+    <string name="analysis_day_tue">火</string>
+    <string name="analysis_day_wed">水</string>
+    <string name="analysis_day_thu">木</string>
+    <string name="analysis_day_fri">金</string>
+    <string name="analysis_day_sat">土</string>
+    <string name="analysis_month_format">%1$d月</string>
+    <string name="analysis_percentage_format">%1$d%%</string>
+    <string name="analysis_ellipsis_format">%1$s..</string>
 </resources>

@@ -58,22 +58,68 @@ class GetLearningAnalysisUseCase @Inject constructor(
             // 3. トレンドの計算 (日・週・月)
             val trendData = calculateTrend(history, period)
 
-            // 4. 総評の生成
+            // 4. 学習継続カレンダー用の日付抽出 (00:00:00 Unix Timestamp のリスト)
+            val studiedDays = history.map { entry ->
+                Calendar.getInstance().apply {
+                    timeInMillis = entry.timestamp
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+            }.distinct().sorted()
+
+            // 5. 連続学習日数（ストリーク）の計算
+            val currentStreak = calculateStreak(studiedDays)
+
+            // 6. 総評の生成
             val overallComment = generateComment(totalProgress, categorySummaries)
 
             LearningAnalysis(
                 totalProgress = totalProgress,
                 categorySummaries = categorySummaries,
                 dailyTrend = trendData,
-                overallComment = overallComment
+                overallComment = overallComment,
+                studiedDays = studiedDays,
+                currentStreak = currentStreak
             )
         }
+    }
+
+    private fun calculateStreak(studiedDays: List<Long>): Int {
+        if (studiedDays.isEmpty()) return 0
+        
+        val today = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        
+        val yesterday = Calendar.getInstance().apply {
+            timeInMillis = today
+            add(Calendar.DAY_OF_YEAR, -1)
+        }.timeInMillis
+
+        // 最後に学習した日が今日か昨日でない場合はストリーク終了
+        val lastStudiedDay = studiedDays.last()
+        if (lastStudiedDay != today && lastStudiedDay != yesterday) return 0
+
+        var streak = 0
+        val calendar = Calendar.getInstance().apply { timeInMillis = lastStudiedDay }
+        val studiedSet = studiedDays.toSet()
+
+        while (studiedSet.contains(calendar.timeInMillis)) {
+            streak++
+            calendar.add(Calendar.DAY_OF_YEAR, -1)
+        }
+        return streak
     }
 
     private fun calculateTrend(history: List<com.msaitodev.quiz.core.domain.model.ScoreEntry>, period: TrendPeriod): List<LearningAnalysis.DailyScore> {
         val dateFormat = when (period) {
             TrendPeriod.DAILY -> SimpleDateFormat("MM/dd", Locale.US)
-            TrendPeriod.WEEKLY -> SimpleDateFormat("W'週目'", Locale.US) // 月内週
+            TrendPeriod.WEEKLY -> SimpleDateFormat("W'週目'", Locale.US)
             TrendPeriod.MONTHLY -> SimpleDateFormat("M'月'", Locale.US)
         }
 
@@ -81,13 +127,8 @@ class GetLearningAnalysisUseCase @Inject constructor(
             val cal = Calendar.getInstance().apply { timeInMillis = entry.timestamp }
             when (period) {
                 TrendPeriod.DAILY -> dateFormat.format(Date(entry.timestamp))
-                TrendPeriod.WEEKLY -> {
-                    // 年と月と週番号をキーにする
-                    "${cal.get(Calendar.YEAR)}/${cal.get(Calendar.MONTH) + 1}/${cal.get(Calendar.WEEK_OF_MONTH)}"
-                }
-                TrendPeriod.MONTHLY -> {
-                    "${cal.get(Calendar.YEAR)}/${cal.get(Calendar.MONTH) + 1}"
-                }
+                TrendPeriod.WEEKLY -> "${cal.get(Calendar.YEAR)}/${cal.get(Calendar.MONTH) + 1}/${cal.get(Calendar.WEEK_OF_MONTH)}"
+                TrendPeriod.MONTHLY -> "${cal.get(Calendar.YEAR)}/${cal.get(Calendar.MONTH) + 1}"
             }
         }
 
@@ -108,7 +149,6 @@ class GetLearningAnalysisUseCase @Inject constructor(
                 averageAccuracy = entries.map { it.percent / 100f }.average().toFloat()
             )
         }.let {
-            // 直近のデータを取得
             when (period) {
                 TrendPeriod.DAILY -> it.takeLast(7)
                 TrendPeriod.WEEKLY -> it.takeLast(4)

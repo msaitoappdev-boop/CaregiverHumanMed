@@ -15,8 +15,10 @@ enum class TrendPeriod {
 data class LearningAnalysis(
     val totalProgress: Float,
     val categorySummaries: List<CategorySummary>,
-    val dailyTrend: List<DailyScore>, // ここは「トレンドデータ」全般を指す
-    val overallComment: String
+    val dailyTrend: List<DailyScore>,
+    val overallComment: String,
+    val studiedDays: List<Long>, // 学習した日の 00:00:00 Unix タイムスタンプ
+    val currentStreak: Int       // 現在の連続学習日数
 ) {
     data class CategorySummary(
         val categoryId: String,
