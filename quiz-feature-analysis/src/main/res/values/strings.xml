@@ -5,8 +5,8 @@
     <string name="analysis_period_month">月</string>
     <string name="analysis_section_overall">総合進捗</string>
     <string name="analysis_section_heatmap">学習継続カレンダー</string>
-    <string name="analysis_section_balance">分野別バランス</string>
-    <string name="analysis_section_details">分野別詳細</string>
+    <string name="analysis_section_balance">分野別 正解率バランス</string>
+    <string name="analysis_section_details">分野別 正解率詳細</string>
     <string name="analysis_section_trend">正解率の推移</string>
     <string name="analysis_total_progress_format">全問題の %1$d%% を学習済み</string>
     <string name="analysis_train_category_action">この分野を特訓する ></string>
