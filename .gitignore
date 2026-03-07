@@ -15,3 +15,8 @@ keystore.properties
 
 # Firebase
 app/google-services.json
+
+# 問題データの保護
+# master_data は Git 管理するが、assets 内のプレーンな JSON は除外する
+app/src/main/assets/**/*.json
+quiz-core-data/src/main/assets/**/*.json

@@ -14,13 +14,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.msaitodev.core.common.ui.LocalAppColors
+import com.msaitodev.core.common.ui.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,10 +38,7 @@ fun ReviewScreen(
     uiState: ReviewUiState,
     onNavUp: () -> Unit
 ) {
-    val CorrectBg = Color(0xFFDFF5E1)
-    val CorrectBorder = Color(0xFF2F855A)
-    val WrongBg = Color(0xFFFFE0E0)
-    val WrongBorder = Color(0xFFC53030)
+    val appColors = LocalAppColors.current
 
     Scaffold(
         topBar = {
@@ -58,10 +65,7 @@ fun ReviewScreen(
                 items(uiState.items, key = { it.number }) { item ->
                     ReviewCard(
                         item = item,
-                        correctBg = CorrectBg,
-                        correctBorder = CorrectBorder,
-                        wrongBg = WrongBg,
-                        wrongBorder = WrongBorder
+                        appColors = appColors
                     )
                 }
             }
@@ -72,16 +76,17 @@ fun ReviewScreen(
 @Composable
 private fun ReviewCard(
     item: ReviewItem,
-    correctBg: Color,
-    correctBorder: Color,
-    wrongBg: Color,
-    wrongBorder: Color
+    appColors: AppColors
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text(text = "第 ${item.number} 問", style = MaterialTheme.typography.titleSmall, color = Color.Gray)
+            Text(
+                text = stringResource(R.string.review_question_number, item.number),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Spacer(Modifier.height(4.dp))
             Text(text = item.question, style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(8.dp))
@@ -90,13 +95,13 @@ private fun ReviewCard(
                 val isSelected = idx == item.selectedIndex
                 val isCorrect = idx == item.correctIndex
                 val bg = when {
-                    isCorrect -> correctBg
-                    isSelected && !isCorrect -> wrongBg
+                    isCorrect -> appColors.correctBackground
+                    isSelected && !isCorrect -> appColors.wrongBackground
                     else -> Color.Transparent
                 }
                 val borderColor = when {
-                    isCorrect -> correctBorder
-                    isSelected && !isCorrect -> wrongBorder
+                    isCorrect -> appColors.correctBorder
+                    isSelected && !isCorrect -> appColors.wrongBorder
                     else -> Color.Transparent
                 }
                 Surface(
@@ -116,21 +121,38 @@ private fun ReviewCard(
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "・$option", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            text = stringResource(R.string.review_option_prefix, option),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
                 }
             }
 
             Spacer(Modifier.height(8.dp))
-            val my = item.selectedIndex?.let { idx -> item.options.getOrNull(idx) } ?: "未回答"
-            val correct = item.options.getOrNull(item.correctIndex) ?: "-"
-            Text(text = "あなたの回答：$my", style = MaterialTheme.typography.labelLarge)
-            Text(text = "正解：$correct", style = MaterialTheme.typography.labelLarge, color = correctBorder)
+            val my = item.selectedIndex?.let { idx -> item.options.getOrNull(idx) }
+                ?: stringResource(R.string.review_not_answered)
+            val correct = item.options.getOrNull(item.correctIndex)
+                ?: stringResource(R.string.review_fallback_dash)
+
+            Text(
+                text = stringResource(R.string.review_your_answer, my),
+                style = MaterialTheme.typography.labelLarge
+            )
+            Text(
+                text = stringResource(R.string.review_correct_answer, correct),
+                style = MaterialTheme.typography.labelLarge,
+                color = if (appColors.correctBorder != Color.Unspecified) appColors.correctBorder else MaterialTheme.colorScheme.primary
+            )
 
             item.explanation?.let { exp ->
                 if (exp.isNotBlank()) {
                     Spacer(Modifier.height(8.dp))
-                    Text(text = "解説：$exp", style = MaterialTheme.typography.bodyMedium, color = correctBorder)
+                    Text(
+                        text = stringResource(R.string.review_explanation_label, exp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (appColors.correctBorder != Color.Unspecified) appColors.correctBorder else MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         }

@@ -1,132 +1,98 @@
 package com.msaitodev.quiz.core.domain.usecase
 
 import com.google.common.truth.Truth.assertThat
+import com.msaitodev.core.ads.RewardedHelper
+import com.msaitodev.quiz.core.domain.config.RemoteConfigKeys
 import com.msaitodev.quiz.core.domain.model.QuotaState
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
 import com.msaitodev.quiz.core.domain.repository.RemoteConfigRepository
 import com.msaitodev.quiz.core.domain.repository.StudyQuotaRepository
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 class StartNextQuizUseCaseTest {
 
-    // --- Fake Repositories --- //
+    private lateinit var quotaRepo: StudyQuotaRepository
+    private lateinit var rewardedHelper: RewardedHelper
+    private lateinit var premiumRepo: PremiumRepository
+    private lateinit var remoteConfigRepo: RemoteConfigRepository
+    private lateinit var useCase: StartNextQuizUseCase
 
-    private class FakeStudyQuotaRepository : StudyQuotaRepository {
-        private var quotaStateToReturn: QuotaState? = null
-
-        fun setQuotaState(quotaState: QuotaState) {
-            quotaStateToReturn = quotaState
-        }
-
-        override fun observe(freeDailySetsProvider: () -> Int): Flow<QuotaState> {
-            return flowOf(quotaStateToReturn ?: error("FakeStudyQuotaRepository.setQuotaState was not called"))
-        }
-
-        override suspend fun markSetFinished() { /* no-op */ }
-        override suspend fun grantByReward() { /* no-op */ }
-    }
-
-    private class FakePremiumRepository : PremiumRepository {
-        private val _isPremium = MutableStateFlow(false)
-        override val isPremium: StateFlow<Boolean> get() = _isPremium
-
-        fun setIsPremium(isPremium: Boolean) {
-            _isPremium.value = isPremium
-        }
-
-        override suspend fun refreshFromBilling() { /* no-op */ }
-        override suspend fun savePremiumStatus(isPremium: Boolean) { /* no-op */ }
-        override suspend fun setPremiumForDebug(enabled: Boolean) { /* no-op */ }
-    }
-
-    private class FakeRemoteConfigRepository : RemoteConfigRepository {
-        private val config = mutableMapOf<String, Any>()
-
-        fun setConfig(key: String, value: Any) {
-            config[key] = value
-        }
-
-        override fun getLong(key: String): Long {
-            return config[key] as? Long ?: 0L
-        }
-
-        override fun getBoolean(key: String): Boolean {
-            return config[key] as? Boolean ?: false
-        }
-    }
-
-    // --- Test Cases --- //
-
-    @Test
-    fun `invoke - when quota is not exceeded - returns CanStart`() = runTest {
-        // Arrange
-        val quotaRepo = FakeStudyQuotaRepository().apply {
-            setQuotaState(QuotaState(todayKey = "", usedSets = 4, rewardedGranted = 0, freeDailySets = 5))
-        }
-        val premiumRepo = FakePremiumRepository().apply { setIsPremium(false) }
-        val remoteConfigRepo = FakeRemoteConfigRepository().apply { setConfig("free_daily_sets", 5L) }
-        val useCase = StartNextQuizUseCase(quotaRepo, premiumRepo, remoteConfigRepo)
-
-        // Act
-        val result = useCase.invoke()
-
-        // Assert
-        assertThat(result).isInstanceOf(StartNextQuizUseCase.Result.CanStart::class.java)
+    @Before
+    fun setup() {
+        quotaRepo = mock()
+        rewardedHelper = mock()
+        premiumRepo = mock()
+        remoteConfigRepo = mock()
+        useCase = StartNextQuizUseCase(quotaRepo, rewardedHelper, premiumRepo, remoteConfigRepo)
     }
 
     @Test
-    fun `invoke - when free user quota exceeded and reward not used - returns ShowRewardOffer`() = runTest {
-        // Arrange
-        val quotaRepo = FakeStudyQuotaRepository().apply {
-            setQuotaState(QuotaState(todayKey = "", usedSets = 5, rewardedGranted = 0, freeDailySets = 5))
-        }
-        val premiumRepo = FakePremiumRepository().apply { setIsPremium(false) }
-        val remoteConfigRepo = FakeRemoteConfigRepository().apply { setConfig("free_daily_sets", 5L) }
-        val useCase = StartNextQuizUseCase(quotaRepo, premiumRepo, remoteConfigRepo)
+    fun `invoke returns CanStart when quota is available`() = runTest {
+        // GIVEN
+        whenever(premiumRepo.isPremium).thenReturn(MutableStateFlow(false))
+        whenever(remoteConfigRepo.getLong(any())).thenReturn(5L)
+        whenever(quotaRepo.observe(any())).thenReturn(flowOf(QuotaState("today", 0, 5)))
+        whenever(rewardedHelper.canShowToday).thenReturn(flowOf(true))
 
-        // Act
-        val result = useCase.invoke()
+        // WHEN
+        val result = useCase()
 
-        // Assert
-        assertThat(result).isInstanceOf(StartNextQuizUseCase.Result.ShowRewardOffer::class.java)
+        // THEN
+        assertThat(result).isEqualTo(StartNextQuizUseCase.Result.CanStart)
     }
 
     @Test
-    fun `invoke - when free user quota exceeded and reward used - returns QuotaExceededAndRewardUsed`() = runTest {
-        // Arrange
-        val quotaRepo = FakeStudyQuotaRepository().apply {
-            setQuotaState(QuotaState(todayKey = "", usedSets = 6, rewardedGranted = 1, freeDailySets = 5))
-        }
-        val premiumRepo = FakePremiumRepository().apply { setIsPremium(false) }
-        val remoteConfigRepo = FakeRemoteConfigRepository().apply { setConfig("free_daily_sets", 5L) }
-        val useCase = StartNextQuizUseCase(quotaRepo, premiumRepo, remoteConfigRepo)
+    fun `invoke returns ShowRewardOffer when quota exceeded for free user and reward available`() = runTest {
+        // GIVEN
+        whenever(premiumRepo.isPremium).thenReturn(MutableStateFlow(false))
+        whenever(remoteConfigRepo.getLong(any())).thenReturn(5L)
+        whenever(quotaRepo.observe(any())).thenReturn(flowOf(QuotaState("today", 5, 5)))
+        whenever(rewardedHelper.canShowToday).thenReturn(flowOf(true))
 
-        // Act
-        val result = useCase.invoke()
+        // WHEN
+        val result = useCase()
 
-        // Assert
-        assertThat(result).isInstanceOf(StartNextQuizUseCase.Result.QuotaExceededAndRewardUsed::class.java)
+        // THEN
+        assertThat(result).isEqualTo(StartNextQuizUseCase.Result.ShowRewardOffer)
     }
 
     @Test
-    fun `invoke - when premium user quota exceeded - returns QuotaExceeded`() = runTest {
-        // Arrange
-        val quotaRepo = FakeStudyQuotaRepository().apply {
-            setQuotaState(QuotaState(todayKey = "", usedSets = 20, rewardedGranted = 0, freeDailySets = 20))
-        }
-        val premiumRepo = FakePremiumRepository().apply { setIsPremium(true) }
-        val remoteConfigRepo = FakeRemoteConfigRepository().apply { setConfig("premium_daily_sets", 20L) }
-        val useCase = StartNextQuizUseCase(quotaRepo, premiumRepo, remoteConfigRepo)
+    fun `invoke returns QuotaExceededAndRewardUsed when reward also unavailable`() = runTest {
+        // GIVEN
+        whenever(premiumRepo.isPremium).thenReturn(MutableStateFlow(false))
+        whenever(remoteConfigRepo.getLong(any())).thenReturn(5L)
+        whenever(quotaRepo.observe(any())).thenReturn(flowOf(QuotaState("today", 5, 5)))
+        whenever(rewardedHelper.canShowToday).thenReturn(flowOf(false))
 
-        // Act
-        val result = useCase.invoke()
+        // WHEN
+        val result = useCase()
 
-        // Assert
-        assertThat(result).isInstanceOf(StartNextQuizUseCase.Result.QuotaExceeded::class.java)
+        // THEN
+        assertThat(result).isEqualTo(StartNextQuizUseCase.Result.QuotaExceededAndRewardUsed)
+    }
+
+    @Test
+    fun `invoke returns QuotaExceeded for premium user when limit reached`() = runTest {
+        // GIVEN
+        whenever(premiumRepo.isPremium).thenReturn(MutableStateFlow(true))
+        whenever(remoteConfigRepo.getLong(any())).thenReturn(10L)
+        whenever(quotaRepo.observe(any())).thenReturn(flowOf(QuotaState("today", 10, 10)))
+        // Reward should not be considered for premium
+        whenever(rewardedHelper.canShowToday).thenReturn(flowOf(true))
+
+        // WHEN
+        val result = useCase()
+
+        // THEN
+        assertThat(result).isEqualTo(StartNextQuizUseCase.Result.QuotaExceeded)
     }
 }

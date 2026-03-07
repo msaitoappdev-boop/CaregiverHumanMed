@@ -1,5 +1,3 @@
-include(":quiz-feature-history")
-
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -18,14 +16,18 @@ dependencyResolutionManagement {
 
 rootProject.name = "CaregiverHumanMed"
 include(":app")
-include(":quiz-core-common")
+include(":core-common")
 include(":quiz-core-data")
 include(":quiz-core-domain")
 include(":quiz-feature-review")
 include(":quiz-feature-result")
-include(":quiz-core-ads")
-include(":quiz-feature-billing")
-include(":quiz-feature-settings")
-include(":quiz-core-notifications")
+include(":core-ads")
+include(":feature-billing")
+include(":feature-settings")
+include(":core-notifications")
 include(":quiz-feature-main")
+include(":quiz-feature-history")
+include(":quiz-feature-analysis")
+include(":core-navigation")
 include(":quiz-core-navigation")
+include(":core-cloud-sync")

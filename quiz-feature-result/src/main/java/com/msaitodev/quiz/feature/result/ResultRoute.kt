@@ -7,11 +7,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.msaitodev.quiz.core.ads.RewardedHelper
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.msaitodev.core.ads.ConsentManager
+import com.msaitodev.core.ads.RewardedHelper
+import kotlinx.coroutines.launch
 
 @Composable
 fun ResultRoute(
@@ -21,7 +25,6 @@ fun ResultRoute(
     onNextSet: () -> Unit,
     onReview: (questionsJson: String, answersJson: String) -> Unit,
     onReviewSameOrder: () -> Unit,
-    onShowScoreHistory: () -> Unit,
     onBackToHome: () -> Unit,
     viewModel: ResultViewModel = hiltViewModel()
 ) {
@@ -34,6 +37,9 @@ fun ResultRoute(
     }
 
     val activity = LocalContext.current as Activity
+    val scope = rememberCoroutineScope()
+    val isPremium by viewModel.isPremium.collectAsStateWithLifecycle()
+
     LaunchedEffect(Unit) {
         viewModel.onScreenShown(activity, score, total, pct)
     }
@@ -42,13 +48,25 @@ fun ResultRoute(
     var showOffer by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel.effect) {
-        viewModel.effect.collect {
-            when (it) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
                 is ResultEffect.StartNewQuiz -> onNextSet()
-                is ResultEffect.NavigateToReview -> onReview(it.questionsJson, it.answersJson)
+                is ResultEffect.NavigateToReview -> onReview(effect.questionsJson, effect.answersJson)
                 is ResultEffect.ShowRewardOffer -> showOffer = true
+                is ResultEffect.QuotaExceeded -> {
+                    Toast.makeText(context, R.string.result_quota_exceeded, Toast.LENGTH_SHORT).show()
+                }
+                is ResultEffect.RewardLimitReached -> {
+                    Toast.makeText(context, R.string.result_reward_limit_reached, Toast.LENGTH_SHORT).show()
+                }
+                is ResultEffect.RewardGranted -> {
+                    Toast.makeText(context, R.string.result_reward_granted, Toast.LENGTH_LONG).show()
+                }
+                is ResultEffect.RewardGrantFailed -> {
+                    Toast.makeText(context, R.string.result_reward_grant_failed, Toast.LENGTH_SHORT).show()
+                }
                 is ResultEffect.ShowMessage -> {
-                    Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -61,18 +79,22 @@ fun ResultRoute(
         showOfferDialog = showOffer,
         onOfferConfirm = {
             showOffer = false
-            rewardedHelper.show(
-                activity = activity,
-                canShowToday = { true },
-                onEarned = { viewModel.onRewardGranted() },
-                onFail = { Toast.makeText(context, "動画を読み込めませんでした", Toast.LENGTH_SHORT).show() }
-            )
+            scope.launch {
+                val success = rewardedHelper.tryShow(activity, isPremium = isPremium)
+                if (success) {
+                    viewModel.onRewardGranted()
+                } else {
+                    Toast.makeText(context, R.string.result_ad_load_failed, Toast.LENGTH_SHORT).show()
+                }
+            }
         },
         onOfferDismiss = { showOffer = false },
-        onNextSet = { viewModel.onNextSetClicked() },
+        onNextSet = {
+            val canRequestAds = ConsentManager.canRequestAds(context)
+            viewModel.onNextSetClicked(canRequestAds)
+        },
         onReviewSameOrder = onReviewSameOrder,
         onReviewList = { viewModel.onReviewClicked() },
-        onScoreHistory = onShowScoreHistory,
         onBackToHome = onBackToHome,
         onNavUp = onBackToHome
     )

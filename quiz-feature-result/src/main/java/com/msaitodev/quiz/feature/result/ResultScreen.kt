@@ -23,7 +23,6 @@ fun ResultScreen(
     onNextSet: () -> Unit,
     onReviewSameOrder: () -> Unit,
     onReviewList: () -> Unit,
-    onScoreHistory: () -> Unit,
     onBackToHome: () -> Unit,
     onNavUp: () -> Unit
 ) {
@@ -49,12 +48,15 @@ fun ResultScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "$score / $total",
+                text = stringResource(R.string.result_score_format, score, total),
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold
             )
             Spacer(Modifier.height(8.dp))
-            Text(text = "$pct%", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                text = stringResource(R.string.result_percent_format, pct),
+                style = MaterialTheme.typography.headlineMedium
+            )
             Spacer(Modifier.height(16.dp))
             LinearProgressIndicator(
                 progress = { (pct / 100f) },
@@ -65,6 +67,7 @@ fun ResultScreen(
 
             Spacer(Modifier.height(32.dp))
 
+            // Primary Action: 次の学習へ
             Button(
                 onClick = onNextSet,
                 modifier = Modifier.fillMaxWidth()
@@ -72,6 +75,7 @@ fun ResultScreen(
 
             Spacer(Modifier.height(12.dp))
 
+            // Secondary Actions: 復習
             OutlinedButton(
                 onClick = onReviewSameOrder,
                 modifier = Modifier.fillMaxWidth()
@@ -79,20 +83,14 @@ fun ResultScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            Button(
+            OutlinedButton(
                 onClick = onReviewList,
                 modifier = Modifier.fillMaxWidth()
             ) { Text(stringResource(id = R.string.result_review_list)) }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
 
-            Button(
-                onClick = onScoreHistory,
-                modifier = Modifier.fillMaxWidth()
-            ) { Text(stringResource(id = R.string.result_score_history)) }
-
-            Spacer(Modifier.height(12.dp))
-
+            // Tertiary Action: ホームへ
             TextButton(
                 onClick = onBackToHome,
                 modifier = Modifier.fillMaxWidth()

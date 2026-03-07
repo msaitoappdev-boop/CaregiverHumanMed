@@ -28,8 +28,8 @@ android {
         applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 19
-        versionName = "0.9.19"
+        versionCode = 81
+        versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -45,13 +45,18 @@ android {
     buildTypes {
         debug {
             // Debug は Google のサンプル App ID に固定（安全）
-            //    公式サンプル: ca-app-pub-3940256099942544~3347511713
             manifestPlaceholders["admob_app_id"] =
                 "ca-app-pub-3940256099942544~3347511713"
         }
         release {
-            // The admob.app.id is loaded from local.properties, but if it's not present,
-            // this fallback is used. We are updating the fallback to the new App ID.
+            // リリース品質の難読化と最適化を有効化
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+
             val appId = localProps.getProperty("admob.app.id")
                 ?: "ca-app-pub-2149916445602223~3292882590"
             manifestPlaceholders["admob_app_id"] = appId
@@ -73,21 +78,24 @@ android {
 }
 
 dependencies {
-    implementation(project(":quiz-core-common"))
+    implementation(project(":core-common"))
     implementation(project(":quiz-core-domain"))
     implementation(project(":quiz-feature-history"))
     implementation(project(":quiz-feature-review"))
     implementation(project(":quiz-feature-result"))
-    implementation(project(":quiz-core-ads"))
-    implementation(project(":quiz-feature-billing"))
-    implementation(project(":quiz-feature-settings"))
+    implementation(project(":core-ads"))
+    implementation(project(":feature-billing"))
+    implementation(project(":feature-settings"))
+    implementation(project(":core-navigation"))
     implementation(project(":quiz-core-navigation"))
-    implementation(project(":quiz-core-notifications"))
+    implementation(project(":core-notifications"))
     implementation(project(":quiz-feature-main"))
+    implementation(project(":quiz-feature-analysis"))
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
     implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     // Compose BOM
     val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
@@ -121,6 +129,7 @@ dependencies {
     implementation("com.android.billingclient:billing-ktx:7.1.1")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation("androidx.hilt:hilt-work:1.2.0")
     implementation("androidx.lifecycle:lifecycle-process:2.8.6")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
 
@@ -132,13 +141,15 @@ dependencies {
 
     implementation("com.google.firebase:firebase-config-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx")
 
     // AdMob / UMP
     implementation("com.google.android.gms:play-services-ads:22.6.0")
-    implementation("com.google.android.ump:user-messaging-platform:4.0.0")
+    implementation("com.google.android.ump:user-messaging-platform:2.2.0")
 
     // Test dependencies
     testImplementation("junit:junit:4.13.2")
+    testImplementation(project(":quiz-core-data"))
     testImplementation("org.mockito:mockito-core:4.11.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
     testImplementation("org.mockito:mockito-inline:5.2.0")

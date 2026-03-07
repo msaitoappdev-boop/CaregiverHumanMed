@@ -43,11 +43,13 @@ android {
 
 dependencies {
 
+    implementation(project(":core-navigation"))
     implementation(project(":quiz-core-navigation"))
-    implementation(project(":quiz-core-common"))
+    implementation(project(":core-common"))
     implementation(project(":quiz-core-domain"))
     implementation(project(":quiz-core-data"))
-    implementation(project(":quiz-core-ads"))
+    implementation(project(":core-ads"))
+    implementation(project(":feature-billing"))
 
     // Compose
     val composeBom = platform("androidx.compose:compose-bom:2024.06.00")

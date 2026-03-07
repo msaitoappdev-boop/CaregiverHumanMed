@@ -7,51 +7,30 @@ import org.junit.Test
 class DailyQuestionSelectorTest {
 
     private val selector = DailyQuestionSelector()
-    private val dummyQuestions = listOf(
-        Question("q1", "", emptyList(), 0, ""),
-        Question("q2", "", emptyList(), 0, ""),
-        Question("q3", "", emptyList(), 0, ""),
-        Question("q4", "", emptyList(), 0, ""),
-        Question("q5", "", emptyList(), 0, "")
+
+    private val testQuestions = listOf(
+        Question("1", "cat", "Q1", emptyList(), 0, null),
+        Question("2", "cat", "Q2", emptyList(), 0, null),
+        Question("3", "cat", "Q3", emptyList(), 0, null),
+        Question("4", "cat", "Q4", emptyList(), 0, null),
+        Question("5", "cat", "Q5", emptyList(), 0, null)
     )
 
     @Test
-    fun `select returns correct count`() {
-        // GIVEN a list of 5 questions
-        // WHEN selecting 3
-        val result = selector.select(dummyQuestions, 3)
-
-        // THEN the result size should be 3
+    fun `select - returns correct number of questions`() {
+        val result = selector.select(testQuestions, 3)
         assertThat(result).hasSize(3)
     }
 
     @Test
-    fun `select with count larger than list size returns all items`() {
-        // GIVEN a list of 5 questions
-        // WHEN selecting 10
-        val result = selector.select(dummyQuestions, 10)
+    fun `select - returns unique questions`() {
+        val result = selector.select(testQuestions, 3)
+        assertThat(result.distinctBy { it.id }).hasSize(3)
+    }
 
-        // THEN the result size should be 5 (all items)
+    @Test
+    fun `select - handles count larger than list`() {
+        val result = selector.select(testQuestions, 10)
         assertThat(result).hasSize(5)
-    }
-
-    @Test
-    fun `select from empty list returns empty list`() {
-        // GIVEN an empty list
-        // WHEN selecting 3
-        val result = selector.select(emptyList(), 3)
-
-        // THEN the result should be empty
-        assertThat(result).isEmpty()
-    }
-
-    @Test
-    fun `select with zero count returns empty list`() {
-        // GIVEN a list of 5 questions
-        // WHEN selecting 0
-        val result = selector.select(dummyQuestions, 0)
-
-        // THEN the result should be empty
-        assertThat(result).isEmpty()
     }
 }

@@ -1,0 +1,4 @@
+<resources>
+    <!-- Paywall (汎用エラーメッセージのみ残し、他は :app のリソースへ移行済み) -->
+    <string name="paywall_error_product_details">商品情報を取得できませんでした</string>
+</resources>

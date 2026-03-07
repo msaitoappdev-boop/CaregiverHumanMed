@@ -1,7 +1,7 @@
 package com.msaitodev.caregiver.humanmed.di
 
 import android.content.Context
-import com.msaitodev.quiz.core.ads.AdModule
+import com.msaitodev.core.ads.AdModule
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

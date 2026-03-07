@@ -1,14 +1,19 @@
 package com.msaitodev.quiz.core.domain.di
 
+import com.msaitodev.core.common.config.AppAssetConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import com.msaitodev.quiz.core.domain.repository.QuestionRepository
 import com.msaitodev.quiz.core.domain.repository.ScoreRepository
+import com.msaitodev.quiz.core.domain.repository.WrongAnswerRepository
+import com.msaitodev.quiz.core.domain.repository.CategoryNameProvider
 import com.msaitodev.quiz.core.domain.usecase.ClearScoresUseCase
 import com.msaitodev.quiz.core.domain.usecase.GetDailyQuestionsUseCase
+import com.msaitodev.quiz.core.domain.usecase.GetLearningAnalysisUseCase
 import com.msaitodev.quiz.core.domain.usecase.GetNextQuestionsUseCase
+import com.msaitodev.quiz.core.domain.usecase.GetWeaknessQuestionsUseCase
 import com.msaitodev.quiz.core.domain.usecase.ObserveScoresUseCase
 import com.msaitodev.quiz.core.domain.usecase.SaveScoreUseCase
 import com.msaitodev.quiz.core.domain.ui.DailyQuestionSelector
@@ -40,5 +45,30 @@ object UseCaseModule {
     @Provides
     fun provideSaveScoreUseCase(scoreRepository: ScoreRepository): SaveScoreUseCase {
         return SaveScoreUseCase(scoreRepository)
+    }
+
+    @Provides
+    fun provideGetWeaknessQuestionsUseCase(
+        questionRepository: QuestionRepository,
+        wrongAnswerRepository: WrongAnswerRepository
+    ): GetWeaknessQuestionsUseCase {
+        return GetWeaknessQuestionsUseCase(questionRepository, wrongAnswerRepository)
+    }
+
+    @Provides
+    fun provideGetLearningAnalysisUseCase(
+        questionRepository: QuestionRepository,
+        wrongAnswerRepository: WrongAnswerRepository,
+        scoreRepository: ScoreRepository,
+        categoryNameProvider: CategoryNameProvider,
+        appAssetConfig: AppAssetConfig
+    ): GetLearningAnalysisUseCase {
+        return GetLearningAnalysisUseCase(
+            questionRepository, 
+            wrongAnswerRepository, 
+            scoreRepository,
+            categoryNameProvider,
+            appAssetConfig
+        )
     }
 }

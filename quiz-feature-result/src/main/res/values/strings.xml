@@ -9,6 +9,14 @@
     <string name="result_review_list">復習一覧を見る</string>
     <string name="result_score_history">スコア履歴を見る</string>
     <string name="result_back_to_home">ホームへ戻る</string>
+    <string name="result_reward_granted">報酬を獲得しました！あと 1 セット追加で学習できます。</string>
+    <string name="result_quota_exceeded">本日の学習上限に達しました。</string>
+    <string name="result_reward_limit_reached">本日は動画視聴による付与は上限です。</string>
+    <string name="result_ad_load_failed">動画を読み込めませんでした（ネットワーク等を確認してください）</string>
+    <string name="result_reward_grant_failed">報酬の付与に失敗しました。</string>
+
+    <string name="result_score_format">%1$d / %2$d</string>
+    <string name="result_percent_format">%d%%</string>
 
     <!-- Dialogs -->
     <string name="dialog_rewarded_ad_title">今日は無料分が終了しました</string>
