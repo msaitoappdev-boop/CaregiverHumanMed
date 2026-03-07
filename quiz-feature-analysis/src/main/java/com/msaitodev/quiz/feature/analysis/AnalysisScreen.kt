@@ -650,13 +650,13 @@ private fun DailyTrendChart(
                             Box(
                                 modifier = Modifier
                                     .fillMaxHeight()
-                                    .width(20.dp)
+                                    .weight(1f) // 固定幅 20.dp を廃止し、均等配分に変更
                                     .clickable { onDateClick(score.dateKey) },
                                 contentAlignment = Alignment.BottomCenter
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxWidth()
+                                        .width(20.dp) // 棒自体の太さは 20.dp で維持
                                         .fillMaxHeight(score.averageAccuracy.coerceAtLeast(0.01f))
                                         .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
                                         .background(
@@ -672,22 +672,23 @@ private fun DailyTrendChart(
 
             Spacer(Modifier.height(8.dp))
 
-            // X軸のラベル (日付)
+            // X軸のラベル (日付) - 構造を上部と完全に一致させる
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = yAxisWidth + 8.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 trends.forEach { score ->
                     Text(
                         text = score.dateLabel,
                         modifier = Modifier
-                            .width(20.dp)
+                            .weight(1f) // 固定幅を廃止し、均等配分に変更
                             .clickable { onDateClick(score.dateKey) },
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelSmall,
-                        fontSize = 9.sp,
+                        fontSize = 8.sp, // 少しだけ小さくして余裕を持たせる
                         color = labelColor,
                         maxLines = 1
                     )
