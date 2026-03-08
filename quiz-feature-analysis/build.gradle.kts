@@ -1,9 +1,12 @@
+import org.gradle.api.publish.maven.MavenPublication
+
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp")
     id("org.jetbrains.kotlin.plugin.serialization")
+    id("maven-publish")
 }
 
 android {
@@ -15,12 +18,22 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
     buildFeatures {
         compose = true
@@ -28,13 +41,33 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.15"
     }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            register<MavenPublication>("release") {
+                groupId = "com.msaitodev.quiz"
+                artifactId = "quiz-feature-analysis"
+                version = "1.0.0"
+                from(components["release"])
+            }
+        }
+    }
 }
 
 dependencies {
-    implementation(project(":core-common"))
-    implementation(project(":quiz-core-domain"))
-    implementation(project(":quiz-core-navigation"))
-    implementation(project(":feature-settings"))
+    // 全てのコア・フィーチャーライブラリを Maven 形式で参照
+    implementation("com.msaitodev.core:core-common:1.0.0")
+    implementation("com.msaitodev.feature:feature-settings:1.0.0")
+    implementation("com.msaitodev.quiz:quiz-core-domain:1.0.0")
+    implementation("com.msaitodev.quiz:quiz-core-navigation:1.0.0")
 
     // AndroidX / Compose
     implementation("androidx.core:core-ktx:1.13.1")
@@ -47,9 +80,10 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.8.4")
 
-    // Hilt
-    implementation("com.google.dagger:hilt-android:2.51.1")
-    kapt("com.google.dagger:hilt-compiler:2.51.1")
+    // Hilt (KSP)
+    val hiltVersion = "2.51.1"
+    implementation("com.google.dagger:hilt-android:$hiltVersion")
+    ksp("com.google.dagger:hilt-compiler:$hiltVersion")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
     // Serialization

@@ -7,10 +7,11 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS) // 一旦プロジェクト参照を許可する設定に戻す
     repositories {
         google()
         mavenCentral()
+        mavenLocal()
     }
 }
 

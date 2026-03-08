@@ -1,13 +1,16 @@
+import org.gradle.api.publish.maven.MavenPublication
+
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp") // KSP導入
+    id("maven-publish")
 }
 
 android {
     namespace = "com.msaitodev.core.notifications"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 24
@@ -23,36 +26,56 @@ android {
             )
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            register<MavenPublication>("release") {
+                groupId = "com.msaitodev.core"
+                artifactId = "core-notifications"
+                version = "1.0.0"
+                from(components["release"])
+            }
+        }
     }
 }
 
 dependencies {
-    implementation(project(":core-common"))
-    implementation(project(":quiz-core-domain"))
+    // 汎用コアおよびクイズドメインを Maven 形式で参照
+    implementation("com.msaitodev.core:core-common:1.0.0")
+    implementation("com.msaitodev.quiz:quiz-core-domain:1.0.0")
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
-    // WorkManager for background tasks
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    // WorkManager
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
 
-    // DataStore for preferences
+    // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
-    // Hilt for dependency injection
-    implementation("com.google.dagger:hilt-android:2.51.1")
-    kapt("com.google.dagger:hilt-compiler:2.51.1")
-    // For Hilt + WorkManager integration
+    // Hilt (KSPへ移行)
+    val hiltVersion = "2.51.1"
+    implementation("com.google.dagger:hilt-android:$hiltVersion")
+    ksp("com.google.dagger:hilt-compiler:$hiltVersion")
     implementation("androidx.hilt:hilt-work:1.2.0")
-    kapt("androidx.hilt:hilt-compiler:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
 
-    // Other necessary dependencies
     implementation("androidx.core:core-ktx:1.13.1")
 
     // Testing
@@ -61,7 +84,7 @@ dependencies {
     androidTestImplementation("com.google.truth:truth:1.4.2")
     androidTestImplementation("org.mockito:mockito-core:5.12.0")
     androidTestImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
-    androidTestImplementation("org.mockito:mockito-inline:5.2.1") // For mocking static methods and more
-    androidTestImplementation("androidx.work:work-testing:2.9.0")
+    androidTestImplementation("org.mockito:mockito-inline:5.2.1")
+    androidTestImplementation("androidx.work:work-testing:2.9.1")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }
