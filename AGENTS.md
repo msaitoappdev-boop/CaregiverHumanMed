@@ -112,3 +112,28 @@
 1.  **即時停止と全体分析**: 直ちに修正せず、関連コードをすべて読む。
 2.  **状態遷移の完全なマッピング**: StateFlow の時系列変化を書き出す。
 3.  **根本原因の仮説構築**: なぜ食い違いが発生したかの仮説をユーザーに提示し承認を得る。
+
+---
+
+## 11. 新規アプリ量産プロトコル
+本プロジェクトをベースに新しい資格試験アプリを立ち上げる際の標準手順です。
+
+### 11.1 プロジェクトの初期設定
+- **Application ID**: `app/build.gradle.kts` の `applicationId` を新しい資格アプリの ID に変更。
+- **Firebase**: 新しいプロジェクト用の `app/google-services.json` を配置。
+- **アプリ名・表示**: `strings.xml` の `app_name` および関連する表示文字列を更新。
+
+### 11.2 収益化の設定
+- **AdMob**: `local.properties` または `AndroidManifest.xml` (meta-data) の AdMob App ID を更新。広告ユニット ID は `strings.xml` または `Remote Config` で定義。
+- **Billing**: `strings.xml` または `BillingModule` 等で、新しいアプリのサブスクリプション製品 ID が正しく反映されているか確認。
+
+### 11.3 コンテンツと科目の定義
+- **クイズデータ**: `master_data/quiz_data` 配下に新しい資格用の AES 暗号化済み問題（.bin）を配置。
+- **科目定義**: `strings.xml` のカテゴリ名、および `QuizCategoryNameProvider`, `QuizConfigModule` の定義を新しいアプリの科目に合わせる。
+- **分析機能**: カテゴリ数が変更になる場合は、レーダーチャートの表示ロジックとの整合性を確認。
+
+### 11.4 外部ライブラリ（Spokes）の同期
+- 基盤側（`core`, `quiz-engine`）の最新バージョンを `app/build.gradle.kts` で指定し、`publishToMavenLocal` された最新のバイナリを取り込む。
+
+---
+
