@@ -4,17 +4,20 @@
 
 ## 最終的なゴール：理想の構成と管理方法
 
-このロードマップが目指す最終的な開発体制は、**「汎用基盤リポジトリ」「クイズエンジンリポジトリ」「各資格アプリケーションリポジトリ」を明確に分離するマルチリポジトリ戦略**です。
+このロードマップが目指す最終的な開発体制は、**「クイズ共通ライブラリリポジトリ」と「各資格アプリケーションリポジトリ」を明確に分離するマルチリポジトリ戦略**です。
 
-- **汎用基盤リポジトリ (`msaitodev-android-core`)**:
-    - 全てのアプリに共通する基盤（Ads, Billing, Settings, Navigation 等）を管理。
-    - `com.msaitodev.core`, `com.msaitodev.feature` のグループIDを使用。
-- **クイズエンジンリポジトリ (`msaitodev-quiz-engine`)**:
-    - クイズドメイン固有の共通モジュール（Domain, Data, QuizUI 等）を管理。
-    - `com.msaitodev.quiz` のグループIDを使用。
-- **アプリケーションリポジトリ (例: `caregiver-humanmed-app`)**:
-    - 新しい資格アプリごとに作成される、独立したGitリポジトリ。
-    - プロジェクト内には`:app`モジュール（Hub）のみが存在し、共通機能はMaven経由で利用。
+- **クイズ共通ライブラリリポジトリ (例: `quiz-common-libs`)**:
+    - 全てのクイズ共通モジュールを管理する、独立した一つのGitリポジトリです。
+    - 各モジュールは **`com.msaitodev.quiz`** のグループIDでバージョン管理され、Mavenリポジトリに公開されます。
+    - 共通機能の修正や追加は、このリポジトリ内でのみ行われます。
+
+- **アプリケーションリポジトリ (例: `caregiver-humanmed-app`, `another-exam-app`)**:
+    - 新しい資格アプリごとに作成される、独立したGitリポジトリです。
+    - プロジェクト内には`:app`モジュール（Hub）のみが存在します。
+    - `build.gradle.kts`では、共通機能をMavenライブラリとして宣言します。ローカルのモジュールへの依存は存在しません。
+      - 例: `implementation("com.msaitodev.quiz:feature-history:1.0.0")`
+
+この体制により、「資格アプリの量産」は、テンプレートリポジトリをコピーし、依存ライブラリのバージョンを指定するだけで実現できるようになります。
 
 ---
 
@@ -30,16 +33,16 @@
     - `:quiz-feature-history` (完了)
     - `:quiz-feature-analysis` (完了)
     - `:quiz-feature-weakness` (完了)
-    - `:feature-billing` (汎用化済み・独立完了)
-    - `:feature-settings` (汎用化済み・独立完了)
-    - `:core-common` (汎用化済み・独立完了)
-    - `:quiz-core-domain` (独立完了)
-    - `:quiz-core-data` (独立完了)
-    - `:core-ads` (汎用化済み・独立完了)
-    - `:core-notifications` (汎用化済み・独立完了)
-    - `:core-navigation` (汎用化済み・独立完了)
-    - `:quiz-core-navigation` (汎用化済み・独立完了)
-    - `:core-cloud-sync` (汎用化済み・独立完了)
+    - `:feature-billing` (汎用化済み・完了)
+    - `:feature-settings` (汎用化済み・完了)
+    - `:core-common` (汎用化済み・完了)
+    - `:quiz-core-domain` (完了)
+    - `:quiz-core-data` (完了)
+    - `:core-ads` (汎用化済み・完了)
+    - `:core-notifications` (汎用化済み・完了)
+    - `:core-navigation` (汎用化済み・完了)
+    - `:quiz-core-navigation` (汎用化済み・完了)
+    - `:core-cloud-sync` (汎用化済み・完了)
 
 ## 3段階計画
 
@@ -66,17 +69,6 @@
 ### フェーズ 7：リリース直前：セキュリティと運用の最終設定（完了）
 
 ### フェーズ 8：量産化への最終移行（マルチリポジトリ戦略）（完了）
-
-**目標:** 共通モジュールを外部リポジトリへ分離し、Maven経由で複数の資格アプリから利用可能にする。
-
-**実績:**
-1. [x] **リポジトリの分離**:
-    - 汎用基盤を `msaitodev-android-core` へ分離。
-    - クイズエンジンを `msaitodev-quiz-engine` へ分離。
-2. [x] **Maven 公開設定**: 各共通モジュールに `maven-publish` を適用し、ローカル Maven リポジトリ (`mavenLocal`) への公開環境を確立。
-3. [x] **Hub リポジトリの軽量化**: `caregiver-humanmed-app` から全 Spoke モジュールのソースコードを物理削除し、完全なバイナリ依存 (`implementation("com.msaitodev...:1.0.0")`) へ移行。
-4. [x] **ビルド検証**: `app:assembleRelease` および実機内部テストにて、バイナリ結合後の動作（課金・広告・難読化）が正常であることを確認。
-5. [ ] **量産用テンプレートの作成**: 新しい資格試験アプリを即座に立ち上げるためのスタータープロジェクト構成を確立。
 
 ---
 
