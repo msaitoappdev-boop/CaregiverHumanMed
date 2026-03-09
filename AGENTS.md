@@ -82,6 +82,7 @@
 
 ## 6. 参照ドキュメント（instructions）
 - **Overall Plan**: `.github/instructions/refactoring-roadmap.md`
+- **新規アプリ量産プロトコル**: `.github/instructions/production-protocol.instructions.md`
 - UI: `.github/instructions/ui-compose.instructions.md`
 - Navigation: `.github/instructions/navigation.instructions.md`
 - Billing: `.github/instructions/billing.instructions.md`
@@ -136,4 +137,3 @@
 - 基盤側（`core`, `quiz-engine`）の最新バージョンを `app/build.gradle.kts` で指定し、`publishToMavenLocal` された最新のバイナリを取り込む。
 
 ---
-
