@@ -8,7 +8,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
     id("com.google.gms.google-services")
-    id("com.google.firebase.crashlytics") // 追加
+    id("com.google.firebase.crashlytics")
 }
 
 val keystoreProps = Properties().apply {
@@ -29,7 +29,7 @@ android {
         applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 85
+        versionCode = 87
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -45,12 +45,10 @@ android {
 
     buildTypes {
         debug {
-            // Debug は Google のサンプル App ID に固定（安全）
             manifestPlaceholders["admob_app_id"] =
                 "ca-app-pub-3940256099942544~3347511713"
         }
         release {
-            // リリース品質の難読化と最適化を有効化
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -79,19 +77,24 @@ android {
 }
 
 dependencies {
-    implementation(project(":core-common"))
-    implementation(project(":quiz-core-domain"))
-    implementation(project(":quiz-feature-history"))
-    implementation(project(":quiz-feature-review"))
-    implementation(project(":quiz-feature-result"))
-    implementation(project(":core-ads"))
-    implementation(project(":feature-billing"))
-    implementation(project(":feature-settings"))
-    implementation(project(":core-navigation"))
-    implementation(project(":quiz-core-navigation"))
-    implementation(project(":core-notifications"))
-    implementation(project(":quiz-feature-main"))
-    implementation(project(":quiz-feature-analysis"))
+    // 全てのコアライブラリを Maven 形式で参照
+    implementation("com.msaitodev.core:core-common:1.0.0")
+    implementation("com.msaitodev.core:core-ads:1.0.0")
+    implementation("com.msaitodev.core:core-notifications:1.0.0")
+    implementation("com.msaitodev.core:core-navigation:1.0.0")
+    implementation("com.msaitodev.core:core-cloud-sync:1.0.0")
+    implementation("com.msaitodev.quiz:quiz-core-domain:1.0.0")
+    implementation("com.msaitodev.quiz:quiz-core-navigation:1.0.0")
+    implementation("com.msaitodev.quiz:quiz-core-data:1.0.0")
+    
+    // 全てのフィーチャーモジュールを Maven 形式で参照
+    implementation("com.msaitodev.quiz:quiz-feature-history:1.0.0")
+    implementation("com.msaitodev.quiz:quiz-feature-review:1.0.0")
+    implementation("com.msaitodev.quiz:quiz-feature-result:1.0.0")
+    implementation("com.msaitodev.feature:feature-billing:1.0.0")
+    implementation("com.msaitodev.feature:feature-settings:1.0.0")
+    implementation("com.msaitodev.quiz:quiz-feature-main:1.0.0")
+    implementation("com.msaitodev.quiz:quiz-feature-analysis:1.0.0")
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
@@ -116,8 +119,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-    implementation("com.google.android.material:material:1.12.0")
-
     // Hilt (KSP)
     val hiltVersion = "2.51.1"
     implementation("com.google.dagger:hilt-android:$hiltVersion")
@@ -127,14 +128,12 @@ dependencies {
     kspTest("com.google.dagger:hilt-compiler:$hiltVersion")
     kspAndroidTest("com.google.dagger:hilt-compiler:$hiltVersion")
 
-    implementation("com.android.billingclient:billing-ktx:7.1.1")
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("androidx.hilt:hilt-work:1.2.0")
     implementation("androidx.lifecycle:lifecycle-process:2.8.6")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
 
-    // ==== Firebase (use enforced BOM; add to test configs as well) ====
+    // ==== Firebase ====
     val fbBom = enforcedPlatform("com.google.firebase:firebase-bom:32.7.4")
     implementation(fbBom)
     testImplementation(fbBom)
@@ -143,15 +142,14 @@ dependencies {
     implementation("com.google.firebase:firebase-config-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-crashlytics-ktx") // 追加
+    implementation("com.google.firebase:firebase-crashlytics-ktx")
 
-    // AdMob / UMP
+    // AdMob / UMP (AppNavHost.kt で直接参照しているため必須)
     implementation("com.google.android.gms:play-services-ads:22.6.0")
     implementation("com.google.android.ump:user-messaging-platform:2.2.0")
 
     // Test dependencies
     testImplementation("junit:junit:4.13.2")
-    testImplementation(project(":quiz-core-data"))
     testImplementation("org.mockito:mockito-core:4.11.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
     testImplementation("org.mockito:mockito-inline:5.2.0")

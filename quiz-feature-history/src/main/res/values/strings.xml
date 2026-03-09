@@ -1,8 +1,0 @@
-<resources>
-    <string name="history_title">スコア履歴</string>
-    <string name="history_back">戻る</string>
-    <string name="history_delete_all">履歴を全て削除</string>
-    <string name="history_empty">履歴はまだありません</string>
-    <string name="history_score_format">%1$d / %2$d （%3$d%%）</string>
-    <string name="history_date_format">yyyy/MM/dd HH:mm</string>
-</resources>
