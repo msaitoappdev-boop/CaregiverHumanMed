@@ -29,8 +29,8 @@ android {
         applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 87
-        versionName = "1.0.0"
+        versionCode = 88
+        versionName = "1.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -94,7 +94,7 @@ dependencies {
     implementation("com.msaitodev.feature:feature-billing:1.0.0")
     implementation("com.msaitodev.feature:feature-settings:1.0.0")
     implementation("com.msaitodev.quiz:quiz-feature-main:1.0.0")
-    implementation("com.msaitodev.quiz:quiz-feature-analysis:1.0.0")
+    implementation("com.msaitodev.quiz:quiz-feature-analysis:1.0.1")
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
