@@ -11,11 +11,11 @@ import com.msaitodev.core.common.ui.LocalAppColors
 import com.msaitodev.core.common.ui.AppColors
 
 private val LightColorScheme = lightColorScheme(
-    primary = GreenPrimary,
-    secondary = GreenSecondary,
-    tertiary = GreenTertiary,
-    background = LightGreenBackground,
-    surface = LightGreenBackground,
+    primary = BrandPrimary,
+    secondary = BrandSecondary,
+    tertiary = BrandTertiary,
+    background = AppBackground,
+    surface = AppBackground,
     onPrimary = Color.White,
     onSecondary = Color.White,
     onTertiary = Color.Black,
@@ -24,9 +24,9 @@ private val LightColorScheme = lightColorScheme(
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = GreenPrimaryDark,
-    secondary = GreenSecondaryDark,
-    tertiary = GreenTertiaryDark,
+    primary = BrandPrimaryDark,
+    secondary = BrandSecondaryDark,
+    tertiary = BrandTertiaryDark,
     background = Color(0xFF121212),
     surface = Color(0xFF121212),
     onPrimary = Color.White,
