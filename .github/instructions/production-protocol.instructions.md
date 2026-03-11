@@ -10,7 +10,7 @@
     - `C:/Users/msait/AndroidStudioProjects/` 配下に、新しいアプリ用のフォルダを作成します。（例： `socialworker-humanmed-app`）
 
 2.  **テンプレートファイルのコピー**:
-    - `caregiver-humanmed-starter` プロジェクトから、以下のファイルとフォルダをすべて新しいプロジェクトフォルダへコピーします。
+    - `caregiver-humanmed-app` プロジェクトから、以下のファイルとフォルダをすべて新しいプロジェクトフォルダへコピーします。
       - `app/` （`build/` フォルダは除く）
       - `gradle/`
       - `.github/`
