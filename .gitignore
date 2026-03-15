@@ -4,6 +4,7 @@
 **/build/
 .idea/
 *.iml
+/app/release/
 
 # 機密・環境依存
 local.properties
