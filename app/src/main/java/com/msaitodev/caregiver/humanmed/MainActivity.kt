@@ -46,6 +46,13 @@ class MainActivity : ComponentActivity() {
         lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onResume(owner: LifecycleOwner) {
                 lifecycleScope.launch {
+                    // Remote Config の最新化を試みる
+                    try {
+                        remoteConfigRepo.fetch()
+                    } catch (e: Exception) {
+                        Log.e("MainActivity", "RemoteConfig fetch failed", e)
+                    }
+
                     premiumRepo.refreshFromBilling()
                     
                     // 起動時にクラウドからデータをダウンロードして統合
@@ -57,7 +64,12 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             CaregiverTheme {
-                AppNavHost(interstitialHelper, rewardedHelper)
+                AppNavHost(
+                    interstitialHelper = interstitialHelper,
+                    rewardedHelper = rewardedHelper,
+                    remoteConfigRepo = remoteConfigRepo,
+                    premiumRepo = premiumRepo
+                )
             }
         }
     }

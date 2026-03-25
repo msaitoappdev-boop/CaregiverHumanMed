@@ -29,8 +29,8 @@ android {
         applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 35
-        versionCode = 90
-        versionName = "1.1.0"
+        versionCode = 91
+        versionName = "1.2.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -82,10 +82,10 @@ dependencies {
     implementation("com.msaitodev.core:core-ads:1.0.0")
     implementation("com.msaitodev.core:core-notifications:1.0.0")
     implementation("com.msaitodev.core:core-navigation:1.0.0")
-    implementation("com.msaitodev.core:core-cloud-sync:1.0.0")
-    implementation("com.msaitodev.quiz:quiz-core-domain:1.0.0")
+    implementation("com.msaitodev.core:core-cloud-sync:1.1.1")
+    implementation("com.msaitodev.quiz:quiz-core-domain:1.1.1")
     implementation("com.msaitodev.quiz:quiz-core-navigation:1.0.0")
-    implementation("com.msaitodev.quiz:quiz-core-data:1.0.0")
+    implementation("com.msaitodev.quiz:quiz-core-data:1.1.1")
     
     // 全てのフィーチャーモジュールを Maven 形式で参照
     implementation("com.msaitodev.quiz:quiz-feature-history:1.0.0")
