@@ -89,11 +89,17 @@ internal fun AppNavHost(
         quizResultForProcessing = null // Prevent re-processing
     }
 
-    LaunchedEffect(Unit) {
-        ConsentManager.obtain(activity) {
-            MobileAds.initialize(activity.applicationContext)
-            Firebase.analytics.setAnalyticsCollectionEnabled(true)
-            interstitialHelper.preload()
+    LaunchedEffect(isPremium) {
+        // アナリティクスはユーザーの状態に関わらず有効化
+        Firebase.analytics.setAnalyticsCollectionEnabled(true)
+
+        // 無料ユーザーの場合のみ広告を初期化・プリロードする
+        if (!isPremium) {
+            ConsentManager.obtain(activity) {
+                MobileAds.initialize(activity.applicationContext)
+                interstitialHelper.preload()
+                rewardedHelper.preload()
+            }
         }
     }
 
