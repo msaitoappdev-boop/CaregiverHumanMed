@@ -48,6 +48,11 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${admob_app_id}" />
 
+        <!-- 通知アイコンの背景色設定 -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/md_theme_primary" />
+
         <!-- AdServices の競合を GMA 側に寄せる -->
         <property
             android:name="android.adservices.AD_SERVICES_CONFIG"
