@@ -185,7 +185,8 @@ internal fun AppNavHost(
             }
         )
 
-        paywallGraph()
+        paywallGraph(onBack = { navController.popBackStack() })
+
         settingsGraph(onBack = { navController.popBackStack() })
     }
 }
