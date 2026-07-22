@@ -9,6 +9,7 @@ plugins {
     id("com.google.dagger.hilt.android")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 val keystoreProps = Properties().apply {
@@ -23,14 +24,14 @@ val localProps = Properties().apply {
 
 android {
     namespace = "com.msaitodev.caregiver.humanmed"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
-        targetSdk = 35
-        versionCode = 106
-        versionName = "1.4.1"
+        targetSdk = 36
+        versionCode = 108
+        versionName = "1.4.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -67,7 +68,6 @@ android {
         compose = true
         buildConfig = true
     }
-    composeOptions { kotlinCompilerExtensionVersion = "1.5.15" }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -78,23 +78,23 @@ android {
 
 dependencies {
     // 全てのコアライブラリを Maven 形式で参照
-    implementation("com.msaitodev.core:core-common:1.0.0")
-    implementation("com.msaitodev.core:core-ads:1.0.2")
-    implementation("com.msaitodev.core:core-notifications:1.0.1")
-    implementation("com.msaitodev.core:core-navigation:1.0.0")
-    implementation("com.msaitodev.core:core-cloud-sync:1.1.1")
-    implementation("com.msaitodev.quiz:quiz-core-domain:1.1.1")
-    implementation("com.msaitodev.quiz:quiz-core-navigation:1.0.0")
-    implementation("com.msaitodev.quiz:quiz-core-data:1.1.1")
+    implementation("com.msaitodev.core:core-common:1.0.1")
+    implementation("com.msaitodev.core:core-ads:1.0.3")
+    implementation("com.msaitodev.core:core-notifications:1.0.2")
+    implementation("com.msaitodev.core:core-navigation:1.0.1")
+    implementation("com.msaitodev.core:core-cloud-sync:1.1.2")
+    implementation("com.msaitodev.quiz:quiz-core-domain:1.1.2")
+    implementation("com.msaitodev.quiz:quiz-core-navigation:1.0.1")
+    implementation("com.msaitodev.quiz:quiz-core-data:1.1.2")
     
     // 全てのフィーチャーモジュールを Maven 形式で参照
-    implementation("com.msaitodev.quiz:quiz-feature-history:1.0.0")
-    implementation("com.msaitodev.quiz:quiz-feature-review:1.0.0")
-    implementation("com.msaitodev.quiz:quiz-feature-result:1.0.0")
-    implementation("com.msaitodev.feature:feature-billing:1.0.1")
-    implementation("com.msaitodev.feature:feature-settings:1.0.0")
-    implementation("com.msaitodev.quiz:quiz-feature-main:1.1.0")
-    implementation("com.msaitodev.quiz:quiz-feature-analysis:1.0.1")
+    implementation("com.msaitodev.quiz:quiz-feature-history:1.0.1")
+    implementation("com.msaitodev.quiz:quiz-feature-review:1.0.1")
+    implementation("com.msaitodev.quiz:quiz-feature-result:1.0.1")
+    implementation("com.msaitodev.feature:feature-billing:1.0.2")
+    implementation("com.msaitodev.feature:feature-settings:1.0.1")
+    implementation("com.msaitodev.quiz:quiz-feature-main:1.1.1")
+    implementation("com.msaitodev.quiz:quiz-feature-analysis:1.0.2")
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
@@ -120,7 +120,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     // Hilt (KSP)
-    val hiltVersion = "2.51.1"
+    val hiltVersion = "2.55"
     implementation("com.google.dagger:hilt-android:$hiltVersion")
     ksp("com.google.dagger:hilt-compiler:$hiltVersion")
     testImplementation("com.google.dagger:hilt-android-testing:$hiltVersion")
