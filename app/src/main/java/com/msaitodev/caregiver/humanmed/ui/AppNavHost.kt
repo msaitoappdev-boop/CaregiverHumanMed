@@ -36,6 +36,7 @@ import com.google.firebase.ktx.Firebase
 import com.msaitodev.core.ads.ConsentManager
 import com.msaitodev.core.ads.InterstitialHelper
 import com.msaitodev.core.ads.RewardedHelper
+import com.msaitodev.core.common.billing.PremiumPlan
 import com.msaitodev.core.common.navigation.AppActions
 import com.msaitodev.core.navigation.PaywallDestination
 import com.msaitodev.core.navigation.SettingsDestination
@@ -73,7 +74,9 @@ internal fun AppNavHost(
     val navController = rememberNavController()
     var quizResultForProcessing by remember { mutableStateOf<QuizResult?>(null) }
 
-    val isPremium by premiumRepo.isPremium.collectAsState(initial = true)
+    // PremiumPlan を取得し、isPremium を判定
+    val premiumPlan by premiumRepo.premiumPlan.collectAsState(initial = PremiumPlan.NONE)
+    val isPremium = premiumPlan != PremiumPlan.NONE
     
     // 現在の画面情報を監視
     val navBackStackEntry by navController.currentBackStackEntryAsState()

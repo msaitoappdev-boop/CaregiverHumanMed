@@ -8,6 +8,7 @@ import com.msaitodev.quiz.core.domain.repository.RemoteConfigRepository
 import com.msaitodev.quiz.core.domain.repository.StudyQuotaRepository
 import com.msaitodev.core.notifications.NotificationData
 import com.msaitodev.core.notifications.NotificationPolicy
+import com.msaitodev.core.common.billing.PremiumPlan
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,7 +32,10 @@ class QuizNotificationPolicy @Inject constructor(
     override val defaultText: String = ""
 
     override suspend fun resolveNotificationData(context: Context): NotificationData? {
-        val isPremium = premiumRepo.isPremium.value
+        val plan = premiumRepo.premiumPlan.value
+        val isPremium = plan != PremiumPlan.NONE
+        
+        // プレミアム（月額）または無料版の場合はRemoteConfigから上限を取得
         val limitKey = if (isPremium) RemoteConfigKeys.PREMIUM_DAILY_SETS else RemoteConfigKeys.FREE_DAILY_SETS
         val limit = remoteConfigRepo.getLong(limitKey).toInt()
 
@@ -46,8 +50,9 @@ class QuizNotificationPolicy @Inject constructor(
                     text = context.getString(R.string.notification_reminder_text_start)
                 )
             }
-            // プレミアムユーザーで、かつ残りセット数がある場合
-            isPremium && quota.usedSets < limit -> {
+            // 月額プレミアムユーザーで、かつ残りセット数がある場合
+            // ※LIFETIMEは無制限のため、継続通知（残りカウント）は表示しない
+            plan == PremiumPlan.MONTHLY && quota.usedSets < limit -> {
                 val remaining = limit - quota.usedSets
                 NotificationData(
                     title = context.getString(R.string.notification_reminder_title_continue),
