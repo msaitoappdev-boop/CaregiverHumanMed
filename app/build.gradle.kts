@@ -30,8 +30,8 @@ android {
         applicationId = "com.msaitodev.caregiver.humanmed"
         minSdk = 24
         targetSdk = 36
-        versionCode = 108
-        versionName = "1.4.3"
+        versionCode = 122
+        versionName = "1.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -78,23 +78,23 @@ android {
 
 dependencies {
     // 全てのコアライブラリを Maven 形式で参照
-    implementation("com.msaitodev.core:core-common:1.0.1")
-    implementation("com.msaitodev.core:core-ads:1.0.3")
-    implementation("com.msaitodev.core:core-notifications:1.0.2")
+    implementation("com.msaitodev.core:core-common:1.1.0")
+    implementation("com.msaitodev.core:core-ads:1.1.0")
+    implementation("com.msaitodev.core:core-notifications:1.1.0")
     implementation("com.msaitodev.core:core-navigation:1.0.1")
-    implementation("com.msaitodev.core:core-cloud-sync:1.1.2")
-    implementation("com.msaitodev.quiz:quiz-core-domain:1.1.2")
+    implementation("com.msaitodev.core:core-cloud-sync:1.2.0")
+    implementation("com.msaitodev.quiz:quiz-core-domain:1.2.0")
     implementation("com.msaitodev.quiz:quiz-core-navigation:1.0.1")
-    implementation("com.msaitodev.quiz:quiz-core-data:1.1.2")
+    implementation("com.msaitodev.quiz:quiz-core-data:1.2.0")
     
     // 全てのフィーチャーモジュールを Maven 形式で参照
-    implementation("com.msaitodev.quiz:quiz-feature-history:1.0.1")
-    implementation("com.msaitodev.quiz:quiz-feature-review:1.0.1")
-    implementation("com.msaitodev.quiz:quiz-feature-result:1.0.1")
-    implementation("com.msaitodev.feature:feature-billing:1.0.2")
-    implementation("com.msaitodev.feature:feature-settings:1.0.1")
-    implementation("com.msaitodev.quiz:quiz-feature-main:1.1.1")
-    implementation("com.msaitodev.quiz:quiz-feature-analysis:1.0.2")
+    implementation("com.msaitodev.quiz:quiz-feature-history:1.1.0")
+    implementation("com.msaitodev.quiz:quiz-feature-review:1.1.0")
+    implementation("com.msaitodev.quiz:quiz-feature-result:1.1.0")
+    implementation("com.msaitodev.feature:feature-billing:1.1.0")
+    implementation("com.msaitodev.feature:feature-settings:1.1.0")
+    implementation("com.msaitodev.quiz:quiz-feature-main:1.2.0")
+    implementation("com.msaitodev.quiz:quiz-feature-analysis:1.1.0")
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 

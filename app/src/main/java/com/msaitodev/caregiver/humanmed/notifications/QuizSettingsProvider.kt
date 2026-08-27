@@ -10,6 +10,7 @@ import com.msaitodev.caregiver.humanmed.R
 import com.msaitodev.feature.settings.SettingsProvider
 import com.msaitodev.quiz.core.domain.repository.CategoryNameProvider
 import com.msaitodev.quiz.core.domain.repository.PremiumRepository
+import com.msaitodev.core.common.billing.PremiumPlan
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,8 +43,8 @@ class QuizSettingsProvider @Inject constructor(
     init {
         // 購読状態を監視し、無料ユーザーになったら弱点特訓モードを強制解除する
         scope.launch {
-            premiumRepository.isPremium.collectLatest { isPremium ->
-                if (!isPremium) {
+            premiumRepository.premiumPlan.collectLatest { plan ->
+                if (plan == PremiumPlan.NONE) {
                     updateWeaknessMode(false)
                 }
             }
